@@ -12,6 +12,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
     @Published var activeTabID: UUID?
     @Published var showGraph = false
     @Published var showAnnotations = false
+    @Published var sidebarWidth: CGFloat = 248
+    @Published var sidebarCollapsed = false
     @Published var searchEngine: SearchEngine = .google
 
     let graph = KnowledgeGraph()
@@ -129,7 +131,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
     // MARK: session persistence
 
     private struct SessionTab: Codable { var url: String?; var pinned: Bool }
-    private struct SessionData: Codable { var tabs: [SessionTab]; var activeIndex: Int }
+    private struct SessionData: Codable { var tabs: [SessionTab]; var activeIndex: Int; var sidebarWidth: Double? }
 
     private func persistSoon() {
         saveWork?.cancel()
@@ -141,7 +143,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
     func persist() {
         let data = SessionData(
             tabs: tabs.map { SessionTab(url: $0.url?.absoluteString, pinned: $0.isPinned) },
-            activeIndex: tabs.firstIndex { $0.id == activeTabID } ?? 0
+            activeIndex: tabs.firstIndex { $0.id == activeTabID } ?? 0,
+            sidebarWidth: Double(sidebarWidth)
         )
         if let encoded = try? JSONEncoder().encode(data) { try? encoded.write(to: Paths.sessionFile) }
     }
@@ -150,6 +153,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
         guard let data = try? Data(contentsOf: Paths.sessionFile),
               let session = try? JSONDecoder().decode(SessionData.self, from: data),
               !session.tabs.isEmpty else { return }
+        if let w = session.sidebarWidth { sidebarWidth = CGFloat(min(400, max(210, w))) }
         for st in session.tabs {
             let tab = makeTab()
             tab.isPinned = st.pinned

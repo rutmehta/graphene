@@ -31,6 +31,7 @@ extension AppState {
         case "close":    if let id = activeTabID { closeTab(id) }
         case "graph":    showGraph = (arg != "off")
         case "notes":    showAnnotations = (arg != "off")
+        case "sidebar":  if let w = Double(arg) { sidebarWidth = CGFloat(w) }
         case "annotate":
             if let tab = activeTab {
                 self.tab(tab, didCapture: CapturedAnnotation(

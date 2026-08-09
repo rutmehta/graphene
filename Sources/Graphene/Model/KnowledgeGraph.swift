@@ -114,6 +114,48 @@ final class KnowledgeGraph: ObservableObject {
         return nodes[id]
     }
 
+    /// A thread of thought: a browsing session (a burst of activity), its pages
+    /// in chronological order, and the search that started it.
+    struct Thread: Identifiable {
+        let id: Int
+        var nodes: [GraphNode]      // chronological (by firstVisit)
+        var start: Date
+        var end: Date
+        var title: String
+        var query: String?
+        var noteCount: Int
+        var hosts: [String]         // distinct, in order of appearance
+    }
+
+    /// Segment history into threads by activity gaps. Most recent first.
+    func threads(gapMinutes: Double = 40, limit: Int = 40) -> [Thread] {
+        let sorted = nodes.values.sorted { $0.firstVisit < $1.firstVisit }
+        guard !sorted.isEmpty else { return [] }
+        var groups: [[GraphNode]] = []
+        var cur: [GraphNode] = []
+        var last: Date?
+        for n in sorted {
+            if let l = last, n.firstVisit.timeIntervalSince(l) > gapMinutes * 60, !cur.isEmpty {
+                groups.append(cur); cur = []
+            }
+            cur.append(n); last = n.lastVisit
+        }
+        if !cur.isEmpty { groups.append(cur) }
+
+        let built = groups.enumerated().map { (i, g) -> Thread in
+            let query = g.first(where: { $0.query != nil })?.query
+            let notes = g.reduce(0) { $0 + $1.annotationCount }
+            var hosts: [String] = []
+            for n in g where !n.host.isEmpty && !hosts.contains(n.host) { hosts.append(n.host) }
+            let title = query
+                ?? g.max(by: { $0.visitCount < $1.visitCount })?.title
+                ?? g.first?.title ?? "Session"
+            return Thread(id: i, nodes: g, start: g.first!.firstVisit, end: g.last!.lastVisit,
+                          title: title, query: query, noteCount: notes, hosts: hosts)
+        }
+        return Array(built.reversed().prefix(limit))
+    }
+
     /// Most-relevant pages for the start page: frequent + recent, de-duplicated by host.
     func topNodes(limit: Int = 6) -> [GraphNode] {
         let now = Date()

@@ -6,7 +6,8 @@ struct RootView: View {
     var body: some View {
         HStack(spacing: 0) {
             Sidebar()
-                .frame(width: 244)
+                .frame(width: app.sidebarWidth)
+            ResizeHandle(width: $app.sidebarWidth)
             ZStack {
                 if let tab = app.activeTab {
                     ContentArea(tab: tab)
@@ -27,6 +28,35 @@ struct RootView: View {
         .animation(.spring(response: 0.34, dampingFraction: 0.86), value: app.showAnnotations)
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowAccessor())
+    }
+}
+
+// MARK: - resizable sidebar divider
+
+private struct ResizeHandle: View {
+    @Binding var width: CGFloat
+    @Environment(\.colorScheme) private var scheme
+    @State private var base: CGFloat?
+    @State private var hovering = false
+
+    var body: some View {
+        Rectangle()
+            .fill(hovering ? Theme.accent.opacity(0.5) : Theme.hairline(scheme))
+            .frame(width: hovering ? 2 : 1)
+            .frame(width: 10)          // wide invisible hit area, thin visible line
+            .contentShape(Rectangle())
+            .onHover { h in
+                hovering = h
+                if h { NSCursor.resizeLeftRight.set() } else { NSCursor.arrow.set() }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { v in
+                        if base == nil { base = width }
+                        width = min(400, max(210, (base ?? width) + v.translation.width))
+                    }
+                    .onEnded { _ in base = nil }
+            )
     }
 }
 
@@ -98,7 +128,6 @@ private struct Sidebar: View {
             .overlay(alignment: .top) { Rectangle().fill(Theme.hairline(scheme)).frame(height: 1) }
         }
         .background(.regularMaterial)
-        .overlay(alignment: .trailing) { Rectangle().fill(Theme.hairline(scheme)).frame(width: 1) }
     }
 }
 
@@ -320,6 +349,8 @@ private struct NavButton: View {
     }
 }
 
+/// The homepage: where your work lives. A prominent search, then your recent
+/// threads of thought to pick back up — not a generic search screen.
 private struct NewTabView: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
@@ -327,99 +358,118 @@ private struct NewTabView: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        ZStack {
-            Color(nsColor: .textBackgroundColor)
-            // a single, restrained warm wash — the brand's warmth, not a neon glow
-            RadialGradient(colors: [Theme.accent.opacity(0.10), .clear],
-                           center: .init(x: 0.5, y: 0.34), startRadius: 0, endRadius: 460)
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-
-            VStack(spacing: 0) {
-                Spacer()
-                Text("Graphene")
-                    .font(.system(size: 40, weight: .semibold))
-                    .tracking(-0.5)
-                Text("Search the web, or pick up a thread.")
-                    .font(.system(size: 14.5))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 10)
-
-                HStack(spacing: 11) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 14)).foregroundStyle(.secondary)
-                    TextField("Search or enter address", text: $text)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 16))
-                        .focused($focused)
-                        .onSubmit { app.submit(text, on: tab) }
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let threads = app.graph.threads(limit: 6)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                // hero
+                VStack(spacing: 16) {
+                    Text("Graphene")
+                        .font(.system(size: 34, weight: .semibold)).tracking(-0.4)
+                        .padding(.top, threads.isEmpty ? 120 : 64)
+                    HStack(spacing: 11) {
+                        Image(systemName: "magnifyingglass").font(.system(size: 14)).foregroundStyle(.secondary)
+                        TextField("Search the web, or type a URL", text: $text)
+                            .textFieldStyle(.plain).font(.system(size: 16))
+                            .focused($focused)
+                            .onSubmit { app.submit(text, on: tab) }
+                    }
+                    .padding(.horizontal, 18).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
                         .fill(.regularMaterial)
-                        .shadow(color: .black.opacity(0.22), radius: 22, y: 8)
-                )
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(focused ? Theme.accent.opacity(0.45) : Color.primary.opacity(0.08)))
-                .frame(maxWidth: 520)
-                .padding(.top, 30)
+                        .shadow(color: .black.opacity(0.18), radius: 18, y: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(focused ? Theme.accent.opacity(0.45) : Color.primary.opacity(0.08)))
+                    .frame(maxWidth: 560)
+                }
+                .frame(maxWidth: .infinity)
 
-                Recents(tab: tab).padding(.top, 40)
+                if !threads.isEmpty {
+                    HStack {
+                        Text("Pick up a thread")
+                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
+                        Spacer()
+                        Button { app.showGraph = true } label: {
+                            Text("All threads").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.accent)
+                        }.buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 48).padding(.bottom, 12)
 
-                Spacer()
-                Spacer()
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
+                        ForEach(threads) { t in
+                            HomeThreadCard(thread: t) { url in app.submit(url.absoluteString, on: tab) }
+                        }
+                    }
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 60)
+                }
             }
-            .padding(40)
+            .padding(.horizontal, 40)
         }
+        .background(
+            ZStack {
+                Color(nsColor: .textBackgroundColor)
+                RadialGradient(colors: [Theme.accent.opacity(0.08), .clear],
+                               center: .init(x: 0.5, y: 0.12), startRadius: 0, endRadius: 520)
+                    .blendMode(.plusLighter).allowsHitTesting(false)
+            }
+        )
         .onAppear { focused = true }
     }
 }
 
-private struct Recents: View {
-    @ObservedObject var tab: Tab
-    @EnvironmentObject var app: AppState
-
-    var body: some View {
-        let top = app.graph.topNodes(limit: 5)
-        if !top.isEmpty {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Recent")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.5)
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 12).padding(.bottom, 4)
-                ForEach(top) { n in RecentRow(node: n, tab: tab) }
-            }
-            .frame(maxWidth: 520)
-        }
-    }
-}
-
-private struct RecentRow: View {
-    let node: GraphNode
-    @ObservedObject var tab: Tab
-    @EnvironmentObject var app: AppState
+/// A compact thread on the homepage: title, the pages as a favicon trail, meta.
+private struct HomeThreadCard: View {
+    let thread: KnowledgeGraph.Thread
+    @Environment(\.colorScheme) private var scheme
     @State private var hovering = false
+    var onOpen: (URL) -> Void
 
     var body: some View {
         Button {
-            if let url = URL(string: node.url) { app.submit(url.absoluteString, on: tab) }
+            if let last = thread.nodes.last, let url = URL(string: last.url) { onOpen(url) }
         } label: {
-            HStack(spacing: 11) {
-                Favicon(host: URL(string: node.url)?.host, size: 16)
-                Text(node.title).font(.system(size: 13)).lineLimit(1)
-                Spacer(minLength: 12)
-                Text(URL(string: node.url)?.host ?? "")
-                    .font(.system(size: 12)).foregroundStyle(.tertiary).lineLimit(1)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 6) {
+                    if thread.query != nil {
+                        Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    Text(thread.title).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                }
+                // favicon trail
+                HStack(spacing: 6) {
+                    ForEach(Array(thread.nodes.prefix(7).enumerated()), id: \.offset) { _, n in
+                        FaviconImg(host: URL(string: n.url)?.host, size: 17)
+                    }
+                    if thread.nodes.count > 7 {
+                        Text("+\(thread.nodes.count - 7)").font(.system(size: 11)).foregroundStyle(.tertiary)
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(meta).font(.system(size: 11.5)).foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(hovering ? Color.primary.opacity(0.06) : .clear))
-            .contentShape(Rectangle())
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(scheme == .dark ? Color.white.opacity(hovering ? 0.06 : 0.03)
+                                      : Color.black.opacity(hovering ? 0.04 : 0.02)))
+            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .strokeBorder(hovering ? Theme.accent.opacity(0.4) : Theme.hairline(scheme)))
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+    }
+
+    private var meta: String {
+        let f = DateFormatter()
+        if Calendar.current.isDateInToday(thread.end) { f.dateFormat = "'Today' h:mm a" }
+        else if Calendar.current.isDateInYesterday(thread.end) { f.dateFormat = "'Yesterday' h:mm a" }
+        else { f.dateFormat = "MMM d" }
+        var s = "\(f.string(from: thread.end)) · \(thread.nodes.count) pages"
+        if thread.noteCount > 0 { s += " · \(thread.noteCount) notes" }
+        return s
     }
 }
