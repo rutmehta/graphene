@@ -216,8 +216,27 @@ private struct ContentArea: View {
                     NewTabView(tab: tab)
                 }
             }
+            .overlay(alignment: .top) { LoadBar(tab: tab) }
         }
         .background(Color(nsColor: .textBackgroundColor))
+    }
+}
+
+private struct LoadBar: View {
+    @ObservedObject var tab: Tab
+    var body: some View {
+        GeometryReader { geo in
+            if tab.isLoading && tab.progress > 0.01 && tab.progress < 1 {
+                Rectangle()
+                    .fill(LinearGradient(colors: [Theme.accent.opacity(0.7), Theme.accent],
+                                         startPoint: .leading, endPoint: .trailing))
+                    .frame(width: geo.size.width * tab.progress, height: 2.5)
+                    .animation(.easeOut(duration: 0.2), value: tab.progress)
+                    .shadow(color: Theme.accent.opacity(0.5), radius: 3)
+            }
+        }
+        .frame(height: 2.5)
+        .allowsHitTesting(false)
     }
 }
 
@@ -269,13 +288,12 @@ private struct Toolbar: View {
         .padding(.horizontal, 16)
         .frame(height: 52)
         .background(.bar)
-        .onAppear { text = urlString }
-        .onChange(of: tab.id) { _, _ in text = urlString }
-        .onChange(of: tab.url) { _, _ in if !focused { text = urlString } }
-        .onChange(of: focused) { _, f in if !f { text = urlString } }
+        // tab.url only changes on an actual navigation (never mid-typing), so an
+        // unconditional sync tracks the page without clobbering what you type.
+        .onAppear { text = tab.url?.absoluteString ?? "" }
+        .onChange(of: tab.url) { _, u in text = u?.absoluteString ?? "" }
+        .onChange(of: tab.id) { _, _ in text = tab.url?.absoluteString ?? "" }
     }
-
-    private var urlString: String { tab.url?.absoluteString ?? "" }
 
     private func navButton(_ system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         NavButton(system: system, enabled: enabled, action: action)
