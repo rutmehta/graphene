@@ -1,0 +1,744 @@
+<!-- Graphene — AI concept prototypes -->
+<title>Graphene · AI concepts</title>
+<style>
+  :root {
+    --bg: #0B0E13;
+    --bg-1: #11161F;
+    --bg-2: #171E29;
+    --bg-3: #1E2734;
+    --line: rgba(139,147,255,.13);
+    --line-strong: rgba(139,147,255,.30);
+    --text: #E7ECF3;
+    --muted: #8A97A8;
+    --faint: #59657A;
+    --indigo: #8B93FF;   /* AI / inference */
+    --teal: #4FD6C3;     /* your knowledge / provenance */
+    --amber: #F5B455;    /* conflict */
+    --indigo-dim: rgba(139,147,255,.16);
+    --teal-dim: rgba(79,214,195,.14);
+    --amber-dim: rgba(245,180,85,.15);
+    --radius: 14px;
+    --display: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --body: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+  ::selection { background: var(--indigo-dim); }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  .mono { font-family: var(--mono); }
+
+  /* faint hexagon lattice — graphene's namesake — behind everything */
+  #lattice {
+    position: fixed; inset: 0; z-index: 0;
+    opacity: .5; pointer-events: none;
+  }
+
+  /* ---------------- window frame ---------------- */
+  .app {
+    position: relative; z-index: 1;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .titlebar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .lights { display: flex; gap: 8px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .lights i:nth-child(1) { background: #ED6A5E; }
+  .lights i:nth-child(2) { background: #F4BF4F; }
+  .lights i:nth-child(3) { background: #61C554; }
+  .wordmark {
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--display); font-weight: 600; letter-spacing: -.01em;
+  }
+  .wordmark .hex { color: var(--indigo); font-size: 18px; }
+  .omnibox {
+    flex: 1; max-width: 520px; margin: 0 auto;
+    display: flex; align-items: center; gap: 9px;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 7px 13px;
+    font-size: 13px; color: var(--muted);
+  }
+  .omnibox .mono { color: var(--faint); font-size: 12px; }
+  .pill {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .02em;
+    padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line-strong); color: var(--muted);
+  }
+
+  /* ---------------- body: rail + stage ---------------- */
+  .main { display: grid; grid-template-columns: 300px 1fr; min-height: 0; }
+
+  .rail {
+    border-right: 1px solid var(--line);
+    padding: 18px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+    overflow-y: auto;
+  }
+  .rail .eyebrow {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 4px 10px 12px;
+  }
+  .concept-btn {
+    text-align: left; width: 100%;
+    display: grid; grid-template-columns: 26px 1fr; gap: 10px;
+    padding: 11px 10px; border-radius: 11px;
+    border: 1px solid transparent;
+    transition: background .18s, border-color .18s;
+  }
+  .concept-btn:hover { background: var(--bg-1); }
+  .concept-btn.active { background: var(--bg-1); border-color: var(--line-strong); }
+  .concept-btn .idx {
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    padding-top: 1px;
+  }
+  .concept-btn.active .idx { color: var(--indigo); }
+  .concept-btn .nm { font-family: var(--display); font-weight: 560; font-size: 14px; letter-spacing: -.01em; }
+  .concept-btn .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .concept-btn:focus-visible { outline: 2px solid var(--indigo); outline-offset: 1px; }
+
+  .rail .legend {
+    margin-top: auto; padding: 14px 10px 4px;
+    display: flex; flex-direction: column; gap: 8px;
+    font-size: 11.5px; color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+  .legend .row { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  /* ---------------- stage ---------------- */
+  .stage { position: relative; overflow: hidden; min-height: 0; }
+  .panel {
+    position: absolute; inset: 0;
+    padding: 30px 40px 34px;
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .3s ease, transform .3s ease;
+    overflow-y: auto;
+  }
+  .panel.show { opacity: 1; transform: none; pointer-events: auto; }
+
+  .phead { margin-bottom: 20px; max-width: 760px; }
+  .phead .tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--indigo); margin-bottom: 12px;
+  }
+  .phead h1 {
+    font-family: var(--display); font-weight: 620; font-size: 30px;
+    letter-spacing: -.02em; text-wrap: balance; line-height: 1.08;
+  }
+  .phead .lede { color: var(--muted); font-size: 15px; margin-top: 9px; max-width: 640px; }
+  .phead .vs {
+    margin-top: 13px; font-size: 12.5px; color: var(--faint);
+    display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+  }
+  .phead .vs b { color: var(--teal); font-weight: 560; }
+
+  .demo {
+    flex: 1; min-height: 340px;
+    background: linear-gradient(180deg, var(--bg-1), rgba(11,14,19,.4));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* graph canvas mock */
+  .graphwrap { position: absolute; inset: 0; }
+  .graphwrap canvas { width: 100%; height: 100%; display: block; }
+  .float-card {
+    position: absolute; z-index: 3;
+    background: rgba(17,22,31,.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--line-strong);
+    border-radius: 12px; padding: 13px 15px;
+    width: 300px; box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .fc-q {
+    font-family: var(--mono); font-size: 11px; color: var(--teal);
+    display: flex; align-items: center; gap: 6px; margin-bottom: 9px;
+  }
+  .fc-ans { font-size: 13px; line-height: 1.55; }
+  .cite {
+    font-family: var(--mono); font-size: 10.5px;
+    padding: 1px 6px; border-radius: 5px; white-space: nowrap;
+    background: var(--teal-dim); color: var(--teal); cursor: default;
+    border: 1px solid rgba(79,214,195,.3);
+  }
+  .cite.web { background: var(--indigo-dim); color: var(--indigo); border-color: rgba(139,147,255,.3); border-style: dashed; }
+  .fc-foot {
+    margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    font-size: 11px; color: var(--muted);
+  }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .03em;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .hint {
+    position: absolute; left: 18px; bottom: 16px; z-index: 3;
+    font-family: var(--mono); font-size: 11px; color: var(--faint);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* reading pane + margin (concept 4) */
+  .read-layout { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 300px; }
+  .reader { padding: 30px 34px; overflow-y: auto; border-right: 1px solid var(--line); }
+  .reader .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .reader h2 { font-family: var(--display); font-weight: 620; font-size: 22px; letter-spacing: -.02em; margin: 8px 0 14px; }
+  .reader p { font-size: 14px; color: #C6CFDC; margin-bottom: 13px; max-width: 60ch; }
+  .reader mark {
+    background: var(--teal-dim); color: var(--text);
+    border-bottom: 2px solid var(--teal); padding: 0 1px; border-radius: 2px;
+  }
+  .reader mark.warn { background: var(--amber-dim); border-color: var(--amber); }
+  .margin { padding: 22px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  .margin .mh { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .mcard {
+    border: 1px solid var(--line); border-left: 2px solid var(--indigo);
+    border-radius: 9px; padding: 11px 12px; background: var(--bg-1);
+    font-size: 12px; color: var(--muted);
+    opacity: 0; transform: translateX(10px);
+    animation: slidein .5s forwards;
+  }
+  .mcard.you { border-left-color: var(--teal); }
+  .mcard.warn { border-left-color: var(--amber); }
+  .mcard b { color: var(--text); font-weight: 560; }
+  .mcard .src { font-family: var(--mono); font-size: 10px; margin-top: 7px; display: block; color: var(--faint); }
+  .mcard .when { color: var(--teal); }
+  @keyframes slidein { to { opacity: 1; transform: none; } }
+
+  /* living annotation (concept 3) */
+  .anno-stack { position: absolute; inset: 0; padding: 34px; display: flex; align-items: center; justify-content: center; }
+  .anno {
+    width: 460px; max-width: 100%;
+    background: var(--bg-1); border: 1px solid var(--line-strong);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+  .anno .quote {
+    padding: 18px 20px; font-size: 15px; line-height: 1.55;
+    border-left: 3px solid var(--teal);
+  }
+  .anno .meta { padding: 0 20px 16px; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .anno .note { padding: 14px 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .anno .note b { color: var(--text); }
+  .anno .alert {
+    padding: 14px 20px; border-top: 1px solid var(--line);
+    background: var(--amber-dim);
+    display: flex; gap: 11px; align-items: flex-start;
+    opacity: 0; max-height: 0; overflow: hidden;
+    transition: max-height .5s ease, opacity .4s ease .15s;
+  }
+  .anno.armed .alert { opacity: 1; max-height: 160px; }
+  .anno .alert .ic { color: var(--amber); font-size: 15px; line-height: 1.3; }
+  .anno .alert .body { font-size: 12.5px; color: var(--text); }
+  .anno .alert .body .src { font-family: var(--mono); font-size: 10.5px; color: var(--amber); display: block; margin-top: 6px; }
+
+  /* synthesis canvas (concept 5) */
+  .synth { position: absolute; inset: 0; display: grid; grid-template-columns: 1.15fr 1fr; }
+  .board { position: relative; border-right: 1px solid var(--line); overflow: hidden; }
+  .chipnode {
+    position: absolute; width: 168px;
+    background: var(--bg-2); border: 1px solid var(--line-strong);
+    border-radius: 10px; padding: 10px 11px; cursor: grab;
+    transition: box-shadow .18s, border-color .18s, transform .18s;
+  }
+  .chipnode:hover { border-color: var(--teal); box-shadow: 0 12px 30px rgba(0,0,0,.4); transform: translateY(-2px); }
+  .chipnode.lit { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-dim); }
+  .chipnode .t { font-size: 12px; font-weight: 560; }
+  .chipnode .u { font-family: var(--mono); font-size: 9.5px; color: var(--faint); margin-top: 4px; }
+  .chipnode .kind { font-family: var(--mono); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; color: var(--teal); }
+  .draft { padding: 26px 26px; overflow-y: auto; }
+  .draft .dh { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; display:flex; gap:8px; align-items:center; }
+  .draft h3 { font-family: var(--display); font-size: 19px; font-weight: 620; letter-spacing: -.01em; margin-bottom: 12px; }
+  .draft p { font-size: 13.5px; line-height: 1.62; color: #C6CFDC; margin-bottom: 12px; }
+  .draft .sent { border-radius: 3px; padding: 0 1px; transition: background .15s; cursor: default; }
+  .draft .sent:hover { background: var(--teal-dim); }
+  .srcchip {
+    font-family: var(--mono); font-size: 9.5px; vertical-align: super;
+    color: var(--teal); cursor: pointer; padding: 0 2px;
+  }
+
+  .kbd {
+    font-family: var(--mono); font-size: 10px;
+    border: 1px solid var(--line-strong); border-radius: 5px;
+    padding: 1px 6px; color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .mcard, .anno .alert { opacity: 1; transform: none; }
+  }
+  @media (max-width: 940px) {
+    .main { grid-template-columns: 1fr; }
+    .rail { display: none; }
+  }
+</style>
+
+<canvas id="lattice"></canvas>
+
+<div class="app">
+  <div class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="wordmark"><span class="hex">⬡</span> Graphene</div>
+    <div class="omnibox">
+      <span>⌕</span>
+      <span class="mono">vector db for rag — pgvector vs pinecone</span>
+    </div>
+    <span class="pill">AI concept lab</span>
+  </div>
+
+  <div class="main">
+    <nav class="rail" id="rail">
+      <div class="eyebrow">AI, grounded in your graph</div>
+      <!-- buttons injected -->
+      <div class="legend">
+        <div class="row"><span class="swatch" style="background:var(--teal)"></span> From <b style="color:var(--teal);font-weight:600">your</b>&nbsp;graph &amp; notes</div>
+        <div class="row"><span class="swatch" style="background:var(--indigo)"></span> From the open web / model</div>
+        <div class="row"><span class="swatch" style="background:var(--amber)"></span> Conflicts with what you knew</div>
+      </div>
+    </nav>
+
+    <section class="stage" id="stage"></section>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ----------------------------------------------------------------------
+   A believable research thread, used across every mock so the ideas land
+   on real content: someone choosing a vector DB for a RAG system.
+---------------------------------------------------------------------- */
+const NODES = [
+  { id: "q",   label: "“vector db for rag”", kind: "search", x: .12, y: .50 },
+  { id: "pg",  label: "pgvector · docs",      kind: "page",   x: .34, y: .30, host: "github.com/pgvector" },
+  { id: "pine",label: "Pinecone · pricing",   kind: "page",   x: .35, y: .70, host: "pinecone.io/pricing" },
+  { id: "hn",  label: "HN: pgvector at scale",kind: "page",   x: .55, y: .22, host: "news.ycombinator.com" },
+  { id: "wv",  label: "Weaviate benchmarks",  kind: "page",   x: .56, y: .78, host: "weaviate.io/benchmarks" },
+  { id: "note",label: "p99 latency matters",  kind: "note",   x: .74, y: .40, host: "your annotation" },
+  { id: "hnsw",label: "arXiv: HNSW indexing", kind: "page",   x: .78, y: .18, host: "arxiv.org/2103" },
+  { id: "doc", label: "RAG design doc",       kind: "note",   x: .82, y: .66, host: "your notion" },
+];
+const EDGES = [
+  ["q","pg","query"], ["q","pine","query"],
+  ["pg","hn","chrono"], ["hn","hnsw","chrono"],
+  ["pine","wv","chrono"], ["pg","note","chrono"], ["wv","doc","chrono"], ["hn","note","chrono"],
+];
+const N = Object.fromEntries(NODES.map(n => [n.id, n]));
+
+/* ---------------- concepts ---------------- */
+const CONCEPTS = [
+  {
+    id: "thread", name: "Thread Chat", sub: "Ask a whole branch, not a tab",
+    tag: "Chat · graph-scoped",
+    h1: "Chat with a thread of thought — not one tab",
+    lede: "Lasso a region of your history graph and ask across the entire trajectory. The nodes the answer drew from light up, and every claim is chipped to the exact page or note it came from — with your-knowledge and open-web visibly separated.",
+    vs: ["Today:", "chat sees the one tab in front of you.", "Graphene:", "chat sees the branch you actually explored."],
+    render: renderThread,
+  },
+  {
+    id: "throughline", name: "The Throughline", sub: "Why did I end up here?",
+    tag: "Narrative · trajectory",
+    h1: "Reconstruct why you ended up here",
+    lede: "Pick any two pages in your graph. Graphene narrates the path between them — the question that drove each hop and the one you never closed. Your own browsing, explained back to you.",
+    vs: ["Today:", "history is a flat list with no story.", "Graphene:", "the AI narrates the through-line of your search."],
+    render: renderThroughline,
+  },
+  {
+    id: "living", name: "Living Annotations", sub: "Highlights that answer back",
+    tag: "Provenance · watchful",
+    h1: "Annotations that talk back",
+    lede: "A highlight isn't a dead note. Graphene keeps watching what you read next, and when a new page confirms or contradicts something you saved, the original annotation grows a badge — linked to the new source.",
+    vs: ["Today:", "notes rot the moment you save them.", "Graphene:", "your notes update themselves as you learn."],
+    render: renderLiving,
+  },
+  {
+    id: "margin", name: "The Margin", sub: "Ambient links to your past",
+    tag: "Ambient · peripheral",
+    h1: "A margin that connects the page to your past",
+    lede: "Not a chatbot you open, and not a page summary. A quiet rail that, as you read, surfaces one-line connections to your own history — where you saw the opposite claim, the number you were hunting for, the note you already took.",
+    vs: ["Today:", "AI summarizes the page you're already reading.", "Graphene:", "it ties the page to what only you have seen."],
+    render: renderMargin,
+  },
+  {
+    id: "synth", name: "Synthesis Canvas", sub: "Arrange knowledge → cited draft",
+    tag: "Spatial · generative",
+    h1: "Arrange what you know; AI writes the connective tissue",
+    lede: "Drag pages and annotations from your graph onto a board. Graphene writes the prose between them — a memo, a comparison, a brief — with every sentence chipped back to the node it came from. The inverse of chat.",
+    vs: ["Today:", "you copy-paste into a doc and lose the sources.", "Graphene:", "spatial layout becomes cited prose, provenance intact."],
+    render: renderSynth,
+  },
+  {
+    id: "ghost", name: "Ghost Branches", sub: "Your graph, one step ahead",
+    tag: "Predictive · graph",
+    h1: "See the next branch before you take it",
+    lede: "As a thread develops, Graphene sketches the likely next nodes as dashed ghosts on the graph — the sources people in your position reach for next. Accept one and it preloads, quietly, in the background.",
+    vs: ["Today:", "you re-search for the obvious next step every time.", "Graphene:", "the graph proposes it and warms it up for you."],
+    render: renderGhost,
+  },
+];
+
+/* ---------------- rail ---------------- */
+const rail = document.getElementById("rail");
+const stage = document.getElementById("stage");
+const btnRow = document.createElement("div");
+CONCEPTS.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.className = "concept-btn" + (i === 0 ? " active" : "");
+  b.dataset.id = c.id;
+  b.innerHTML = `<span class="idx mono">${String(i+1).padStart(2,"0")}</span>
+    <span><span class="nm">${c.name}</span><span class="sub">${c.sub}</span></span>`;
+  b.addEventListener("click", () => activate(c.id));
+  rail.insertBefore(b, rail.querySelector(".legend"));
+});
+
+const panels = {};
+CONCEPTS.forEach((c, i) => {
+  const p = document.createElement("div");
+  p.className = "panel" + (i === 0 ? " show" : "");
+  p.dataset.id = c.id;
+  p.innerHTML = `
+    <div class="phead">
+      <div class="tag">◆ ${c.tag}</div>
+      <h1>${c.h1}</h1>
+      <div class="lede">${c.lede}</div>
+      <div class="vs"><span>${c.vs[0]}</span><span style="color:var(--faint)">${c.vs[1]}</span>
+        <span style="margin-left:4px">${c.vs[2]}</span><b>${c.vs[3]}</b></div>
+    </div>
+    <div class="demo" data-demo="${c.id}"></div>`;
+  stage.appendChild(p);
+  panels[c.id] = p;
+});
+
+let current = null;
+function activate(id) {
+  if (current === id) return;
+  current = id;
+  document.querySelectorAll(".concept-btn").forEach(b => b.classList.toggle("active", b.dataset.id === id));
+  Object.values(panels).forEach(p => p.classList.toggle("show", p.dataset.id === id));
+  const demo = panels[id].querySelector(".demo");
+  demo.innerHTML = "";
+  CONCEPTS.find(c => c.id === id).render(demo);
+}
+
+/* keyboard: 1-6 and arrows */
+window.addEventListener("keydown", e => {
+  const idx = CONCEPTS.findIndex(c => c.id === current);
+  if (e.key >= "1" && e.key <= String(CONCEPTS.length)) activate(CONCEPTS[+e.key - 1].id);
+  else if (e.key === "ArrowDown") activate(CONCEPTS[Math.min(idx+1, CONCEPTS.length-1)].id);
+  else if (e.key === "ArrowUp") activate(CONCEPTS[Math.max(idx-1, 0)].id);
+});
+
+/* ======================================================================
+   Graph renderer — shared by the graph-based concepts
+====================================================================== */
+function makeGraph(host, opts = {}) {
+  const wrap = document.createElement("div");
+  wrap.className = "graphwrap";
+  const canvas = document.createElement("canvas");
+  wrap.appendChild(canvas);
+  host.appendChild(wrap);
+  const ctx = canvas.getContext("2d");
+  let W = 0, Hh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let hover = null;
+  const state = Object.assign({ lit: new Set(), path: [], ghosts: [], lasso: null, dim: false }, opts);
+
+  function size() {
+    const r = wrap.getBoundingClientRect();
+    W = r.width; Hh = r.height;
+    canvas.width = W * dpr; canvas.height = Hh * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  const px = n => ({ x: 40 + n.x * (W - 80), y: 34 + n.y * (Hh - 68) });
+
+  const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  function draw() {
+    ctx.clearRect(0, 0, W, Hh);
+    const teal = css("--teal"), indigo = css("--indigo"), line = "rgba(139,147,255,.16)";
+    // edges
+    EDGES.forEach(([a, b, kind]) => {
+      const A = px(N[a]), B = px(N[b]);
+      const inPath = state.path.includes(a) && state.path.includes(b) &&
+        Math.abs(state.path.indexOf(a) - state.path.indexOf(b)) === 1;
+      ctx.beginPath();
+      ctx.moveTo(A.x, A.y);
+      const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2 - 14;
+      ctx.quadraticCurveTo(mx, my, B.x, B.y);
+      if (inPath) { ctx.strokeStyle = indigo; ctx.lineWidth = 2.4; ctx.globalAlpha = 1; }
+      else { ctx.strokeStyle = kind === "query" ? "rgba(79,214,195,.32)" : line; ctx.lineWidth = 1.2; ctx.globalAlpha = state.dim ? .4 : 1; }
+      if (kind === "query" && !inPath) ctx.setLineDash([4, 4]); else ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.globalAlpha = 1; ctx.setLineDash([]);
+    });
+    // ghost edges + nodes
+    state.ghosts.forEach(g => {
+      const A = px(N[g.from]), B = px({ x: g.x, y: g.y });
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y);
+      ctx.strokeStyle = "rgba(139,147,255,.4)"; ctx.lineWidth = 1.3; ctx.setLineDash([3, 5]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(B.x, B.y, 8, 0, 7); ctx.fillStyle = "rgba(139,147,255,.09)";
+      ctx.strokeStyle = "rgba(139,147,255,.55)"; ctx.setLineDash([3, 3]); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(200,205,230,.65)"; ctx.font = "11px " + css("--mono"); ctx.textAlign = "center";
+      ctx.fillText(g.label, B.x, B.y + 22);
+    });
+    // nodes
+    NODES.forEach(n => {
+      const p = px(n);
+      const lit = state.lit.has(n.id) || state.path.includes(n.id);
+      const isNote = n.kind === "note", isSearch = n.kind === "search";
+      const base = isNote ? teal : isSearch ? indigo : "#3A4658";
+      const r = isSearch ? 9 : lit ? 9 : 7;
+      if (lit) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 7, 0, 7);
+        ctx.fillStyle = isNote ? "rgba(79,214,195,.16)" : "rgba(139,147,255,.16)"; ctx.fill();
+      }
+      ctx.globalAlpha = state.dim && !lit ? .45 : 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7);
+      ctx.fillStyle = lit ? base : (isNote ? "rgba(79,214,195,.5)" : isSearch ? "rgba(139,147,255,.5)" : "#2A3444");
+      ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = lit ? base : "rgba(139,147,255,.25)"; ctx.stroke();
+      // label
+      ctx.globalAlpha = state.dim && !lit ? .5 : 1;
+      ctx.fillStyle = lit ? "#EAF0F7" : "rgba(200,207,220,.7)";
+      ctx.font = (lit ? "600 " : "") + "12px " + css("--body");
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(n.label, p.x, p.y + r + 6);
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  function loop() { draw(); }
+  const ro = new ResizeObserver(() => { size(); draw(); });
+  ro.observe(wrap);
+  requestAnimationFrame(() => { size(); draw(); });
+  return { state, redraw: draw, wrap, px, canvas };
+}
+
+/* ---------------- concept 1: Thread Chat ---------------- */
+function renderThread(host) {
+  const g = makeGraph(host, { lit: new Set(["q","pg","hn","note","hnsw"]), dim: true });
+  const card = document.createElement("div");
+  card.className = "float-card";
+  card.style.right = "26px"; card.style.top = "26px";
+  card.innerHTML = `
+    <div class="fc-q">◆ asked across 5 nodes in this branch</div>
+    <div class="fc-ans">For your latency bar, <span class="cite">pgvector · HN</span> hits p99 issues past ~1M rows;
+      <span class="cite">arXiv · HNSW</span> is the fix, and it's what your note
+      <span class="cite">p99 latency matters</span> was already circling. Pinecone clears the bar out of the box
+      <span class="cite web">open web</span>.</div>
+    <div class="fc-foot">
+      <span class="toggle"><span class="dot" style="background:var(--teal)"></span> your graph</span>
+      <span class="toggle"><span class="dot" style="background:var(--indigo)"></span> open web</span>
+      <span style="margin-left:auto" class="mono">4 of 5 from you</span>
+    </div>`;
+  host.appendChild(card);
+  addHint(host, "Lasso a region → ask the thread. Cited nodes glow.");
+}
+
+/* ---------------- concept 2: The Throughline ---------------- */
+function renderThroughline(host) {
+  const g = makeGraph(host, { path: ["q","pg","hn","hnsw"], dim: true });
+  const card = document.createElement("div");
+  card.className = "float-card";
+  card.style.left = "26px"; card.style.bottom = "58px"; card.style.width = "330px";
+  card.innerHTML = `
+    <div class="fc-q" style="color:var(--indigo)">◆ q &nbsp;→&nbsp; arXiv · HNSW</div>
+    <div class="fc-ans">You started at <b>“vector db for rag”</b>, went deep on <b>pgvector</b>,
+      hit the <b>HN thread</b> flagging p99 blowups at scale, and followed it to the <b>HNSW paper</b>.
+      <span style="color:var(--amber)">Open question you left:</span> you never checked whether Pinecone's
+      managed index sidesteps this — that branch is one hop away.</div>`;
+  host.appendChild(card);
+  addHint(host, "Click two nodes → Graphene narrates the path between them.");
+}
+
+/* ---------------- concept 3: Living Annotations ---------------- */
+function renderLiving(host) {
+  const wrap = document.createElement("div");
+  wrap.className = "anno-stack";
+  wrap.innerHTML = `
+    <div class="anno" id="anno">
+      <div class="quote">“pgvector handles production RAG fine — we serve 40M embeddings on a single Postgres box.”</div>
+      <div class="meta">highlighted 2 weeks ago · news.ycombinator.com/item?id=…</div>
+      <div class="note"><b>Your note:</b> reassuring — maybe we don't need a dedicated vector DB.</div>
+      <div class="alert">
+        <span class="ic">⚡</span>
+        <div class="body">The arXiv HNSW paper you just opened says flat pgvector indexes degrade past ~1M rows without IVF/HNSW tuning — <b>the 40M-on-one-box claim assumes a tuned index.</b>
+          <span class="src">↳ conflicts · arxiv.org/2103 · opened just now</span></div>
+      </div>
+    </div>`;
+  host.appendChild(wrap);
+  const anno = wrap.querySelector("#anno");
+  setTimeout(() => anno.classList.add("armed"), 900);
+  addHint(host, "The badge appears when a later page changes what your note means.");
+}
+
+/* ---------------- concept 4: The Margin ---------------- */
+function renderMargin(host) {
+  const wrap = document.createElement("div");
+  wrap.className = "read-layout";
+  wrap.innerHTML = `
+    <article class="reader">
+      <div class="kicker">pinecone.io · pricing</div>
+      <h2>Serverless vector search, priced per read &amp; write</h2>
+      <p>Pinecone Serverless separates storage from compute, so you pay for what you query rather than
+        for always-on pods. For a retrieval workload, cost tracks your <mark>read units</mark> — each query
+        against an index consumes units proportional to the data scanned.</p>
+      <p>Indexes scale to <mark class="warn">billions of vectors</mark> with p99 latency held in the low tens
+        of milliseconds, without index tuning on your side.</p>
+      <p>A starter project on the free tier includes 2GB of storage and enough units for early prototyping.</p>
+    </article>
+    <aside class="margin">
+      <div class="mh">◆ from your graph</div>
+      <div class="mcard you" style="animation-delay:.1s">
+        <b>You were hunting this number.</b> Your note <span class="when">“p99 latency matters”</span>
+        set a &lt;50ms bar — Pinecone's claim clears it.
+        <span class="src">↳ your annotation · 3 days ago</span></div>
+      <div class="mcard warn" style="animation-delay:.35s">
+        <b>Opposite of what you read.</b> The HN thread you saved argues pgvector needs hand-tuned
+        indexes to hold p99 — Pinecone says none needed.
+        <span class="src">↳ news.ycombinator.com · your highlight</span></div>
+      <div class="mcard" style="animation-delay:.6s">
+        <b>Cost angle you haven't checked.</b> You compared latency, never $/query. Weaviate's benchmark
+        page (in this branch) has the read-cost table.
+        <span class="src">↳ weaviate.io/benchmarks · unopened</span></div>
+    </aside>`;
+  host.appendChild(wrap);
+}
+
+/* ---------------- concept 5: Synthesis Canvas ---------------- */
+function renderSynth(host) {
+  const wrap = document.createElement("div");
+  wrap.className = "synth";
+  const board = document.createElement("div");
+  board.className = "board";
+  const cards = [
+    { id: "pg", t: "pgvector · docs", u: "github.com/pgvector", kind: "page", x: 22, y: 30 },
+    { id: "hn", t: "HN: pgvector at scale", u: "news.ycombinator.com", kind: "page", x: 168, y: 128 },
+    { id: "note", t: "p99 latency matters", u: "your annotation", kind: "note", x: 40, y: 210 },
+    { id: "pine", t: "Pinecone · pricing", u: "pinecone.io", kind: "page", x: 210, y: 240 },
+  ];
+  cards.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "chipnode"; el.dataset.id = c.id;
+    el.style.left = c.x + "px"; el.style.top = c.y + "px";
+    el.innerHTML = `<div class="kind">${c.kind}</div><div class="t">${c.t}</div><div class="u">${c.u}</div>`;
+    board.appendChild(el);
+  });
+  const draft = document.createElement("div");
+  draft.className = "draft";
+  draft.innerHTML = `
+    <div class="dh">◆ generated · every sentence cites a card</div>
+    <h3>Vector store: recommendation</h3>
+    <p><span class="sent" data-src="pg">Postgres with pgvector keeps our stack to one datastore<span class="srcchip">①</span></span>,
+      <span class="sent" data-src="hn">but the community flags p99 degradation past ~1M rows without a tuned HNSW/IVF index<span class="srcchip">②</span></span>.</p>
+    <p><span class="sent" data-src="note">Since our own bar is sub-50ms p99<span class="srcchip">③</span></span>,
+      <span class="sent" data-src="pine">Pinecone Serverless clears it with no index tuning, at a per-query cost<span class="srcchip">④</span></span>.</p>
+    <p style="color:var(--muted)"><b>Draft call:</b> start on pgvector; if tuned p99 misses the bar at our row count, move to Pinecone.</p>`;
+  wrap.appendChild(board); wrap.appendChild(draft);
+  host.appendChild(wrap);
+  draft.querySelectorAll(".sent").forEach(s => {
+    s.addEventListener("mouseenter", () => board.querySelector(`[data-id="${s.dataset.src}"]`)?.classList.add("lit"));
+    s.addEventListener("mouseleave", () => board.querySelector(`[data-id="${s.dataset.src}"]`)?.classList.remove("lit"));
+  });
+  addHint(host, "Hover a sentence → its source card lights up. Drag cards to recompose.");
+}
+
+/* ---------------- concept 6: Ghost Branches ---------------- */
+function renderGhost(host) {
+  const g = makeGraph(host, {
+    lit: new Set(["q","pg","hn"]),
+    dim: true,
+    ghosts: [
+      { from: "hn", x: .70, y: .10, label: "IVFFlat tuning guide" },
+      { from: "note", x: .90, y: .46, label: "Pinecone vs pgvector p99" },
+      { from: "pine", x: .74, y: .90, label: "cost calculator" },
+    ],
+  });
+  const card = document.createElement("div");
+  card.className = "float-card";
+  card.style.right = "26px"; card.style.top = "26px"; card.style.width = "270px";
+  card.innerHTML = `
+    <div class="fc-q" style="color:var(--indigo)">◆ 3 likely next branches</div>
+    <div class="fc-ans">Based on where this thread is heading, Graphene sketched the sources you'd
+      reach for next. <b>Accept</b> one to preload it in the background — no new search.</div>
+    <div class="fc-foot"><span class="mono">dashed = not visited yet</span>
+      <span style="margin-left:auto;color:var(--indigo)" class="mono">⏎ accept</span></div>`;
+  host.appendChild(card);
+  addHint(host, "Ghost nodes = the next hop, preloaded before you ask for it.");
+}
+
+function addHint(host, text) {
+  const h = document.createElement("div");
+  h.className = "hint";
+  h.innerHTML = `<span class="kbd">1–6</span> switch concept &nbsp;·&nbsp; ${text}`;
+  host.appendChild(h);
+}
+
+/* ======================================================================
+   Background hexagon lattice — subtle, drifting
+====================================================================== */
+(function lattice() {
+  const cv = document.getElementById("lattice");
+  const ctx = cv.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let W, H, t = 0, raf = null;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size() { W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  size(); addEventListener("resize", size);
+  const R = 30;
+  function hex(cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 180 * (60 * i - 30);
+      const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  }
+  function frame() {
+    ctx.clearRect(0, 0, W / dpr, H / dpr);
+    const w = W / dpr, h = H / dpr;
+    const dx = R * Math.sqrt(3), dy = R * 1.5;
+    const off = reduce ? 0 : Math.sin(t / 120) * 6;
+    for (let row = -1, y = -R; y < h + R; y += dy, row++) {
+      for (let x = (row % 2 ? dx / 2 : 0) - dx; x < w + dx; x += dx) {
+        const d = Math.hypot(x - w * .35 + off, y - h * .5);
+        const a = Math.max(0, .06 - d / (w * 14));
+        ctx.strokeStyle = `rgba(139,147,255,${a + .012})`;
+        ctx.lineWidth = 1;
+        hex(x, y + off, R * .96); ctx.stroke();
+      }
+    }
+    t++;
+    if (!reduce) raf = requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+activate("thread");
+</script>
