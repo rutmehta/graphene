@@ -23,6 +23,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
     private init() {
         restoreSession()
         if tabs.isEmpty { _ = newTab(activate: true) }
+        startDebugDriverIfEnabled()
     }
 
     var activeTab: Tab? { tabs.first { $0.id == activeTabID } }

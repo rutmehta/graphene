@@ -12,8 +12,18 @@ extension Color {
     }
 }
 
-/// Graphene's restraint: one warm graphite accent, used sparingly. Neutrals come
-/// from the system so the app follows the OS light/dark appearance natively.
+/// Graphene's look: native materials + system labels so it adapts to light/dark,
+/// with one warm graphite accent used sparingly. Hierarchy comes from type and
+/// space, not color.
 enum Theme {
-    static let accent = Color(hex: "B4794F")   // warm graphite / ink — deliberately not blue
+    static let accent = Color(hex: "C08457")        // warm graphite / ember
+    static let accentSoft = Color(hex: "C08457").opacity(0.16)
+
+    /// Hairline used for separators and field borders.
+    static func hairline(_ scheme: ColorScheme) -> Color {
+        .primary.opacity(scheme == .dark ? 0.09 : 0.10)
+    }
+    static func fill(_ scheme: ColorScheme, _ level: Double = 1) -> Color {
+        .primary.opacity((scheme == .dark ? 0.05 : 0.045) * level)
+    }
 }

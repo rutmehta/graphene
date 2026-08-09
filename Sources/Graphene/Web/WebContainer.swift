@@ -23,9 +23,14 @@ struct WebContainer: NSViewRepresentable {
     }
 
     private func install(_ host: NSView, in container: NSView) {
-        host.frame = container.bounds
-        host.autoresizingMask = [.width, .height]
+        host.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            host.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            host.topAnchor.constraint(equalTo: container.topAnchor),
+            host.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
     }
 
     final class FlippedView: NSView {

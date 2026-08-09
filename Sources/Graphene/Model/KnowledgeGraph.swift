@@ -114,6 +114,27 @@ final class KnowledgeGraph: ObservableObject {
         return nodes[id]
     }
 
+    /// Most-relevant pages for the start page: frequent + recent, de-duplicated by host.
+    func topNodes(limit: Int = 6) -> [GraphNode] {
+        let now = Date()
+        let ranked = nodes.values.sorted { a, b in
+            func score(_ n: GraphNode) -> Double {
+                let ageDays = now.timeIntervalSince(n.lastVisit) / 86_400
+                return Double(n.visitCount) * exp(-ageDays / 21)
+            }
+            return score(a) > score(b)
+        }
+        var seenHost = Set<String>()
+        var out: [GraphNode] = []
+        for n in ranked {
+            if seenHost.contains(n.host) { continue }
+            seenHost.insert(n.host)
+            out.append(n)
+            if out.count >= limit { break }
+        }
+        return out
+    }
+
     func updatePositions(_ positions: [UUID: (Double, Double)]) {
         for (id, p) in positions where nodes[id] != nil {
             nodes[id]?.x = p.0
@@ -158,9 +179,24 @@ final class KnowledgeGraph: ObservableObject {
         return (Double.random(in: -200...200), Double.random(in: -200...200))
     }
 
+    // Params that SPAs (esp. Google) rewrite in-place — stripping them keeps a
+    // page from spawning near-duplicate nodes as tracking junk changes.
+    private static let volatileParams: Set<String> = [
+        "sca_esv", "ved", "ei", "source", "sourceid", "oq", "gs_lcrp", "sclient",
+        "uact", "bih", "biw", "dpr", "sxsrf", "iflsig", "aqs", "gs_lp", "spf",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid",
+    ]
+
     private func normalize(_ url: URL) -> String {
-        var s = url.absoluteString
-        if let hash = s.firstIndex(of: "#") { s = String(s[..<hash]) }
+        guard var comps = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return url.absoluteString
+        }
+        comps.fragment = nil
+        if let items = comps.queryItems {
+            let kept = items.filter { !Self.volatileParams.contains($0.name.lowercased()) }
+            comps.queryItems = kept.isEmpty ? nil : kept
+        }
+        var s = comps.string ?? url.absoluteString
         if s.hasSuffix("/") { s.removeLast() }
         return s
     }
