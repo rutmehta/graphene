@@ -4,6 +4,7 @@ import AppKit
 /// The same navigation surface opens a page, switches tabs, or brings back a source.
 struct CommandBar: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var integrated = false
     @State private var selectedIndex = 0
     @State private var askOverride: Bool?
@@ -68,7 +69,7 @@ struct CommandBar: View {
         }
         if asking && !query.isEmpty { matches.append(Result(id: "ask", title: "Ask Graphene: \(query)", detail: "Current page and attached tabs · On-device", host: nil, symbol: "sparkle", kind: "Ask", destination: .ask)) }
         for action in app.commandActions where CommandMatch.matches(query, title: action.title) {
-            matches.append(Result(id: "action-\(action.id)", title: action.title, detail: action.id == "archive-all" ? "Archive Today tabs; keep pins and favorites" : "", host: nil, symbol: "command", kind: "Actions", destination: .action(action.id)))
+            matches.append(Result(id: "action-\(action.id)", title: action.title, detail: action.id == "archive-all" ? "Archive Today tabs; keep pins and favorites" : "", host: nil, symbol: "command", kind: "Commands", destination: .action(action.id)))
         }
         let tabs = app.tabs.compactMap { tab -> (Tab, URL, Int)? in
             guard let url = tab.url,
@@ -132,57 +133,49 @@ struct CommandBar: View {
 
     var body: some View {
         let rows = results
+        let sections = rows.map(\.kind)
+        let labels = CommandBarLayout.sectionStarts(sections)
         VStack(spacing: 0) {
-            HStack(spacing: 13) {
-                Image(systemName: "magnifyingglass")
+            HStack(spacing: 14) {
+                Image(systemName: asking ? "sparkle" : "magnifyingglass")
                     .font(integrated ? ShellType.row : ShellType.input)
                     .foregroundStyle(app.pal.ink3)
+                    .accessibilityHidden(true)
                 CommandInput(text: $app.commandBarDraft,
                              focusRequest: app.commandBarFocusRequest,
                              selectAllOnFocus: !app.commandBarCreatesTab,
+                             placeholder: asking ? "Ask about this page…" : "Search or enter URL…",
                              color: NSColor(app.pal.ink),
                              placeholderColor: NSColor(app.pal.ink3),
                              fontSize: integrated ? ShellType.rowSize : ShellType.inputSize,
                              onMove: moveSelection,
                              onSubmit: submitSelection,
                              onCancel: { app.dismissCommandBar() }, completion: completion,
-                             onToggle: { askOverride = !asking })
+                             onToggle: toggleMode)
                     .id(app.commandBarCreatesTab)
                     .frame(maxWidth: .infinity)
                     .frame(height: integrated ? 28 : 30)
                     .accessibilityIdentifier("commandBarInput")
-                Button(asking ? "Ask ⇥" : "Search ⇥") { askOverride = !asking }
-                    .buttonStyle(.plain).font(ShellType.label)
-                    .foregroundStyle(app.pal.accentText).padding(7)
-                    .background(app.pal.accentSoft, in: Capsule()).disabled(app.isPrivate)
-                    .accessibilityIdentifier("command.mode").accessibilityLabel(asking ? "Switch to Search" : "Switch to Ask").accessibilityAddTraits(.isButton)
-                Button { app.dismissCommandBar() } label: {
-                    Text("esc").font(ShellType.label)
-                        .foregroundStyle(app.pal.ink3)
-                        .padding(.horizontal, 6).padding(.vertical, 4)
-                        .background(app.pal.hover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
-                }
-                .buttonStyle(.plain)
-                .help("Close")
-                .accessibilityLabel("Close navigation")
-                .accessibilityIdentifier("command.close").accessibilityAddTraits(.isButton)
             }
-            .padding(.horizontal, integrated ? 12 : 20)
+            .padding(.horizontal, integrated ? ShellLayout.commandListPadding + ShellLayout.rowInsetLeading : ShellLayout.commandInset)
             .frame(height: integrated ? ShellLayout.pageToolbarHeight : ShellLayout.commandInputHeight)
+            .accessibilityAction(named: asking ? "Switch to Search" : "Switch to Ask", toggleMode)
 
             Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
 
             if !app.commandContextIDs.isEmpty {
-                ScrollView(.horizontal) {
-                    HStack {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: ShellLayout.commandListPadding / 2) {
                         ForEach(app.commandContextIDs, id: \.self) { id in
                             Button { app.commandContextIDs.removeAll { $0 == id } } label: {
-                                Label(app.tabs.first { $0.id == id }?.displayTitle ?? "Closed tab", systemImage: "xmark.circle")
-                                    .font(ShellType.caption).padding(7).background(app.pal.accentSoft, in: Capsule())
+                                Label(app.tabs.first { $0.id == id }?.displayTitle ?? "Closed tab", systemImage: "xmark")
+                                    .font(ShellType.secondary).foregroundStyle(app.pal.ink2).lineLimit(1)
+                                    .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+                                    .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                             }.buttonStyle(.plain)
                                 .accessibilityIdentifier("command.removeContext.\(id)").accessibilityLabel("Remove attached tab").accessibilityAddTraits(.isButton)
                         }
-                    }.padding(8)
+                    }.padding(.horizontal, ShellLayout.commandInset).padding(.top, ShellLayout.commandListPadding)
                 }
             }
 
@@ -190,47 +183,40 @@ struct CommandBar: View {
                 Text("Your open tabs and recent pages will appear here.")
                     .font(ShellType.secondary).foregroundStyle(app.pal.ink3)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20).padding(.vertical, 23)
+                    .padding(.horizontal, ShellLayout.commandInset)
+                    .frame(height: ShellLayout.commandRowHeight + 2 * ShellLayout.commandListPadding)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(spacing: 2) {
+                        LazyVStack(spacing: 0) {
                             ForEach(Array(rows.enumerated()), id: \.element.id) { index, result in
-                                if index == 0 || rows[index - 1].kind != result.kind {
+                                if labels.contains(index) {
                                     Text(result.kind).font(ShellType.label).foregroundStyle(app.pal.ink3)
-                                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 11).frame(height: 22)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.horizontal, ShellLayout.commandInset)
+                                        .frame(height: ShellLayout.commandSectionHeight)
+                                        .accessibilityAddTraits(.isHeader)
                                 }
                                 resultRow(result, selected: index == selectedIndex).id(result.id)
                                     .onTapGesture { activate(result) }
                                     .onHover { inside in if inside { selectedIndex = index } }
                             }
-                        }.padding(7).id(rows.map(\.id))
-                    }.frame(maxHeight: integrated ? 264 : 312).scrollIndicators(.visible)
+                        }
+                        .padding(.top, labels.contains(0) ? 0 : ShellLayout.commandListPadding)
+                        .padding(.bottom, ShellLayout.commandListPadding)
+                        .id(rows.map(\.id))
+                    }.frame(height: CommandBarLayout.listHeight(sections)).scrollIndicators(.automatic)
                         .onChange(of: selectedIndex) { _, index in
-                            if rows.indices.contains(index) { proxy.scrollTo(rows[index].id, anchor: .center) }
+                            if rows.indices.contains(index) { proxy.scrollTo(rows[index].id) }
                         }
                 }
             }
-
-            HStack(spacing: 6) {
-                Circle().fill(app.pal.accentText).frame(width: 5, height: 5)
-                Text(app.activeSpace.name).lineLimit(1)
-                Spacer()
-                Text("↑ ↓").fontWeight(.medium)
-                Text("to select")
-                Text("↵").fontWeight(.medium).padding(.leading, 8)
-                Text("open · ⌘↵ new tab · ⇧↵ split · → complete")
-            }
-            .font(ShellType.caption)
-            .foregroundStyle(app.pal.ink3)
-            .padding(.horizontal, 17).padding(.vertical, 11)
-            .background(app.pal.hover)
         }
         .frame(maxWidth: integrated ? .infinity : ShellLayout.commandWidth)
         .background(app.pal.elev, in: RoundedRectangle(cornerRadius: cornerRadius))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
-        .shadow(color: app.pal.shadow, radius: integrated ? 16 : 32, x: 0, y: integrated ? 8 : 16)
+        .shadow(color: integrated ? .clear : app.pal.commandShadow, radius: app.pal.commandShadowRadius, x: 0, y: app.pal.commandShadowY)
         .onChange(of: app.commandBarDraft) { selectedIndex = 0 }
         .task(id: "\(query)|\(app.searchEngine.rawValue)|\(app.searchSuggestions)|\(asking)") {
             suggestions = []
@@ -246,40 +232,40 @@ struct CommandBar: View {
         .accessibilityIdentifier("commandBar")
     }
 
+    /// `Tab` flips between Search and Ask; there is no visible pill.
+    private func toggleMode() {
+        guard !app.isPrivate else { return }
+        askOverride = !asking
+    }
+
     private func resultRow(_ result: Result, selected: Bool) -> some View {
-        HStack(spacing: 11) {
+        HStack(spacing: ShellLayout.rowInsetLeading) {
             Group {
                 if let symbol = result.symbol {
-                    Image(systemName: symbol)
-                        .font(ShellType.glyph)
-                        .foregroundStyle(app.pal.ink2)
-                        .frame(width: 26, height: 26)
+                    Image(systemName: symbol).font(ShellType.row).foregroundStyle(app.pal.ink3)
                 } else {
-                    Favicon(host: result.host, size: 26)
+                    Favicon(host: result.host, size: ShellLayout.iconSize)
                 }
+            }.frame(width: ShellLayout.iconSlot)
+            Text(result.title).font(ShellType.row)
+                .foregroundStyle(app.pal.ink).lineLimit(1).layoutPriority(1)
+            if !result.detail.isEmpty {
+                Text(result.detail).font(ShellType.secondary)
+                    .foregroundStyle(app.pal.ink3).lineLimit(1).truncationMode(.tail)
             }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(result.title).font(ShellType.rowSelected)
-                    .foregroundStyle(app.pal.ink).lineLimit(1)
-                if !result.detail.isEmpty {
-                    Text(result.detail).font(integrated ? ShellType.caption : ShellType.secondary)
-                        .foregroundStyle(app.pal.ink3).lineLimit(1)
-                }
-            }
-            Spacer(minLength: 8)
-            if !result.kind.isEmpty {
-                Text(rowHint(result)).font(ShellType.label)
-                    .foregroundStyle(selected ? app.pal.accentText : app.pal.ink3)
-            }
-            if selected {
-                Image(systemName: "return").font(ShellType.caption)
-                    .foregroundStyle(app.pal.ink3).frame(width: 14)
+            Spacer(minLength: ShellLayout.rowInsetLeading)
+            let hint = rowHint(result, selected: selected)
+            if !hint.isEmpty {
+                Text(hint).font(ShellType.label).foregroundStyle(app.pal.ink3).fixedSize()
             }
         }
-        .padding(.horizontal, 11).frame(height: integrated ? (result.detail.isEmpty ? 36 : 50) : ShellLayout.commandRowHeight)
+        .padding(.horizontal, ShellLayout.rowInsetLeading + ShellLayout.rowInsetLeading / 2)
+        .frame(height: ShellLayout.commandRowHeight)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(selected ? app.pal.accentSoft : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .background(selected ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .animation(Motion.hover.reduced(reduceMotion), value: selected)
         .contentShape(RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .padding(.horizontal, ShellLayout.commandListPadding)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("command.result.\(result.id)")
         .accessibilityLabel(result.title)
@@ -339,14 +325,15 @@ struct CommandBar: View {
         }
     }
 
-    private func rowHint(_ result: Result) -> String {
-        if case .action(let id) = result.destination {
-            let hint = app.commandActions.first { $0.id == id }?.hint ?? ""
-            return hint.isEmpty ? "↵" : hint
-        }
+    /// Tabs name their verb, actions show their registered shortcut, and the
+    /// selected row shows the key that opens it.
+    private func rowHint(_ result: Result, selected: Bool) -> String {
         switch result.destination {
-        case .tab, .page, .input: return "↵ · ⌘↵ · ⇧↵"
-        default: return "↵"
+        case .tab: return "Switch to Tab"
+        case .action(let id):
+            let hint = app.commandActions.first { $0.id == id }?.hint ?? ""
+            return hint.isEmpty && selected ? "↩" : hint
+        default: return selected ? "↩" : ""
         }
     }
 }
@@ -357,6 +344,7 @@ private struct CommandInput: NSViewRepresentable {
     @Binding var text: String
     let focusRequest: Int
     let selectAllOnFocus: Bool
+    let placeholder: String
     let color: NSColor
     let placeholderColor: NSColor
     let fontSize: CGFloat
@@ -381,7 +369,7 @@ private struct CommandInput: NSViewRepresentable {
         field.cell?.isScrollable = true
         field.setContentHuggingPriority(.defaultLow, for: .horizontal)
         field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        field.setAccessibilityLabel("Search or enter a URL")
+        field.setAccessibilityLabel("Search or enter URL")
         field.setAccessibilityIdentifier("commandBarInput")
         updateNSView(field, context: context)
         return field
@@ -392,10 +380,9 @@ private struct CommandInput: NSViewRepresentable {
         if field.stringValue != text { field.stringValue = text }
         field.textColor = color
         field.completionSuffix = completion.map { String($0.dropFirst(text.count)) } ?? ""
-        field.completionColor = placeholderColor
         field.needsDisplay = true
         field.placeholderAttributedString = NSAttributedString(
-            string: "Search or enter a URL…",
+            string: placeholder,
             attributes: [.foregroundColor: placeholderColor, .font: NSFont.systemFont(ofSize: fontSize)]
         )
         field.requestFocus(focusRequest, selectAll: selectAllOnFocus)
@@ -438,13 +425,18 @@ private struct CommandInput: NSViewRepresentable {
 
 private final class CommandTextField: NSTextField {
     var completionSuffix = ""
-    var completionColor = NSColor.secondaryLabelColor
+    /// Draws the inline completion's remainder the way selected text looks, as Arc does.
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard !completionSuffix.isEmpty, let font else { return }
         let x = (stringValue as NSString).size(withAttributes: [.font: font]).width + 2
         guard x < bounds.width else { return }
-        (completionSuffix as NSString).draw(in: NSRect(x: x, y: 1, width: bounds.width - x, height: bounds.height), withAttributes: [.font: font, .foregroundColor: completionColor])
+        let size = (completionSuffix as NSString).size(withAttributes: [.font: font])
+        let highlight = NSRect(x: x, y: (bounds.height - size.height) / 2, width: min(size.width, bounds.width - x), height: size.height)
+        NSColor.selectedTextBackgroundColor.setFill()
+        highlight.fill()
+        (completionSuffix as NSString).draw(in: NSRect(x: x, y: 1, width: bounds.width - x, height: bounds.height),
+                                            withAttributes: [.font: font, .foregroundColor: textColor ?? NSColor.labelColor])
     }
     private var focusRequest = 0
     private var handledFocusRequest: Int?

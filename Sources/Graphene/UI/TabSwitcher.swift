@@ -1,28 +1,60 @@
 import SwiftUI
 import AppKit
 
+/// ⌃Tab: a centred card of recent tabs, each a 96×60 thumbnail over a title row.
 struct TabSwitcher: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ObservedObject private var thumbnails = ThumbnailCache.shared
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: ShellLayout.windowGap) {
                     ForEach(Array(app.switcherIDs.enumerated()), id: \.element) { index, id in
                         if let tab = app.tabs.first(where: { $0.id == id }) {
-                            VStack(spacing: 10) {
-                                Favicon(host: tab.url?.host, size: 28, url: tab.url)
-                                Text(tab.displayTitle).font(.system(size: 12, weight: .medium)).lineLimit(2)
-                            }.frame(width: 120, height: 84).padding(8)
-                                .background(index == app.switcherIndex ? app.pal.active : app.pal.hover, in: RoundedRectangle(cornerRadius: 10))
-                                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(index == app.switcherIndex ? app.pal.accentText : app.pal.hairline))
+                            tile(tab, selected: index == app.switcherIndex)
                                 .id(index).onTapGesture { app.switcherIndex = index; app.finishTabSwitch() }
                         }
                     }
-                }.padding(12)
-            }.frame(maxWidth: 650).frame(height: 130)
-                .background(app.pal.elev, in: RoundedRectangle(cornerRadius: 12)).shadow(color: app.pal.shadow, radius: 20)
-                .onChange(of: app.switcherIndex) { _, index in proxy.scrollTo(index) }
+                }.padding(ShellLayout.windowGap)
+            }
+            .frame(maxWidth: ShellLayout.commandWidth)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
+            .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
+            .onChange(of: app.switcherIndex) { _, index in proxy.scrollTo(index) }
         }
+        .accessibilityIdentifier("tabSwitcher")
+    }
+
+    private func tile(_ tab: Tab, selected: Bool) -> some View {
+        let thumb = RoundedRectangle(cornerRadius: ShellLayout.rowRadius)
+        return VStack(spacing: 0) {
+            Group {
+                if !tab.isPrivate, let image = thumbnails.images[tab.id] {
+                    Image(nsImage: image).resizable().scaledToFill()
+                } else {
+                    Favicon(host: tab.url?.host, size: ShellLayout.favoriteIconSize, url: tab.url)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity).background(app.pal.elevFill)
+                }
+            }
+            .frame(width: ShellLayout.thumbnailSize.width, height: ShellLayout.thumbnailSize.height)
+            .clipShape(thumb)
+            .overlay(thumb.strokeBorder(selected ? app.pal.accent : app.pal.hairline, lineWidth: ShellLayout.hairline))
+            HStack(spacing: ShellLayout.rowInsetLeading / 2) {
+                Favicon(host: tab.url?.host, size: ShellLayout.iconSize, url: tab.url)
+                Text(tab.displayTitle).font(ShellType.secondary).foregroundStyle(selected ? app.pal.ink : app.pal.ink2).lineLimit(1)
+            }
+            .frame(width: ShellLayout.thumbnailSize.width, height: ShellLayout.commandRowHeight)
+        }
+        .padding(.horizontal, ShellLayout.rowInsetLeading).padding(.top, ShellLayout.rowInsetLeading)
+        .background(selected ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .animation(Motion.hover.reduced(reduceMotion), value: selected)
+        .contentShape(RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(tab.displayTitle)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 }
 

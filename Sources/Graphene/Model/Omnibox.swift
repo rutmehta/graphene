@@ -65,6 +65,37 @@ enum Omnibox {
     }
 }
 
+/// Command bar geometry and sectioning (arc-look.md §3.4), kept free of views so it can be tested.
+enum CommandBarLayout {
+    /// `min(commandWidth, window − commandMargin)`, never negative.
+    static func width(window: CGFloat) -> CGFloat {
+        max(0, min(ShellLayout.commandWidth, window - ShellLayout.commandMargin))
+    }
+
+    /// Distance from the window's top edge to the card's top edge.
+    static func top(window height: CGFloat) -> CGFloat {
+        max(0, height) * ShellLayout.commandTop
+    }
+
+    /// Indices of results that open a section. Labels show only when more than one section is present.
+    static func sectionStarts(_ sections: [String]) -> Set<Int> {
+        guard Set(sections).count > 1 else { return [] }
+        return Set(sections.indices.filter { $0 == 0 || sections[$0 - 1] != sections[$0] })
+    }
+
+    /// The result list's height: at most `commandMaxRows` rows plus the section labels among them,
+    /// top padding when the list does not open with a label, and bottom padding. Anything more scrolls.
+    static func listHeight(_ sections: [String]) -> CGFloat {
+        guard !sections.isEmpty else { return 0 }
+        let starts = sectionStarts(sections)
+        let visible = min(sections.count, ShellLayout.commandMaxRows)
+        let labels = starts.filter { $0 < visible }.count
+        let top = starts.contains(0) ? 0 : ShellLayout.commandListPadding
+        return CGFloat(visible) * ShellLayout.commandRowHeight + CGFloat(labels) * ShellLayout.commandSectionHeight
+            + top + ShellLayout.commandListPadding
+    }
+}
+
 enum SearchEngine: String, Codable, CaseIterable {
     case google, duckduckgo
 

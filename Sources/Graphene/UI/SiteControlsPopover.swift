@@ -32,9 +32,9 @@ struct SiteControlsPopover: View {
     private var engine: WKWebEngine? { tab.engine as? WKWebEngine }
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(host).font(ShellType.title)
+            Text(host).font(ShellType.title).lineLimit(1).truncationMode(.middle)
             DisclosureGroup(tab.url?.scheme == "https" && tab.loadError == nil ? "Secure connection" : "Connection not secure") {
-                Text(engine?.certificateSummary ?? "No certificate available. HTTP connections are not encrypted.").font(ShellType.caption).textSelection(.enabled)
+                Text(engine?.certificateSummary ?? "No certificate available. HTTP connections are not encrypted.").font(ShellType.secondary).foregroundStyle(app.pal.ink2).textSelection(.enabled)
             }
             HStack {
                 Text("Zoom"); Spacer()
@@ -43,20 +43,20 @@ struct SiteControlsPopover: View {
             }
             Slider(value: Binding(get: { site.zoom }, set: { zoom($0) }), in: 0.25...3, step: 0.05)
             Toggle("Block ads & trackers", isOn: Binding(get: { site.blocking ?? app.settings.contentBlocking ?? true }, set: { site.blocking = $0; save(); Task { await engine?.applyBlocking(host: host) } }))
-            HStack { Text(engine?.blockingActive == true ? "Blocking on" : "Blocking off"); Spacer(); Button("Use global setting") { site.blocking = nil; save(); Task { await engine?.applyBlocking(host: host) } } }.font(ShellType.caption).foregroundStyle(app.pal.ink3)
-            if let error = engine?.blockerError { Text(error).font(ShellType.caption) }
+            HStack { Text(engine?.blockingActive == true ? "Blocking on" : "Blocking off"); Spacer(); Button("Use global setting") { site.blocking = nil; save(); Task { await engine?.applyBlocking(host: host) } } }.font(ShellType.secondary).foregroundStyle(app.pal.ink3)
+            if let error = engine?.blockerError { Text(error).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
             Divider()
             permission("Camera", key: \.camera)
             permission("Microphone", key: \.microphone)
             permission("Motion", key: \.motion)
-            Text("Location and notifications: managed by WebKit/macOS. No public per-site delegate is available in this macOS WKWebView.").font(ShellType.caption).foregroundStyle(app.pal.ink3)
+            Text("Location and notifications: managed by WebKit/macOS. No public per-site delegate is available in this macOS WKWebView.").font(ShellType.secondary).foregroundStyle(app.pal.ink3)
             Divider()
             Button("Boosts ▸") { app.boostHost = host; dismiss() }
             Button("Zap an element…") { engine?.startZap(); app.notify("Click an element to hide it. Escape cancels."); dismiss() }
             Button("Clear data for this site…") { app.clearCurrentSiteData() }
             if let url = tab.url { Button("Open in default browser") { app.openInSystemBrowser(url) } }
-            if !status.isEmpty { Text(status).font(ShellType.caption) }
-        }.padding(ShellLayout.sectionGap + ShellLayout.windowGap).frame(width: SiteControlsPopover.width).font(ShellType.body).foregroundStyle(app.pal.ink).background(app.pal.elev)
+            if !status.isEmpty { Text(status).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
+        }.padding(ShellLayout.windowGap * 2).frame(width: ShellLayout.siteControlsWidth).font(ShellType.body).foregroundStyle(app.pal.ink).background(app.pal.elev)
             .onAppear { site = app.sites.site(host) }
             .onReceive(app.sites.$entries) { _ in site = app.sites.site(host) }
     }

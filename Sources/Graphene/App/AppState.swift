@@ -398,7 +398,15 @@ final class AppState: ObservableObject, BrowserCoordinator {
         } else { closeTab(id) }
     }
     func focusAddress() {
+        presentCommandBar()
+    }
+
+    /// Opens the command bar to replace the current page, prefilled with `seedURL`
+    /// (the active tab's URL when nil) and fully selected, so typing replaces it.
+    /// The page toolbar's URL, `⌘L` and the top-tabs address all use this.
+    func presentCommandBar(seedURL: URL? = nil) {
         openCommandBar(newTab: false)
+        if let seedURL { commandBarDraft = seedURL.absoluteString }
     }
 
     func openCommandBar(newTab: Bool) {

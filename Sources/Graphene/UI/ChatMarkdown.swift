@@ -37,13 +37,13 @@ struct ChatMarkdownView: View {
         VStack(alignment: .leading, spacing: 10) {
             ForEach(ChatMarkdown.blocks(text)) { block in
                 if block.code {
-                    ScrollView(.horizontal) { Text(block.text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled).padding(10) }
-                        .background(app.pal.hover, in: RoundedRectangle(cornerRadius: 8))
+                    ScrollView(.horizontal) { Text(block.text).font(ShellType.code).textSelection(.enabled).padding(10) }
+                        .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                 } else {
                     let heading = block.text.hasPrefix("#")
                     let value = heading ? block.text.drop(while: { $0 == "#" || $0 == " " }).description : block.text
                     Text((try? AttributedString(markdown: ChatMarkdown.citations(value, sources: sources), options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(value))
-                        .font(.system(size: heading ? 16 : 13, weight: heading ? .semibold : .regular)).lineSpacing(4).textSelection(.enabled)
+                        .font(heading ? ShellType.title : ShellType.row).lineSpacing(ShellType.rowLineSpacing).textSelection(.enabled)
                 }
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
