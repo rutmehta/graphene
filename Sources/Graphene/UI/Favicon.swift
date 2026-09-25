@@ -1,11 +1,26 @@
 import SwiftUI
 import AppKit
 
+/// What a row asks `Favicon` for when it shows a saved page: the page's host and, for a web
+/// page, its URL, so the cache is looked up by the page's origin (the icon the page declared,
+/// as the sidebar shows it) and fetched when missing, rather than matched by host alone.
+struct FaviconRequest: Equatable {
+    let host: String?
+    let url: URL?
+    init(page: String) {
+        let parsed = URL(string: page)
+        host = parsed?.host
+        url = parsed.flatMap { ["http", "https"].contains($0.scheme?.lowercased() ?? "") && $0.host != nil ? $0 : nil }
+    }
+}
+
 /// Live tabs fetch from their own origin. Library rows only reuse cached icons.
 struct Favicon: View {
     let host: String?
     var size: CGFloat = 16
     var url: URL? = nil
+    init(host: String?, size: CGFloat = 16, url: URL? = nil) { self.host = host; self.size = size; self.url = url }
+    init(_ request: FaviconRequest, size: CGFloat = 16) { self.init(host: request.host, size: size, url: request.url) }
     @EnvironmentObject private var app: AppState
     @Environment(\.pageIsDark) private var pageIsDark
     @ObservedObject private var store = FaviconStore.shared

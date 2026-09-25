@@ -41,7 +41,8 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     /// Assigns per-answer indices to every valid `[n]` in `answer` (first mention first) and,
     /// with `passages`, picks each source's supporting passage from the text the model received.
     /// With `passages` (a finished answer), sentences the model left uncited are matched to the
-    /// sources by `fallbackMatch`; explicit markers always take precedence.
+    /// sources by `fallbackMatch`; explicit markers always take precedence, but a marker whose
+    /// sentence finds no passage (a restated source label) still gets one from the others.
     static func assign(answer: String, sources: [KnowledgeSource], messageID: UUID, passages: Bool = true) -> [ChatCitation] {
         guard let regex = try? NSRegularExpression(pattern: marker) else { return [] }
         var order: [Entry] = []
@@ -60,25 +61,48 @@ struct ChatCitation: Codable, Equatable, Identifiable {
             }
             if hasClaim, let waiting = pending { fallback(waiting, sources: sources, into: &order); pending = nil }
             if !hasClaim, !numbers.isEmpty { pending = nil }
-            for n in numbers where !order.contains(where: { $0.n == n }) { order.append(Entry(n: n, claim: claim)) }
+            for n in numbers {
+                if let existing = order.firstIndex(where: { $0.n == n }) { order[existing].claims.append(claim) }
+                else { order.append(Entry(n: n, claims: [claim])) }
+            }
             if passages, hasClaim, numbers.isEmpty { pending = sentence }
             if hasClaim { previous = sentence }
         }
         if let waiting = pending { fallback(waiting, sources: sources, into: &order) }
         return order.enumerated().map { offset, entry in
             let source = sources[entry.n - 1]
-            let passage = passages ? (entry.passage ?? PageContext.passage(for: entry.claim, in: source)) : nil
             return ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: entry.n, sourceID: source.id,
-                                passage: passage, anchors: entry.anchors.isEmpty ? nil : entry.anchors)
+                                passage: passages ? passage(for: entry, in: source) : nil, anchors: entry.anchors.isEmpty ? nil : entry.anchors)
         }
     }
-    /// A citation being assigned: its source number, the claim that picks its passage (or a
-    /// fallback's own passage) and the uncited sentences matched to it.
+    /// A citation being assigned: its source number, the sentences that cite it with a marker,
+    /// the passages uncited sentences matched in it and those sentences (its anchors).
     private struct Entry {
         var n: Int
-        var claim: String
-        var passage: String?
+        var claims: [String] = []
+        var matched: [String] = []
         var anchors: [String] = []
+    }
+    /// The passage a citation marks: the first marker sentence that states a claim and finds one,
+    /// else the first passage an uncited sentence matched, else (for an answer whose only marker
+    /// sits on a restated source label, "Source [1]: Graphene - Wikipedia") the label's own match.
+    /// A marker never stands in the way of a passage: every sentence that cites or matches the
+    /// source is tried.
+    private static func passage(for entry: Entry, in source: KnowledgeSource) -> String? {
+        let claims = entry.claims.filter { !isLabel($0, source: source) }
+        let labels = entry.claims.filter { isLabel($0, source: source) }
+        for claim in claims { if let found = PageContext.passage(for: claim, in: source) { return found } }
+        for claim in claims { if let found = fallbackMatch(claim, sources: [source])?.passage { return found } }
+        if let matched = entry.matched.first { return matched }
+        for claim in labels { if let found = PageContext.passage(for: claim, in: source) { return found } }
+        return nil
+    }
+    /// Whether `sentence` only restates where the answer comes from ("Source [1]: Graphene -
+    /// Wikipedia", "According to the article [1]"): no content word beyond attribution words and
+    /// the source's title.
+    static func isLabel(_ sentence: String, source: KnowledgeSource) -> Bool {
+        let bare = sentence.replacingOccurrences(of: marker, with: " ", options: .regularExpression)
+        return PageContext.terms(bare).subtracting(attributionWords).subtracting(PageContext.terms(source.title)).isEmpty
     }
 
     /// Share of an uncited answer sentence's content words its source sentence must contain.
@@ -109,8 +133,8 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     private static func fallback(_ sentence: String, sources: [KnowledgeSource], into order: inout [Entry]) {
         guard let match = fallbackMatch(sentence, sources: sources) else { return }
         let anchor = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let existing = order.firstIndex(where: { $0.n == match.n }) { order[existing].anchors.append(anchor) }
-        else { order.append(Entry(n: match.n, claim: sentence, passage: match.passage, anchors: [anchor])) }
+        if let existing = order.firstIndex(where: { $0.n == match.n }) { order[existing].anchors.append(anchor); order[existing].matched.append(match.passage) }
+        else { order.append(Entry(n: match.n, matched: [match.passage], anchors: [anchor])) }
     }
 }
 
@@ -174,6 +198,18 @@ enum CitationChipLink: Equatable {
     case tab(UUID)
     /// Anything else (history, notes, closed tabs): click opens the source.
     case source
+
+    /// The chip's help text. "Passage not found" is said only of the page the source is; a
+    /// source elsewhere is "not on this page".
+    func help(title: String?, note: Bool = false) -> String {
+        let name = title.flatMap { $0.isEmpty ? nil : $0 }
+        switch self {
+        case .page: return "Show in page"
+        case .unlinkedPage: return "Passage not found on this page"
+        case .tab: return "Not on this page. Switch to \(name ?? "its tab")"
+        case .source: return note ? (name ?? "Open note") : "Not on this page. Open \(name ?? "the source")"
+        }
+    }
 }
 
 /// Links one answer's citations to marks in one page. Owned by `AppState` so the page's

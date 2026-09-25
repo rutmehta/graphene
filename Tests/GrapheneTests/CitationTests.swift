@@ -132,6 +132,36 @@ final class CitationTests: XCTestCase {
         XCTAssertEqual(both[1].anchors, ["Graphene has a tensile strength of 130 GPa."])
     }
 
+    /// The on-device answer from the D6 re-verification: its first `[1]` sits on a restated source
+    /// label that matches no sentence. The citation's passage comes from the lines that state claims.
+    func testAMarkerOnASourceLabelStillGetsAPassage() throws {
+        let page = source("Graphene - Wikipedia", wiki + " In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
+        let answer = "Source [1]: Graphene - Wikipedia\nTensile strength: 130 GPa [1]\nFirst isolated: Andre Geim and Konstantin Novoselov in 2004. [1]"
+        XCTAssertTrue(ChatCitation.isLabel("Source [1]: Graphene - Wikipedia\n", source: page))
+        XCTAssertFalse(ChatCitation.isLabel("Tensile strength: 130 GPa [1]", source: page))
+        XCTAssertNil(PageContext.passage(for: "Source [1]: Graphene - Wikipedia", in: page), "the label alone matches nothing")
+        let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: UUID())
+        XCTAssertEqual(citations.count, 1)
+        let passage = try XCTUnwrap(citations.first?.passage)
+        XCTAssertEqual(passage, "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa.")
+        XCTAssertTrue(page.text.contains(passage))
+
+        // Only the label carries a marker: the uncited claim that matches the source supplies the passage.
+        let labelOnly = ChatCitation.assign(answer: "Source [1]: Graphene - Wikipedia\nGraphene was first isolated by Andre Geim and Konstantin Novoselov in 2004.",
+                                            sources: [page], messageID: UUID())
+        XCTAssertEqual(labelOnly.count, 1)
+        XCTAssertEqual(labelOnly.first?.passage, "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
+        XCTAssertEqual(labelOnly.first?.anchors, ["Graphene was first isolated by Andre Geim and Konstantin Novoselov in 2004."])
+    }
+
+    func testChipHelpSaysWhetherTheSourceIsThisPage() {
+        XCTAssertEqual(CitationChipLink.unlinkedPage.help(title: "Graphene - Wikipedia"), "Passage not found on this page")
+        XCTAssertEqual(CitationChipLink.tab(UUID()).help(title: "Swift Forums"), "Not on this page. Switch to Swift Forums")
+        XCTAssertEqual(CitationChipLink.source.help(title: "Graphite"), "Not on this page. Open Graphite")
+        XCTAssertEqual(CitationChipLink.source.help(title: "My note", note: true), "My note")
+        XCTAssertEqual(CitationChipLink.page.help(title: "Graphene"), "Show in page")
+    }
+
     func testBudgetNoticesArePlain() {
         let page = KnowledgeSource(id: UUID(), title: "Graphene - Wikipedia", url: "https://en.wikipedia.org/wiki/Graphene", text: String(repeating: "Graphene is strong. ", count: 900), kind: "Tab")
         XCTAssertEqual(PageContext.budget([page], limit: 6000).notices, ["Page text trimmed to \(6000.formatted()) characters"])

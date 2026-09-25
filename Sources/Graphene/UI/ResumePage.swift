@@ -9,6 +9,9 @@ struct ResumeSections: Equatable {
         let host: String?
         let pageCount: Int
         let end: Date
+        /// The thread's first page on `host`, so the row's favicon is looked up (and fetched) by
+        /// that page's origin as the sidebar's is, not matched by host alone.
+        var url: URL? = nil
     }
     struct SavedRow: Equatable, Identifiable {
         let id: UUID
@@ -33,7 +36,7 @@ struct ResumeSections: Equatable {
     static func build(threads: [KnowledgeGraph.Thread], notes: [Annotation], spaceID: UUID?,
                       favoriteIDs: [UUID] = [], sidebarCollapsed: Bool) -> ResumeSections {
         let continueRows = threads.filter { !$0.nodes.isEmpty }.sorted { $0.end > $1.end }.prefix(maxContinue).map {
-            ContinueRow(id: $0.id, title: $0.title, host: $0.hosts.first, pageCount: $0.nodes.count, end: $0.end)
+            ContinueRow(id: $0.id, title: $0.title, host: $0.hosts.first, pageCount: $0.nodes.count, end: $0.end, url: firstPage($0))
         }
         let savedRows = notes
             .filter { $0.spaceID == spaceID && !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -46,6 +49,11 @@ struct ResumeSections: Equatable {
             .prefix(maxSaved)
         return ResumeSections(continueRows: Array(continueRows), savedRows: Array(savedRows),
                               favoriteIDs: sidebarCollapsed ? favoriteIDs : [])
+    }
+
+    /// The web page of `thread`'s first host, for its row's favicon.
+    static func firstPage(_ thread: KnowledgeGraph.Thread) -> URL? {
+        thread.nodes.first { $0.host == thread.hosts.first }.flatMap { FaviconRequest(page: $0.url).url }
     }
 
     /// "6 pages · 2h ago".
@@ -208,7 +216,7 @@ private struct ResumeContinueRow: View {
     var body: some View {
         Button { if let thread = app.currentThreads.first(where: { $0.id == row.id }) { app.openThread(thread) } } label: {
             HStack(spacing: ShellLayout.iconGap) {
-                Favicon(host: row.host, size: ShellLayout.iconSize).frame(width: ShellLayout.iconSlot)
+                Favicon(host: row.host, size: ShellLayout.iconSize, url: row.url).frame(width: ShellLayout.iconSlot)
                 Text(row.title).font(ShellType.row).foregroundStyle(app.pal.ink).lineLimit(1)
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     Text(ResumeSections.detail(pageCount: row.pageCount, end: row.end, now: context.date))

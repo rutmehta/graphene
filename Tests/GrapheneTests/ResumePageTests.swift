@@ -118,6 +118,7 @@ final class ResumePageTests: XCTestCase {
         XCTAssertEqual(sections.continueRows.map(\.title), ["New", "Mid", "Old"])
         XCTAssertEqual(sections.continueRows.first?.pageCount, 6)
         XCTAssertEqual(sections.continueRows.first?.host, "site0.example")
+        XCTAssertEqual(sections.continueRows.first?.url?.absoluteString, "https://site0.example/", "the favicon is requested by the page, not the host alone")
         XCTAssertFalse(sections.isEmpty)
         XCTAssertEqual(ResumeSections.detail(pageCount: 6, end: now.addingTimeInterval(-7200), now: now), "6 pages · 2h ago")
         XCTAssertEqual(ResumeSections.detail(pageCount: 1, end: now.addingTimeInterval(-30), now: now), "1 page · just now")

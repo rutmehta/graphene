@@ -459,14 +459,7 @@ struct CitationChip: View {
             .accessibilityIdentifier("chat.citation.\(message.id).\(citation.index)\(full ? ".source" : "")")
             .accessibilityLabel("Source \(citation.index): \(source?.title ?? "unknown")").accessibilityAddTraits(.isButton)
     }
-    private func help(_ link: CitationChipLink) -> String {
-        switch link {
-        case .page: return "Show in page"
-        case .unlinkedPage: return "Passage not found on this page"
-        case .tab: return "Switch to \(source?.title ?? "tab")"
-        case .source: return source?.title ?? ""
-        }
-    }
+    private func help(_ link: CitationChipLink) -> String { link.help(title: source?.title, note: source?.isNote == true) }
     private func hover(_ hovering: Bool, _ link: CitationChipLink) {
         switch link {
         case .page: linker.hoverChip(hovering ? citation.citationID : nil)

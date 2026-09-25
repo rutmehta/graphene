@@ -115,6 +115,28 @@ final class VaultShelfTests: XCTestCase {
         XCTAssertNil(VaultShelfLayout.passage(note(" \n", note: "just a note")))
     }
 
+    /// The chip asks for the note's page, so it finds the icon the page declared (the one the
+    /// sidebar row shows), not whatever is cached for the bare host or a monogram.
+    func testChipFaviconIsRequestedByThePageURL() {
+        func note(_ url: String) -> Annotation {
+            Annotation(id: UUID(), text: "The Swift Forums are governed by the Swift Code of Conduct", note: "", url: url, title: "Swift Forums", context: "", created: Date(), spaceID: nil)
+        }
+        let request = VaultShelfLayout.favicon(note("https://forums.swift.org/t/welcome/1"))
+        XCTAssertEqual(request.host, "forums.swift.org")
+        XCTAssertEqual(request.url, URL(string: "https://forums.swift.org/t/welcome/1"))
+        // The store keys icons by the page's origin, so a page-declared icon cached for the sidebar row is the one found.
+        XCTAssertEqual(request.url.map(FaviconPolicy.origin), "https://forums.swift.org:443")
+        // A note without a web page keeps the host-only lookup and never fetches.
+        XCTAssertNil(VaultShelfLayout.favicon(note("file:///Users/me/notes.txt")).url)
+        XCTAssertNil(VaultShelfLayout.favicon(note("")).url)
+        // Every favicon on the shelf (chip and hover card) goes through that request.
+        let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/Graphene/UI/VaultShelf.swift")
+        let shelf = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
+        XCTAssertEqual(shelf.components(separatedBy: "Favicon(VaultShelfLayout.favicon(note)").count - 1, 2)
+        XCTAssertFalse(shelf.contains("Favicon(host:"), "no shelf favicon is looked up by host alone")
+    }
+
     func testMarkdownPayloadMatchesTheNoteFile() throws {
         let app = AppState(directory: root)
         app.vault.add(text: "line one\nline two", note: "My thought", url: URL(string: "https://example.com/page"), title: "Example page", context: "", spaceID: app.activeSpaceID)

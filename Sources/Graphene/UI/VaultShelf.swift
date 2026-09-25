@@ -59,6 +59,10 @@ enum VaultShelfLayout {
         let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
         return text.isEmpty ? nil : text
     }
+
+    /// The favicon a chip (and its hover card) shows: by the note's page URL, as the sidebar
+    /// row for that page does, so both show the icon the page declared.
+    static func favicon(_ note: Annotation) -> FaviconRequest { FaviconRequest(page: note.url) }
 }
 
 /// Shelf motion (graphene-identity.md §4): height 0→44 easeOut 180ms with the chips fading;
@@ -145,11 +149,10 @@ private struct ShelfChip: View {
     @State private var hovered = false
     @State private var previewTask: Task<Void, Never>?
     @State private var previewShown = false
-    private var host: String? { URL(string: note.url)?.host }
 
     var body: some View {
         HStack(spacing: VaultShelfLayout.chipIconGap) {
-            Favicon(host: host, size: VaultShelfLayout.chipIconSize)
+            Favicon(VaultShelfLayout.favicon(note), size: VaultShelfLayout.chipIconSize)
             Text(VaultShelfLayout.chipText(note)).font(ShellType.quoteSmall).foregroundStyle(app.pal.ink2)
                 .lineLimit(1).truncationMode(.tail)
         }.padding(.horizontal, VaultShelfLayout.chipPadding)
@@ -200,7 +203,7 @@ private struct ShelfQuoteCard: View {
             Text(VaultShelfLayout.fullText(note)).font(ShellType.quoteSmall).foregroundStyle(app.pal.ink)
                 .lineSpacing(ShellType.rowLineSpacing).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: VaultShelfLayout.chipGap) {
-                Favicon(host: host, size: ShellLayout.iconSize)
+                Favicon(VaultShelfLayout.favicon(note), size: ShellLayout.iconSize)
                 Text(note.title.isEmpty ? (host ?? "Saved note") : note.title)
                     .font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
             }
