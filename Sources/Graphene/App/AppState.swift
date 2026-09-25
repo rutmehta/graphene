@@ -380,7 +380,10 @@ final class AppState: ObservableObject, BrowserCoordinator {
             return
         }
         openThreadNode(nodeID, in: thread, asChild: false)
+        // A page note was asked for explicitly: skip the selection-first behaviour of ⌘D.
+        composingPage = true
         noteComposerPresented = true
+        composingPage = false
     }
     func pin(_ tab: Tab) { placeTab(tab.id, section: tab.isPinned ? .today : .pinned) }
 

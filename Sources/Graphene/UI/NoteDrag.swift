@@ -25,7 +25,8 @@ enum NoteDrag {
 /// target asks for the data.
 nonisolated private func register(_ reference: Data, on provider: NSItemProvider) {
     provider.registerDataRepresentation(forTypeIdentifier: UTType.grapheneNoteReference.identifier, visibility: .all) { completion in
-        completion(reference, nil); return nil
+        Task { @MainActor in completion(reference, nil) }
+        return nil
     }
 }
 
