@@ -158,6 +158,14 @@ enum ShellLayout {
     static let newTabColumnWidth: CGFloat = 560
     /// Vertical gap between Resume page sections.
     static let newTabGap: CGFloat = 24
+    /// The Resume page's space band, full card width, and its bottom fade into `pageBg`
+    /// (landing-and-tidy.md §2).
+    static let newTabBandHeight: CGFloat = 160
+    static let newTabBandFade: CGFloat = 24
+    /// The search row in the band, right-aligned to the column.
+    static let newTabSearchWidth: CGFloat = 260
+    /// A surface tile (Threads, Vault, Board, Mail): two favorite tiles tall.
+    static let surfaceTileHeight: CGFloat = favoriteHeight * 2
     /// Width of one hex cell of the empty-state lattice.
     static let latticeCell: CGFloat = 28
     /// Padding of the in-page citation mark, in CSS px.
@@ -190,6 +198,10 @@ enum ShellType {
     static let title = Font.system(size: 15, weight: .semibold)
     static let input = Font.system(size: inputSize, weight: .regular)
     static let display = Font.system(size: 22, weight: .semibold)
+    /// The space glyph in the Resume page's band.
+    static let bandGlyph = Font.system(size: 24, weight: .regular)
+    /// A surface tile's glyph on the Resume page.
+    static let surfaceGlyph = Font.system(size: 20, weight: .regular)
     /// Toolbar and footer glyphs.
     static let glyph = Font.system(size: 15, weight: .medium)
     /// Close glyphs and space glyphs.
@@ -347,13 +359,14 @@ struct Palette {
     // MARK: chrome plane
 
     /// Dark coefficients are calibrated to the Arc capture (#0E0D26 → #200A26 at h = 243°, s = 0.6).
+    /// Light stops carry the space visibly (landing-and-tidy.md §3): graphite light is a cool grey-blue.
     var chromeTop: Color {
         isDark ? Self.hsb(spaceHS.hue, 0.82 * chromeSaturation, 0.15)
-               : Self.hsb(spaceHS.hue, 0.22 * chromeSaturation, 0.95)
+               : Self.hsb(spaceHS.hue, 0.30 * chromeSaturation, 0.93)
     }
     var chromeBottom: Color {
         isDark ? Self.hsb(spaceHS.hue + 44.0 / 360, 0.92 * chromeSaturation, 0.15)
-               : Self.hsb(spaceHS.hue + 25.0 / 360, 0.26 * chromeSaturation, 0.92)
+               : Self.hsb(spaceHS.hue + 25.0 / 360, 0.34 * chromeSaturation, 0.90)
     }
     var grainOpacity: Double { 0.02 }
     var chromeGrain: Color { (isDark ? Color.white : Color.black).opacity(grainOpacity) }
@@ -365,7 +378,7 @@ struct Palette {
     var ink3: Color { ink.opacity(isDark ? 0.48 : 0.50) }
     /// Disabled glyphs and labels.
     var inkDisabled: Color { ink.opacity(0.25) }
-    var fill: Color { Color.white.opacity(isDark ? 0.09 : 0.45) }
+    var fill: Color { Color.white.opacity(isDark ? 0.09 : 0.55) }
     var fillHover: Color { Color.white.opacity(isDark ? 0.14 : 0.60) }
     var fillSelected: Color { Color.white.opacity(isDark ? 0.22 : 0.85) }
     var fillSelectedStroke: Color { isDark ? Color.white.opacity(0.25) : Color.black.opacity(0.08) }
@@ -374,6 +387,8 @@ struct Palette {
     /// `fill` for tiles that sit on the page card (Vault grid, mail avatars). On light chrome
     /// `fill` is translucent white, which vanishes on a white `pageBg`, so it falls back to `rowHover`.
     var tileFill: Color { isDark ? fill : rowHover }
+    /// `tileFill` hovered: `fillHover` in dark; in light a deeper ink wash, since white vanishes on `pageBg`.
+    var tileFillHover: Color { isDark ? fillHover : Color.black.opacity(0.07) }
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
     /// The provenance connector under Today rows, and the one on the selected tab's branch.
     var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.24) }
@@ -385,6 +400,13 @@ struct Palette {
     var quoteRule: Color { threadLine }
     /// Empty-state hex lattice strokes.
     var lattice: Color { ink.opacity(0.04) }
+    /// The Resume page's space band (landing-and-tidy.md §2): the chrome stops over `pageBg`,
+    /// at 55% in light and 70% in dark, so a new tab carries its space.
+    var bandOpacity: Double { isDark ? 0.70 : 0.55 }
+    var bandTop: Color { chromeTop.opacity(bandOpacity) }
+    var bandBottom: Color { chromeBottom.opacity(bandOpacity) }
+    /// The band's bottom fade: `pageBg` from clear to opaque.
+    var bandFade: Color { pageBg.opacity(0) }
     /// In-page citation highlight (injected as CSS).
     var highlight: Color { accent.opacity(0.22) }
     /// Hovered or selected in-page citation.

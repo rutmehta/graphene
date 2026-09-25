@@ -1,7 +1,51 @@
 import SwiftUI
 
-/// What the Resume page shows (graphene-identity.md §3.3). Pure, so the section rules are
-/// testable: sections appear only with data, in a fixed order.
+/// The Resume page's live counts (landing-and-tidy.md §2): the band's status line and the
+/// four surface tiles. Pure, so the copy is testable.
+struct ResumeSummary: Equatable {
+    struct Tile: Equatable, Identifiable {
+        let surface: Surface
+        let name: String
+        let glyph: String
+        let detail: String
+        var id: Surface { surface }
+    }
+
+    /// Tabs with a page in this space (a blank new tab does not count).
+    var tabs = 0
+    /// Threads in this space.
+    var threads = 0
+    /// Vault notes saved in this space.
+    var notes = 0
+    /// Board cards in this space.
+    var cards = 0
+    /// Gmail has an OAuth client configured.
+    var mailConnected = false
+
+    /// "3 threads", "1 note", "0 cards".
+    static func count(_ value: Int, _ noun: String) -> String { "\(value) \(noun)\(value == 1 ? "" : "s")" }
+
+    /// "12 tabs · 3 threads · 5 notes · Tuesday 14:05" (weekday and time in the locale's clock).
+    func status(now: Date, locale: Locale = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEjjmm")
+        return [Self.count(tabs, "tab"), Self.count(threads, "thread"), Self.count(notes, "note"), formatter.string(from: now)]
+            .joined(separator: " · ")
+    }
+
+    /// Threads, Vault, Board, Mail: the four Graphene surfaces, always shown.
+    var tiles: [Tile] {
+        [Tile(surface: .threads, name: "Threads", glyph: "point.3.connected.trianglepath.dotted", detail: Self.count(threads, "thread")),
+         Tile(surface: .vault, name: "Vault", glyph: "tray.full", detail: Self.count(notes, "note")),
+         Tile(surface: .board, name: "Board", glyph: "rectangle.3.group", detail: Self.count(cards, "card")),
+         Tile(surface: .mail, name: "Mail", glyph: "envelope", detail: mailConnected ? "Read-only" : "Not connected")]
+    }
+}
+
+/// What the Resume page shows beneath the band and tiles (graphene-identity.md §3.3,
+/// landing-and-tidy.md §2). Pure, so the section rules are testable: Continue and Saved here
+/// appear only with data, in a fixed order.
 struct ResumeSections: Equatable {
     struct ContinueRow: Equatable, Identifiable {
         let id: UUID
@@ -27,8 +71,9 @@ struct ResumeSections: Equatable {
     var savedRows: [SavedRow] = []
     var favoriteIDs: [UUID] = []
 
-    /// Every section is empty: the page shows the search row and the lattice.
-    var isEmpty: Bool { continueRows.isEmpty && savedRows.isEmpty && favoriteIDs.isEmpty }
+    /// Continue and Saved here are both empty: one line of copy sits under the surface tiles.
+    var showsEmptyLine: Bool { continueRows.isEmpty && savedRows.isEmpty }
+    static let emptyLine = "Open a page and Graphene will keep the thread. Select text and press ⌘D to save it."
 
     /// - threads: the space's threads (`app.currentThreads`); the newest three are shown.
     /// - notes: all Vault notes; only quotes from a page saved in `spaceID`, newest four.
@@ -110,8 +155,8 @@ extension AppState {
     }
 }
 
-/// The new-tab page: the place a thread is picked up. Search, Continue, Saved here and
-/// (with the sidebar collapsed) the space's favorites; the lattice when all are empty.
+/// The new-tab page: the space band (glyph, name, status, search), the four surface tiles,
+/// then Continue, Saved here and (with the sidebar collapsed) the space's favorites.
 struct ResumePage: View {
     @EnvironmentObject var app: AppState
     @FocusState private var focused: Bool
@@ -121,22 +166,29 @@ struct ResumePage: View {
         ResumeSections.build(threads: app.currentThreads, notes: app.vault.annotations, spaceID: app.activeSpaceID,
                              favoriteIDs: favorites.map(\.id), sidebarCollapsed: app.layout == .sidebar && app.sidebarCollapsed)
     }
+    private var summary: ResumeSummary {
+        ResumeSummary(tabs: app.visibleTabs.filter { $0.url != nil }.count,
+                      threads: app.currentThreads.filter { !$0.nodes.isEmpty }.count,
+                      notes: app.vault.notes(inSpace: app.activeSpaceID).count,
+                      cards: app.boards.items(in: app.activeSpaceID).count,
+                      mailConnected: GmailConfig.isConfigured)
+    }
 
     var body: some View {
-        let sections = sections
-        GeometryReader { geometry in
-            ScrollView {
+        let sections = sections, summary = summary
+        ScrollView {
+            VStack(spacing: 0) {
+                band(summary)
                 VStack(alignment: .leading, spacing: ShellLayout.newTabGap) {
-                    searchRow
+                    surfacesRow(summary)
+                    if sections.showsEmptyLine { emptyLine }
                     if !sections.continueRows.isEmpty { continueSection(sections.continueRows) }
                     if !sections.savedRows.isEmpty { savedSection(sections.savedRows) }
                     if !sections.favoriteIDs.isEmpty { favoritesSection(sections.favoriteIDs) }
-                    if sections.isEmpty { emptyState }
                 }
                 .frame(maxWidth: ShellLayout.newTabColumnWidth)
                 .padding(.horizontal, ShellLayout.newTabGap)
-                .padding(.top, max(ShellLayout.newTabGap, geometry.size.height * ShellLayout.commandTop))
-                .padding(.bottom, ShellLayout.newTabGap)
+                .padding(.vertical, ShellLayout.newTabGap)
                 .frame(maxWidth: .infinity)
             }
         }
@@ -150,19 +202,74 @@ struct ResumePage: View {
         .onChange(of: app.activeTabID) { _, _ in if !app.commandBarPresented { focused = true } }
     }
 
+    /// The space band: the space's chrome gradient over `pageBg` with the lattice as texture,
+    /// fading into the page at its bottom edge. Glyph, name and status left; search right.
+    private func band(_ summary: ResumeSummary) -> some View {
+        ZStack {
+            LinearGradient(colors: [app.pal.bandTop, app.pal.bandBottom], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Lattice()
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                LinearGradient(colors: [app.pal.bandFade, app.pal.pageBg], startPoint: .top, endPoint: .bottom)
+                    .frame(height: ShellLayout.newTabBandFade)
+            }.allowsHitTesting(false)
+            HStack(spacing: ShellLayout.sectionGap) {
+                VStack(alignment: .leading, spacing: ShellLayout.iconBackingInset) {
+                    HStack(spacing: ShellLayout.iconGap) {
+                        bandGlyph
+                        Text(app.activeSpace.name).font(ShellType.display).foregroundStyle(app.pal.ink).lineLimit(1)
+                    }
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        Text(summary.status(now: context.date)).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+                    }
+                }
+                .accessibilityElement(children: .combine).accessibilityIdentifier("newTab.space")
+                Spacer(minLength: ShellLayout.sectionGap)
+                searchRow.frame(maxWidth: ShellLayout.newTabSearchWidth)
+            }
+            .frame(maxWidth: ShellLayout.newTabColumnWidth)
+            .padding(.horizontal, ShellLayout.newTabGap)
+        }
+        .frame(height: ShellLayout.newTabBandHeight)
+        .frame(maxWidth: .infinity)
+        .background(app.pal.pageBg)
+    }
+
+    /// The space's emoji or SF Symbol at 24pt, resolved as the sidebar's `SpaceGlyph` does.
+    private var bandGlyph: some View {
+        let icon = app.activeSpace.icon
+        return Group {
+            if let icon, NSImage(systemSymbolName: icon, accessibilityDescription: nil) == nil { Text(String(icon.prefix(2))) }
+            else { Image(systemName: icon ?? "circle.hexagongrid.fill") }
+        }.font(ShellType.bandGlyph).foregroundStyle(app.pal.ink2).accessibilityHidden(true)
+    }
+
     private var searchRow: some View {
         Button { app.openCommandBar(newTab: true) } label: {
             HStack(spacing: ShellLayout.sectionGap) {
                 Image(systemName: "magnifyingglass").font(ShellType.glyph)
-                Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(ShellType.row)
-                Spacer()
+                Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(ShellType.row).lineLimit(1)
+                Spacer(minLength: 0)
                 Text("⌘T").font(ShellType.label).padding(.horizontal, ShellLayout.rowInsetLeading / 2).padding(.vertical, PageToolbarGeometry.controlGap)
                     .background(app.pal.rowHover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
             }.foregroundStyle(app.pal.ink3).padding(.horizontal, ShellLayout.sectionGap).frame(height: ShellLayout.commandRowHeight)
-                .background(app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
+                .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
                 .contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityIdentifier("newTab.search")
             .accessibilityLabel("Search or enter a URL").accessibilityAddTraits(.isButton)
+    }
+
+    /// Threads, Vault, Board and Mail as four equal tiles with live counts.
+    private func surfacesRow(_ summary: ResumeSummary) -> some View {
+        HStack(spacing: ShellLayout.favoriteGap) {
+            ForEach(summary.tiles) { tile in ResumeSurfaceTile(tile: tile) }
+        }
+    }
+
+    private var emptyLine: some View {
+        Text(ResumeSections.emptyLine).font(ShellType.secondary).foregroundStyle(app.pal.ink3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityIdentifier("newTab.empty")
     }
 
     private func sectionLabel(_ title: String) -> some View {
@@ -175,7 +282,7 @@ struct ResumePage: View {
                 sectionLabel("Continue")
                 Spacer()
                 Button("All threads") { app.show(.threads) }.font(ShellType.caption).foregroundStyle(app.pal.ink3).buttonStyle(.plain)
-                    .accessibilityIdentifier("newTab.threads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
+                    .accessibilityIdentifier("newTab.allThreads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
             }.padding(.bottom, ShellLayout.rowInsetLeading)
             ForEach(rows) { row in ResumeContinueRow(row: row) }
         }
@@ -198,13 +305,41 @@ struct ResumePage: View {
             }
         }
     }
+}
 
-    private var emptyState: some View {
-        VStack(spacing: ShellLayout.sectionGap) {
-            Lattice().frame(maxWidth: .infinity).frame(height: Lattice.bandHeight)
-            Text("Open a page and Graphene will keep the thread.").font(ShellType.secondary).foregroundStyle(app.pal.ink3)
-                .frame(maxWidth: .infinity)
-        }.accessibilityIdentifier("newTab.empty")
+/// A surface tile: 20pt glyph, the surface's name and its live count. Mail without an OAuth
+/// client opens Settings → Mail instead of the Mail view.
+private struct ResumeSurfaceTile: View {
+    @EnvironmentObject var app: AppState
+    let tile: ResumeSummary.Tile
+    @State private var hovering = false
+    var body: some View {
+        Button(action: open) {
+            VStack(alignment: .leading, spacing: ShellLayout.iconBackingInset) {
+                Image(systemName: tile.glyph).font(ShellType.surfaceGlyph).foregroundStyle(app.pal.ink2)
+                Spacer(minLength: 0)
+                Text(tile.name).font(ShellType.row).foregroundStyle(app.pal.ink).lineLimit(1)
+                Text(tile.detail).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+            }
+            .padding(ShellLayout.sectionGap)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: ShellLayout.surfaceTileHeight)
+            .background(hovering ? app.pal.tileFillHover : app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.favoriteRadius))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { inside in withAnimation(Motion.hover.animation) { hovering = inside } }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(tile.name), \(tile.detail)").accessibilityAddTraits(.isButton)
+        .accessibilityAction(.default, open)
+        .accessibilityIdentifier(tile.surface == .threads ? "newTab.threads" : "newTab.surface.\(tile.surface.rawValue)")
+    }
+    private func open() {
+        if tile.surface == .mail && !GmailConfig.isConfigured {
+            app.settingsPage = "Mail"; app.settingsPresented = true
+        } else {
+            app.show(tile.surface)
+        }
     }
 }
 

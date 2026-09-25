@@ -250,9 +250,9 @@ li{margin:4px 0}
       return {ct:hex(top),cb:hex(bot),gr:'.03',wo:W+'.10)',wi:'#FFFFFF',wi2:W+'.72)',wi3:W+'.48)',fill:W+'.09)',fillhov:W+'.14)',fillsel:W+'.22)',fillstroke:W+'.25)',rowhov:W+'.06)',rowsel:W+'.12)',hairw:W+'.10)',pb:W+'.12)',ps:'0 2px 12px rgba(0,0,0,.35)',ev:'#26262C',accent:hex(acc),
         list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['ink','#FFFFFF'],['ink2','white 72%'],['ink3','white 48%'],['fill','white 9%'],['fillHover','white 14%'],['fillSelected','white 22% + stroke 25%'],['rowHover','white 6%'],['rowSelected','white 12%'],['hairline','white 10%'],['pageBorder','white 12%'],['elev','#26262C'],['accent',hex(acc)]],
         sw:[hex(top),hex(bot),'#FFFFFF','#B8B8C0','#7A7A85','#25243A','#2D2C42','#3A3950','#1F1E33','#28273D','#232238','#25243A','#26262C',hex(acc)]};}
-    var top=hsb(h,0.22*sp,0.95),bot=hsb(h+25,0.26*sp,0.92),acc=hsb(h,0.55,0.62);
-    return {ct:hex(top),cb:hex(bot),gr:'.025',wo:K+'.06)',wi:'#1B1B22',wi2:K+'.75)',wi3:K+'.50)',fill:W+'.45)',fillhov:W+'.60)',fillsel:W+'.85)',fillstroke:K+'.08)',rowhov:K+'.04)',rowsel:W+'.60)',hairw:K+'.08)',pb:K+'.08)',ps:'0 1px 10px rgba(0,0,0,.10)',ev:'#FFFFFF',accent:hex(acc),
-      list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['ink','#1B1B22'],['ink2','ink 75%'],['ink3','ink 50%'],['fill','white 45%'],['fillHover','white 60%'],['fillSelected','white 85% + stroke black 8%'],['rowHover','black 4%'],['rowSelected','white 60%'],['hairline','black 8%'],['pageBorder','black 8%'],['elev','#FFFFFF'],['accent',hex(acc)]],
+    var top=hsb(h,0.30*sp,0.93),bot=hsb(h+25,0.34*sp,0.90),acc=hsb(h,0.55,0.62);
+    return {ct:hex(top),cb:hex(bot),gr:'.025',wo:K+'.06)',wi:'#1B1B22',wi2:K+'.75)',wi3:K+'.50)',fill:W+'.55)',fillhov:W+'.60)',fillsel:W+'.85)',fillstroke:K+'.08)',rowhov:K+'.04)',rowsel:W+'.60)',hairw:K+'.08)',pb:K+'.08)',ps:'0 1px 10px rgba(0,0,0,.10)',ev:'#FFFFFF',accent:hex(acc),
+      list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['ink','#1B1B22'],['ink2','ink 75%'],['ink3','ink 50%'],['fill','white 55%'],['fillHover','white 60%'],['fillSelected','white 85% + stroke black 8%'],['rowHover','black 4%'],['rowSelected','white 60%'],['hairline','black 8%'],['pageBorder','black 8%'],['elev','#FFFFFF'],['accent',hex(acc)]],
       sw:[hex(top),hex(bot),'#1B1B22','#4F4F58','#8C8C94','#E6E6F0','#EEEEF5','#F8F8FC','#D8D8E2','#EEEEF5','#D4D4DE','#D4D4DE','#FFFFFF',hex(acc)]};
   }
   function apply(el,p){for(var k in p){if(k==='list'||k==='sw')continue;el.style.setProperty('--'+k,p[k]);}}

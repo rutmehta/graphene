@@ -39,6 +39,23 @@ extension AppState {
             } catch { self?.notify("Couldn’t tidy tab title: \(error.localizedDescription)") }
         }
     }
+    /// Tidy Today with "Tidy pinned tab titles" on and a model available: each new folder gets a
+    /// 1–3 word name from its tabs' titles, replacing the heuristic unless the folder was renamed
+    /// or removed meanwhile. Titles of tabs the AI may not read are left out.
+    func nameTidyFolders(_ folders: [(id: UUID, group: TidyPlan.Group)]) {
+        guard settings.ai?.tidyTitles == true, !isPrivate, providerRegistry.unavailableReason == nil else { return }
+        let registry = providerRegistry
+        for (id, group) in folders {
+            let titles = group.tabIDs.compactMap { tabID in tabs.first { $0.id == tabID && aiTabAllowed($0) }?.displayTitle }
+            guard !titles.isEmpty else { continue }
+            Task { [weak self] in
+                guard let result = try? await AITidy.answer("Return only a short 1–3 word name for a folder holding these browser tabs.", data: titles.joined(separator: "\n"), registry: registry),
+                      let self, self.settings.ai?.tidyTitles == true, let name = AITidy.title(result),
+                      self.folders.contains(where: { $0.id == id && $0.name == group.name }) else { return }
+                self.updateFolder(id, name: name)
+            }
+        }
+    }
     func tidyDownload(_ entry: DownloadEntry) {
         guard !isPrivate, settings.ai?.tidyDownloads == true, entry.profileID == (activeSpace.profileID ?? Profile.defaultID), let source = entry.sourceURL, let host = source.host?.lowercased(), !excludedHosts.contains(where: { host == $0 || host.hasSuffix("." + $0) }), providerRegistry.unavailableReason == nil else { return }
         let registry = providerRegistry

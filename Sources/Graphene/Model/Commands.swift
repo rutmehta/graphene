@@ -143,7 +143,8 @@ extension AppState {
         }
         add("move-space", "Move Tab to Space ▸", enabled: tab != nil && spaces.count > 1) { self.openCommandBar(newTab: true); self.commandBarDraft = "Move Tab to Space ▸" }
         add("archive-all", "Archive All Tabs", enabled: visibleTabs.contains { $0.section == .today }) { self.archiveToday() }
-        add("tidy-tabs", "Tidy Stale Tabs") { self.tidyToday() }
+        add("tidy-today", "Tidy Today", "t", [.command, .option, .control], "⌃⌥⌘T", enabled: visibleTabs.contains { $0.section == .today && $0.folderID == nil }) { self.tidyToday() }
+        add("archive-stale", "Archive Stale Tabs") { self.archiveStaleTabs() }
         add("copy-url", "Copy URL", "c", [.command, .shift], "⇧⌘C", enabled: page) { copyLink(tab?.url) }
         add("copy-markdown", "Copy URL as Markdown", "c", [.command, .shift, .option], "⌥⇧⌘C", enabled: page) {
             guard let tab, let url = tab.url else { return }

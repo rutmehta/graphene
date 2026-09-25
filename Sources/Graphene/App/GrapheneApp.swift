@@ -83,7 +83,7 @@ struct GrapheneCommands: Commands {
             buttons(["next-tab", "previous-tab", "next-tab-arrow", "previous-tab-arrow", "mru-next", "mru-previous"])
             Menu("Select Tab") { ForEach(1..<10, id: \.self) { number in actionButton("tab-\(number)") } }
             Divider()
-            buttons(["pin", "favorite", "rename", "new-folder", "pinned-folder", "tidy-tabs", "archive-all", "copy-url", "copy-markdown", "pip", "peek"])
+            buttons(["pin", "favorite", "rename", "new-folder", "pinned-folder", "tidy-today", "archive-stale", "archive-all", "copy-url", "copy-markdown", "pip", "peek"])
             Menu("Split View") { buttons(["split", "split-vertical", "split-horizontal", "separate"]) }
             buttons(["move-up", "move-down", "collapse-branch", "expand-branch"])
             Menu("Move Tab to Space") {

@@ -335,7 +335,8 @@ private struct SpaceLabel: View {
     private func beginRename() { name = app.activeSpace.name; renaming = true }
 }
 
-/// The hairline above Today; hovering it reveals "Clear", which archives the Today tabs.
+/// The hairline above Today; hovering it reveals the Tidy glyph (groups Today into folders)
+/// and "Clear", which archives the Today tabs.
 private struct TodayDivider: View {
     @EnvironmentObject var app: AppState
     @State private var hovered = false
@@ -343,6 +344,9 @@ private struct TodayDivider: View {
         HStack(spacing: ShellLayout.iconGap) {
             Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
             if hovered {
+                SidebarGlyphButton("Tidy Today (⌃⌥⌘T)", system: "wand.and.stars", font: ShellType.glyphSmall, size: ShellLayout.closeTarget, identifier: "sidebar.tidy") {
+                    app.tidyToday()
+                }.transition(.opacity)
                 Button("Clear") { app.archiveToday() }.buttonStyle(.plain)
                     .font(ShellType.label).foregroundStyle(app.pal.ink3)
                     .help("Archive all Today tabs; restore with ⇧⌘T")
@@ -354,7 +358,8 @@ private struct TodayDivider: View {
             .animation(SidebarMotion.hover, value: hovered)
             .contextMenu {
                 Button("Clear Today") { app.archiveToday() }
-                Button("Tidy Stale Tabs") { app.tidyToday() }
+                Button("Tidy Today") { app.tidyToday() }
+                Button("Archive Stale Tabs") { app.archiveStaleTabs() }
                 Button("New Folder") { app.createFolder(section: .today) }
             }
             .modifier(ShellDropTarget { payload in
@@ -363,6 +368,7 @@ private struct TodayDivider: View {
             .accessibilityElement(children: .contain).accessibilityLabel("Today")
             .accessibilityIdentifier("sidebar.todayDivider")
             .accessibilityAction(named: "Clear Today tabs") { app.archiveToday() }
+            .accessibilityAction(named: "Tidy Today") { app.tidyToday() }
     }
 }
 
@@ -637,6 +643,11 @@ private struct FolderRow: View {
     @State private var renaming = false
     @State private var name = ""
     @State private var hovered = false
+    private var todayBranches: ProvenanceLayout? {
+        guard folder.section == .today else { return nil }
+        let layout = app.folderProvenance(folder.id)
+        return layout.hasBranches ? layout : nil
+    }
     var body: some View {
         VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
             HStack(spacing: ShellLayout.iconGap) {
@@ -667,7 +678,10 @@ private struct FolderRow: View {
                 }, accept: { payload in
                     if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: folder.section, folderID: folder.id, spaceID: folder.spaceID) }
                 }))
-            if !folder.collapsed {
+            // A Today folder keeps its tabs' branches and their connectors (landing-and-tidy.md §4).
+            if !folder.collapsed, let branches = todayBranches {
+                ProvenanceRows(layout: branches).padding(.leading, ShellLayout.folderIndent)
+            } else if !folder.collapsed {
                 ForEach(app.visibleTabs.filter { $0.folderID == folder.id }) { tab in SidebarTab(tab: tab).padding(.leading, ShellLayout.folderIndent) }
             }
         }

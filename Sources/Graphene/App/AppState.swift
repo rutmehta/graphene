@@ -479,11 +479,82 @@ final class AppState: ObservableObject, BrowserCoordinator {
         archiveInactiveTabs(in: nil)
     }
 
-    func tidyToday() {
+    /// "Archive Stale Tabs": archives this space's Today tabs idle past the auto-archive age.
+    func archiveStaleTabs() {
         guard archiveHours > 0 else { notify("Auto-archive is set to Never in Settings."); return }
         let before = tabs.count
         archiveInactiveTabs(in: activeSpaceID)
         notify(before == tabs.count ? "No stale Today tabs." : "Stale Today tabs archived.")
+    }
+
+    // MARK: Tidy Today (landing-and-tidy.md §4)
+
+    /// What a Tidy changed, so Undo puts every tab back: the whole tab order, and each moved
+    /// tab's folder and parent.
+    struct TidyUndo {
+        let order: [UUID]
+        let placements: [UUID: (folderID: UUID?, parentID: UUID?)]
+        let folderIDs: [UUID]
+    }
+
+    /// The loose Today tabs of a space as the planner's input, in list order.
+    func tidyInput(spaceID: UUID? = nil) -> [TidyPlan.Input] {
+        let space = spaceID ?? activeSpaceID
+        return tabs.filter { $0.spaceID == space && $0.section == .today && $0.folderID == nil }.map { tab in
+            TidyPlan.Input(id: tab.id, title: tab.displayTitle, host: tab.url?.host,
+                           parentID: branchParent(of: tab.id)?.id, threadID: tab.currentThreadID)
+        }
+    }
+
+    /// Groups the Today tabs into folders (branches never split), with one Undo toast. Nothing
+    /// is closed or archived. Returns the Undo record, or nil when there was nothing to group.
+    @discardableResult
+    func tidyToday() -> TidyUndo? {
+        let space = activeSpaceID
+        let plan = TidyPlan.make(tidyInput(spaceID: space))
+        guard !plan.groups.isEmpty else { notify("Nothing to tidy in Today."); return nil }
+        let byID = Dictionary(tabs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var placements: [UUID: (folderID: UUID?, parentID: UUID?)] = [:]
+        for id in plan.groups.flatMap(\.tabIDs) { if let tab = byID[id] { placements[id] = (tab.folderID, tab.parentTabID) } }
+        let record = TidyUndo(order: tabs.map(\.id), placements: placements, folderIDs: plan.groups.map { _ in UUID() })
+        for (group, folderID) in zip(plan.groups, record.folderIDs) {
+            folders.append(TabFolder(id: folderID, name: group.name, spaceID: space, section: .today))
+            // Set directly rather than through `placeTab`, so each tab keeps its `parentTabID`.
+            for id in group.tabIDs { byID[id]?.folderID = folderID }
+        }
+        objectWillChange.send(); persistSoon()
+        let groups = plan.groups.count
+        toasts.enqueue(title: "Tidied \(plan.tidiedCount) tabs into \(groups) \(groups == 1 ? "group" : "groups")", icon: "folder",
+                       seconds: 5, actionTitle: "Undo") { [weak self] in self?.undoTidy(record) }
+        nameTidyFolders(zip(record.folderIDs, plan.groups).map { (id: $0, group: $1) })
+        return record
+    }
+
+    /// Reverses a Tidy: the folders it made go, every moved tab returns to its folder and
+    /// parent, and the tab order is the one before the Tidy (tabs opened since keep their place after).
+    func undoTidy(_ record: TidyUndo) {
+        let made = Set(record.folderIDs)
+        for tab in tabs {
+            if let placement = record.placements[tab.id] {
+                tab.folderID = placement.folderID.flatMap { id in folders.contains { $0.id == id } ? id : nil }
+                tab.parentTabID = placement.parentID
+            } else if let folder = tab.folderID, made.contains(folder) { tab.folderID = nil }
+        }
+        folders.removeAll { made.contains($0.id) }
+        let rank = Dictionary(record.order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        let known = tabs.filter { rank[$0.id] != nil }.sorted { rank[$0.id]! < rank[$1.id]! }
+        var slots = known.makeIterator()
+        tabs = tabs.map { rank[$0.id] == nil ? $0 : (slots.next() ?? $0) }
+        objectWillChange.send(); persistSoon()
+    }
+
+    /// A Today folder's tabs as branches: parents are kept inside the folder (landing-and-tidy.md §4).
+    func folderProvenance(_ folderID: UUID) -> ProvenanceLayout {
+        let inside = tabs.filter { $0.folderID == folderID && $0.section == .today }
+        let ids = Set(inside.map(\.id))
+        var parents: [UUID: UUID] = [:]
+        for tab in inside { if let parent = tab.parentTabID, ids.contains(parent) { parents[tab.id] = parent } }
+        return ProvenanceLayout(ids: inside.map(\.id), parents: parents)
     }
 
     private func archiveInactiveTabs(in spaceID: UUID?) {
@@ -956,7 +1027,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
     private func promoteChildren(of tab: Tab) {
         let children = tabs.filter { $0.parentTabID == tab.id && $0.id != tab.id }
         guard !children.isEmpty else { return }
-        let adopter = branchParent(of: tab.id)?.id
+        let adopter = branchParent(of: tab.id)?.id ?? folderParent(of: tab)
         let moving = inTodayList(tab) ? children.filter { $0.spaceID == tab.spaceID && inTodayList($0) } : []
         for child in children { child.parentTabID = adopter }
         if !moving.isEmpty {
@@ -964,6 +1035,13 @@ final class AppState: ObservableObject, BrowserCoordinator {
             if let index = tabs.firstIndex(where: { $0 === tab }) { tabs.insert(contentsOf: moving, at: index) }
         }
         objectWillChange.send()
+    }
+
+    /// A Today folder tab's parent inside the same folder: its children join it when it closes.
+    private func folderParent(of tab: Tab) -> UUID? {
+        guard let folder = tab.folderID, tab.section == .today, let parent = tab.parentTabID, parent != tab.id,
+              tabs.contains(where: { $0.id == parent && $0.folderID == folder }) else { return nil }
+        return parent
     }
 
     private func detachFromBranch(_ tab: Tab) {

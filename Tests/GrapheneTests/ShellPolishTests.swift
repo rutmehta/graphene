@@ -51,7 +51,7 @@ final class ShellPolishTests: XCTestCase {
     }
 
     @MainActor
-    func testTidyCommandArchivesOnlyStaleTodayTabsInCurrentSpace() throws {
+    func testArchiveStaleCommandArchivesOnlyStaleTodayTabsInCurrentSpace() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         var now = Date(timeIntervalSince1970: 1_000_000)
@@ -64,7 +64,7 @@ final class ShellPolishTests: XCTestCase {
         let selected = app.newTab()
         now.addTimeInterval(12 * 3600)
         let fresh = app.newTab(activate: false)
-        try XCTUnwrap(app.commandActions.first { $0.id == "tidy-tabs" }).run()
+        try XCTUnwrap(app.commandActions.first { $0.id == "archive-stale" }).run()
         XCTAssertFalse(app.tabs.contains { $0.id == stale.id })
         for tab in [pin, other, playing, selected, fresh] { XCTAssertTrue(app.tabs.contains { $0.id == tab.id }) }
         app.persist()
@@ -73,7 +73,7 @@ final class ShellPolishTests: XCTestCase {
         app.archiveHours = 0
         now.addTimeInterval(24 * 3600)
         let count = app.tabs.count
-        app.tidyToday()
+        app.archiveStaleTabs()
         XCTAssertEqual(app.tabs.count, count)
     }
 
