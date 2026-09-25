@@ -257,6 +257,9 @@ struct Palette {
     var fillSelectedStroke: Color { isDark ? Color.white.opacity(0.25) : Color.black.opacity(0.08) }
     var rowHover: Color { isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.04) }
     var rowSelected: Color { Color.white.opacity(isDark ? 0.12 : 0.60) }
+    /// `fill` for tiles that sit on the page card (Vault grid, mail avatars). On light chrome
+    /// `fill` is translucent white, which vanishes on a white `pageBg`, so it falls back to `rowHover`.
+    var tileFill: Color { isDark ? fill : rowHover }
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
     /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
     var elevFill: Color { isDark ? fill : rowHover }
@@ -290,6 +293,8 @@ struct Palette {
     }
     /// The focused split pane's border.
     var focusBorder: Color { accent.opacity(0.6) }
+    /// Semantic system red at 70%, only for destructive and error state (§2.3), never decoration.
+    var danger: Color { Color.red.opacity(0.7) }
 
     // MARK: aliases kept for existing views
 

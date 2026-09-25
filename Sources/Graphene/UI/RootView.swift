@@ -45,10 +45,7 @@ struct RootView: View {
                             if app.activeSurface == .web {
                                 SplitBrowserView(reservesTrafficLights: app.sidebarCollapsed && sidebarLayout, cardOriginX: cardGap)
                             } else if sidebarLayout {
-                                VStack(spacing: 0) {
-                                    SurfaceToolbar(reservesTrafficLights: app.sidebarCollapsed, cardOriginX: cardGap)
-                                    librarySurface
-                                }.pageCard()
+                                librarySurface.pageCard()
                             } else { librarySurface }
                         }.frame(maxWidth: .infinity, maxHeight: .infinity)
                             .modifier(TopTabsPageSurface(active: !sidebarLayout))

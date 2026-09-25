@@ -258,29 +258,6 @@ struct WebPageToolbar: View {
     }
 }
 
-/// Threads, Vault, Mail and Board share the web toolbar's strip with a title instead of a URL (§3.7).
-struct SurfaceToolbar: View {
-    var reservesTrafficLights = false
-    var cardOriginX: CGFloat = ShellLayout.windowGap
-    @EnvironmentObject var app: AppState
-    var body: some View {
-        HStack(spacing: PageToolbarGeometry.controlGap) {
-            if reservesTrafficLights { SidebarToggleButton() }
-            Text(app.activeSurface.rawValue.capitalized).font(ShellType.label).foregroundStyle(app.pal.ink2)
-                .frame(maxWidth: .infinity)
-            ToolbarGlyphButton(title: "Open location (⌘L)", system: "magnifyingglass", identifier: "toolbar.search") { app.openCommandBar(newTab: true) }
-            ToolbarGlyphButton(title: "Ask Graphene (⌘K)", system: "sparkle", on: app.knowledgeSearchPresented, identifier: "toolbar.chat") {
-                app.toggleKnowledge()
-            }.disabled(app.isPrivate)
-        }
-        .padding(.leading, PageToolbarGeometry.leadingInset(reservesTrafficLights: reservesTrafficLights, cardOriginX: cardOriginX))
-        .padding(.trailing, ShellLayout.windowGap)
-        .frame(height: ShellLayout.pageToolbarHeight)
-        .background { app.pal.pageBg.overlay(WindowDragRegion()) }
-        .overlay(alignment: .bottom) { Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline) }
-    }
-}
-
 struct SidebarToggleButton: View {
     @EnvironmentObject var app: AppState
     var body: some View {
