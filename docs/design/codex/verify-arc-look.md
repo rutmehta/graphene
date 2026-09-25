@@ -6,7 +6,7 @@ You are Codex running on macOS with the computer-use tool. Use it for every inte
 Build the current `master` of this repository, run it on an isolated profile, exercise the surfaces in `docs/design/arc-look.md` section 6 (Acceptance), capture evidence, and write a report that says plainly which acceptance items pass, which fail, and what looks wrong compared with Arc. Output goes in `docs/parity/shots/arc-look/` (PNGs plus `report.md`). Do not commit.
 
 ## Build and launch
-1. `git status` must be clean apart from `docs/parity/shots/arc-look/`. Note the HEAD hash in the report.
+1. Run `git status` and note the HEAD hash and any untracked files in the report. Untracked files under `docs/parity/` are expected and are not a blocker; never delete, stash or commit anything.
 2. Build with `GRAPHENE_APP_DIR=$PWD/.build/Graphene-verify.app ./scripts/build-app.sh`. Never build into or touch `~/Applications/Graphene.app`, and never quit a Graphene process you did not start.
 3. Launch: `GRAPHENE_DATA_DIR=/tmp/graphene-arc-look-verify .build/Graphene-verify.app/Contents/MacOS/Graphene &` (fresh directory; delete it first if it exists). Record the PID. Complete onboarding with default choices. Resize the window to 1280×820 points.
 
