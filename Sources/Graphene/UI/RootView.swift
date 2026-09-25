@@ -210,7 +210,7 @@ struct BrowserPage: View {
     }
     private var page: some View {
         ZStack(alignment: .top) {
-            if tab.url == nil { NewTabView() }
+            if tab.url == nil { ResumePage() }
             else if let error = tab.loadError {
                 SurfaceState(symbol: "exclamationmark.shield", title: error.contains("crashed") ? "This page crashed" : "This page couldn’t load", detail: error) {
                     Button("Try again") { tab.reload() }.buttonStyle(.bordered)
@@ -224,53 +224,6 @@ struct BrowserPage: View {
         }
     }
 }
-
-private struct NewTabView: View {
-    @EnvironmentObject var app: AppState
-    var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Button { app.openCommandBar(newTab: true) } label: {
-                        HStack(spacing: ShellLayout.sectionGap) {
-                            Image(systemName: "magnifyingglass").font(ShellType.glyph)
-                            Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(ShellType.row)
-                            Spacer()
-                            Text("⌘T").font(ShellType.label).padding(.horizontal, ShellLayout.rowInsetLeading / 2).padding(.vertical, PageToolbarGeometry.controlGap)
-                                .background(app.pal.rowHover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
-                        }.foregroundStyle(app.pal.ink3).padding(.horizontal, ShellLayout.sectionGap).frame(height: ShellLayout.commandRowHeight)
-                            .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
-                    }.buttonStyle(.plain).accessibilityIdentifier("newTab.search")
-                        .accessibilityLabel("Search or enter a URL").accessibilityAddTraits(.isButton)
-
-                    if !app.currentThreads.isEmpty {
-                        HStack {
-                            Text("Recent threads").font(ShellType.label)
-                            Spacer()
-                            Button("All threads") { app.show(.threads) }.font(ShellType.caption).buttonStyle(.plain)
-                                .accessibilityIdentifier("newTab.threads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
-                        }.foregroundStyle(app.pal.ink3).padding(.top, ShellLayout.pageToolbarHeight).padding(.bottom, ShellLayout.sectionGap)
-                        ForEach(app.currentThreads.prefix(3)) { thread in
-                            Button { app.openThread(thread) } label: {
-                                HStack(spacing: ShellLayout.rowInsetLeading) {
-                                    Favicon(host: thread.hosts.first, size: ShellLayout.iconSize)
-                                    Text(thread.title).font(ShellType.row).foregroundStyle(app.pal.ink2).lineLimit(1)
-                                    Spacer()
-                                    Text(thread.end, format: .relative(presentation: .named, unitsStyle: .abbreviated)).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                                }.frame(height: ShellLayout.rowHeight).contentShape(Rectangle())
-                            }.buttonStyle(.plain)
-                                .accessibilityIdentifier("newTab.thread.\(thread.id)").accessibilityLabel(thread.title).accessibilityAddTraits(.isButton)
-                        }
-                    }
-                }
-                .frame(maxWidth: 400).padding(.horizontal, 40)
-                .padding(.top, max(60, geometry.size.height * 0.34)).padding(.bottom, 40)
-                .frame(maxWidth: .infinity)
-            }
-        }.background(app.pal.pageBg)
-    }
-}
-
 
 extension Notification.Name { static let focusOmnibox = Notification.Name("graphene.focusOmnibox") }
 

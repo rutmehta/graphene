@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import WebKit
 
 /// WKWebView-backed WebEngine. One instance per tab; the view persists across
@@ -79,6 +80,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     }
 
     private var kvo: [NSKeyValueObservation] = []
+    /// The last reported page darkness; citation marks take the matching scheme's accent.
+    private var pageIsDark: Bool?
     private var lastRecordedURL: URL?
 
     // Stable profile identifiers isolate cookies, including separate development namespaces.
@@ -132,6 +135,7 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     /// paints under the page (the document background by default).
     private func reportPageDarkness() {
         guard let dark = Palette.pageIsDark(webView.themeColor) ?? Palette.pageIsDark(webView.underPageBackgroundColor) else { return }
+        pageIsDark = dark
         delegate?.engine(self, didChangePageDarkness: dark)
     }
 
@@ -166,6 +170,69 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             webView.find(text, configuration: config) { continuation.resume(returning: $0.matchFound) }
         }
     }
+
+    // MARK: in-page citations (Resources/cite.js)
+
+    func highlight(passages: [CitedPassage]) async -> [String] {
+        let eligible = passages.filter { !$0.normalized.isEmpty }
+        guard !isPrivate, !eligible.isEmpty, !Self.citeScript.isEmpty else { return [] }
+        let items: [[String: Any]] = eligible.map { passage in
+            var item: [String: Any] = ["id": passage.id, "text": passage.text]
+            if let index = passage.index { item["index"] = index }
+            return item
+        }
+        let palette = aiOwner?.pal.page(dark: pageIsDark) ?? Palette(mode: pageIsDark == true ? .dark : .light, space: .slate)
+        let found = await callCite("return window.__grapheneCite.highlight(passages, style);", install: true,
+                                   arguments: ["passages": items, "style": Self.citeStyle(palette)])
+        return (found as? [Any])?.compactMap { $0 as? String } ?? []
+    }
+
+    func setActiveHighlight(_ id: String?) async {
+        guard !isPrivate else { return }
+        await callCite("if (window.__grapheneCite) window.__grapheneCite.setActive(id);", arguments: ["id": id ?? NSNull()])
+    }
+
+    func scrollToHighlight(_ id: String) async {
+        guard !isPrivate else { return }
+        await callCite("if (window.__grapheneCite) window.__grapheneCite.scrollTo(id);", arguments: ["id": id])
+    }
+
+    func clearHighlights() async {
+        guard !isPrivate else { return }
+        await callCite("if (window.__grapheneCite) window.__grapheneCite.clear();", arguments: [:])
+    }
+
+    /// Runs `call` as a function body in the page world, first installing cite.js when asked.
+    @discardableResult
+    private func callCite(_ call: String, install: Bool = false, arguments: [String: Any]) async -> Any? {
+        let body = (install ? Self.citeScript + "\n" : "") + call
+        return await withCheckedContinuation { continuation in
+            webView.callAsyncJavaScript(body, arguments: arguments, in: nil, in: .page) { result in
+                continuation.resume(returning: try? result.get())
+            }
+        }
+    }
+
+    /// The CSS colours and inset `cite.js` styles its marks with, from `palette`.
+    static func citeStyle(_ palette: Palette) -> [String: Any] {
+        ["highlight": cssColor(palette.highlight), "highlightActive": cssColor(palette.highlightActive),
+         "accent": cssColor(palette.accent), "inset": Double(ShellLayout.markInset)]
+    }
+
+    /// A colour as a CSS `rgba()` in sRGB.
+    static func cssColor(_ color: Color) -> String {
+        let c = NSColor(color).usingColorSpace(.sRGB) ?? .black
+        func channel(_ v: CGFloat) -> Int { Int((max(0, min(1, v)) * 255).rounded()) }
+        let alpha = (Double(c.alphaComponent) * 1000).rounded() / 1000
+        return "rgba(\(channel(c.redComponent)),\(channel(c.greenComponent)),\(channel(c.blueComponent)),\(alpha))"
+    }
+
+    /// Citation marks, loaded from Resources/cite.js.
+    static let citeScript: String = {
+        guard let url = Bundle.main.url(forResource: "cite", withExtension: "js") ?? Bundle.module.url(forResource: "cite", withExtension: "js"),
+              let src = try? String(contentsOf: url, encoding: .utf8) else { return "" }
+        return src
+    }()
 
     func captureSnapshotText() async -> String {
         guard !isPrivate, capturePermitted() else { return "" }
@@ -372,6 +439,9 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             delegate?.engine(self, didCaptureAnnotation: ann)
         case "copy":
             delegate?.engine(self, didCopyText: body["text"] as? String ?? "", url: webView.url)
+        case "citeHover":
+            guard !isPrivate else { return }
+            delegate?.engine(self, didHoverHighlight: body["id"] as? String)
         default: break
         }
     }
