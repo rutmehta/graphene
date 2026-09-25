@@ -62,8 +62,8 @@ private struct WritingHelpView: View {
     @State private var status = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("Writing help").font(.headline); Spacer(); Button("Close") { engine.aiPopover?.close() } }
-            Text(app.providerRegistry.status).font(.system(size: 10)).foregroundStyle(app.pal.ink3)
+            HStack { Text("Writing help").font(ShellType.title); Spacer(); Button("Close") { engine.aiPopover?.close() } }
+            Text(app.providerRegistry.status).font(ShellType.caption).foregroundStyle(app.pal.ink3)
             HStack {
                 ForEach(["Improve", "Shorten", "Fix grammar"], id: \.self) { action in Button(action) { generate(action) }.accessibilityIdentifier("writing.\(action)").accessibilityLabel(action).accessibilityAddTraits(.isButton) }
                 Menu("Tone") { ForEach(["Friendly", "Formal", "Direct"], id: \.self) { tone in Button(tone) { generate("Change tone to " + tone) } } }
@@ -74,17 +74,17 @@ private struct WritingHelpView: View {
                 Button("Draft") { generate(custom) }.disabled(custom.isEmpty || app.providerRegistry.unavailableReason != nil)
                     .accessibilityIdentifier("writing.generate").accessibilityLabel("Generate draft").accessibilityAddTraits(.isButton)
             }
-            ScrollView { Text(draft.text.isEmpty ? original : draft.text).font(.system(size: 13)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }.frame(height: 190)
-            Text(status.hasPrefix("Draft inserted") ? "Draft applied to the page." : (draft.text.isEmpty ? "Original text. Choose an action to preview a draft." : "Draft preview · your page is unchanged.")).font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+            ScrollView { Text(draft.text.isEmpty ? original : draft.text).font(ShellType.row).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }.frame(height: 190)
+            Text(status.hasPrefix("Draft inserted") ? "Draft applied to the page." : (draft.text.isEmpty ? "Original text. Choose an action to preview a draft." : "Draft preview · your page is unchanged.")).font(ShellType.caption).foregroundStyle(app.pal.ink3)
             if draft.working { HStack { ProgressView().controlSize(.small); Button("Stop") { draft.stop() } } }
             HStack {
                 Button("Replace") { apply("replace") }.accessibilityIdentifier("writing.replace").accessibilityLabel("Replace text").accessibilityAddTraits(.isButton)
                 Button("Insert below") { apply("insert") }.accessibilityIdentifier("writing.insert").accessibilityLabel("Insert below").accessibilityAddTraits(.isButton)
                 Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(draft.text, forType: .string); status = "Copied draft." }
             }.disabled(draft.text.isEmpty || draft.working)
-            if let reason = draft.error ?? app.providerRegistry.unavailableReason { Text(reason).font(.system(size: 11)).foregroundStyle(app.pal.ink2) }
-            if !status.isEmpty { Text(status).font(.system(size: 11)) }
-        }.padding(18).frame(width: 430).foregroundStyle(app.pal.ink).background(app.pal.ground)
+            if let reason = draft.error ?? app.providerRegistry.unavailableReason { Text(reason).font(ShellType.caption).foregroundStyle(app.pal.ink2) }
+            if !status.isEmpty { Text(status).font(ShellType.caption).foregroundStyle(app.pal.ink2) }
+        }.font(ShellType.body).padding(18).frame(width: 430).foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accent)
             .onDisappear { draft.stop() }.onChange(of: app.settings.ai) { _, _ in draft.stop() }
     }
     private func generate(_ instruction: String) {
@@ -135,13 +135,13 @@ private struct LinkPreviewView: View {
     private var key: String { app.providerRegistry.namespace + ":" + app.providerRegistry.status + ":" + url.absoluteString }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("5-second preview").font(.headline)
-            Text(url.host ?? "").font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+            Text("5-second preview").font(ShellType.title)
+            Text(url.host ?? "").font(ShellType.caption).foregroundStyle(app.pal.ink3)
             if fetching || draft.working { ProgressView().controlSize(.small) }
-            Text(draft.text).font(.system(size: 13)).textSelection(.enabled)
-            if let issue = error ?? draft.error ?? app.providerRegistry.unavailableReason { Text(issue).font(.system(size: 12)).foregroundStyle(app.pal.ink2) }
+            Text(draft.text).font(ShellType.row).textSelection(.enabled)
+            if let issue = error ?? draft.error ?? app.providerRegistry.unavailableReason { Text(issue).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
             Button("Open link") { app.openTab(url: url, parent: nil, activate: true) }
-        }.padding(18).frame(width: 350).foregroundStyle(app.pal.ink).background(app.pal.ground)
+        }.font(ShellType.body).padding(18).frame(width: 350).foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accent)
             .task {
                 guard app.providerRegistry.unavailableReason == nil else { return }
                 if let cached = LinkPreview.cache[key] { draft.text = cached; return }

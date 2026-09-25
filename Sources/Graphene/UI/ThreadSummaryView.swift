@@ -15,8 +15,8 @@ struct ThreadSummaryView: View {
                 Button(working ? "Stop summary" : "Summarize thread") { if working { stop() } else { summarize() } }.buttonStyle(.bordered).controlSize(.small)
                 if working { ProgressView().controlSize(.small) }
             }
-            if !text.isEmpty { ChatMarkdownView(text: text, sources: sources) }
-            if let issue = error ?? app.providerRegistry.unavailableReason { Text(issue).font(.system(size: 11)).foregroundStyle(app.pal.ink3) }
+            if !text.isEmpty { ChatMarkdownView(text: text, sources: sources).font(ShellType.row) }
+            if let issue = error ?? app.providerRegistry.unavailableReason { Text(issue).font(ShellType.secondary).foregroundStyle(app.pal.ink3) }
         }.onAppear {
             if let cached = app.graph.summaries[thread.id.uuidString], cached.profileID == (app.activeSpace.profileID ?? Profile.defaultID), cached.sources.allSatisfy({ app.aiSourceAllowed($0) }) { text = cached.text; sources = cached.sources }
         }.onDisappear { stop() }.onChange(of: app.settings.ai) { _, _ in stop() }

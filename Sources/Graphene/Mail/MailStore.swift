@@ -14,7 +14,6 @@ struct MailItem: Identifiable {
     var colorHex: String
     var body: [String]
 
-    var color: Color { Color(hex: colorHex) }
     var timeLabel: String {
         let cal = Calendar.current
         let f = DateFormatter()

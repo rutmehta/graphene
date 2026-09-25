@@ -7,6 +7,7 @@ struct VaultView: View {
     @State private var currentSpaceOnly = false
     @State private var kind = "All"
     @State private var site = ""
+    @State private var deleting: Annotation?
     private var selectedID: UUID? { app.vaultSelectionID }
     private var annotations: [Annotation] {
         app.vault.annotations.filter { note in
@@ -20,12 +21,24 @@ struct VaultView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            LibraryBar(title: "Vault", detail: app.vault.annotations.isEmpty ? nil : "\(app.vault.annotations.count)") {
+                if !app.vault.annotations.isEmpty {
+                    LibraryBarButton("Ask my notes", system: "text.bubble") { askNotes() }.disabled(annotations.isEmpty)
+                }
+                LibraryBarButton("Open vault folder", system: "folder") { NSWorkspace.shared.open(Paths.vault) }
+                if let selected { LibraryBarButton("Delete note", system: "trash") { deleting = selected } }
+            }
             if let error = app.vault.errorText {
-                Text("Couldn’t save: \(error)").font(.system(size: 12)).foregroundStyle(app.pal.ink2)
-                    .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Couldn’t save: \(error)").font(ShellType.secondary).foregroundStyle(app.pal.danger)
+                    .padding(.horizontal, ShellLayout.windowGap + ShellLayout.rowInsetLeading).padding(.vertical, ShellLayout.windowGap)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
             }
             content
-        }
+        }.foregroundStyle(app.pal.ink).background(app.pal.pageBg)
+            .confirmationDialog("Delete this saved note?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
+                Button("Delete note", role: .destructive) { if let deleting { delete(deleting) }; deleting = nil }
+            } message: { Text("The note and its Markdown file will be removed. Your browsing history is kept.") }
     }
 
     @ViewBuilder private var content: some View {
@@ -43,72 +56,45 @@ struct VaultView: View {
         } else {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Vault").font(.system(size: 17, weight: .semibold))
-                        Spacer()
-                        Text("\(app.vault.annotations.count)").font(.system(size: 11, weight: .medium)).foregroundStyle(app.pal.ink3)
-                    }.padding(.horizontal, 18).padding(.top, 22).padding(.bottom, 18)
-                    FilterField(placeholder: "Search saved items", text: $filter).padding(.horizontal, 12).padding(.bottom, 12)
-                    VStack(spacing: 10) {
-                        Toggle("Current space only", isOn: $currentSpaceOnly)
-                        Picker("Kind", selection: $kind) { ForEach(["All", "Highlights", "Pages"], id: \.self) { Text($0) } }.pickerStyle(.segmented)
-                        Picker("Site", selection: $site) {
-                            Text("All sites").tag("")
-                            ForEach(Array(Set(app.vault.annotations.compactMap { URL(string: $0.url)?.host })).sorted(), id: \.self) { Text($0).tag($0) }
+                    FilterField(placeholder: "Search saved items", text: $filter).padding(ShellLayout.windowGap)
+                    VStack(alignment: .leading, spacing: ShellLayout.windowGap) {
+                        Picker("Kind", selection: $kind) { ForEach(["All", "Highlights", "Pages"], id: \.self) { Text($0) } }.pickerStyle(.segmented).labelsHidden()
+                        HStack {
+                            Picker("Site", selection: $site) {
+                                Text("All sites").tag("")
+                                ForEach(Array(Set(app.vault.annotations.compactMap { URL(string: $0.url)?.host })).sorted(), id: \.self) { Text($0).tag($0) }
+                            }.labelsHidden().fixedSize()
+                            Spacer()
+                            Toggle("Current space only", isOn: $currentSpaceOnly).toggleStyle(.checkbox)
                         }
-                        Button("Ask my notes") {
-                            app.attachedSources = annotations.prefix(4).map { KnowledgeSource(id: $0.id, title: $0.title, url: $0.url, text: $0.text + "\n" + $0.note, kind: "Vault note") }
-                            app.knowledgeSearchPresented = true; app.show(.web)
-                        }
-                    }.font(.system(size: 12)).padding(.horizontal, 14).padding(.bottom, 14)
+                    }.font(ShellType.secondary).controlSize(.small).padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.windowGap)
+                    Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 10)], spacing: 10) {
-                            ForEach(annotations) { ann in
-                                Button { app.vaultSelectionID = ann.id } label: {
-                                    VStack(alignment: .leading, spacing: 7) {
-                                        HStack(spacing: 7) {
-                                            Favicon(host: URL(string: ann.url)?.host, size: 14)
-                                            Text(ann.title).font(.system(size: 12, weight: .medium)).foregroundStyle(app.pal.ink).lineLimit(1)
-                                        }
-                                        if !ann.text.isEmpty {
-                                            Text(ann.text).font(.system(size: 11)).foregroundStyle(app.pal.ink2).lineLimit(2).multilineTextAlignment(.leading)
-                                        } else if !ann.note.isEmpty {
-                                            Text(ann.note).font(.system(size: 11)).foregroundStyle(app.pal.ink2).lineLimit(2).multilineTextAlignment(.leading)
-                                        }
-                                        HStack(spacing: 5) {
-                                            Text(URL(string: ann.url)?.host?.replacingOccurrences(of: "www.", with: "") ?? "Saved note").lineLimit(1)
-                                            Spacer(minLength: 2)
-                                            Text(ann.created.formatted(.dateTime.month(.abbreviated).day()))
-                                        }.font(.system(size: 10)).foregroundStyle(app.pal.ink3)
-                                        Text(ann.provenance ?? "Legacy note").font(.system(size: 10)).foregroundStyle(app.pal.ink3)
-                                    }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(selected?.id == ann.id ? app.pal.hover : app.pal.elev, in: RoundedRectangle(cornerRadius: 8))
-                                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(app.pal.hairline))
-                                        .contentShape(Rectangle())
-                                }.buttonStyle(.plain).draggable("note:\(ann.id)")
-                            }
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: ShellLayout.windowGap)], spacing: ShellLayout.windowGap) {
+                            ForEach(annotations) { ann in VaultTile(annotation: ann, selected: selected?.id == ann.id) }
                             if annotations.isEmpty {
-                                Text("No matching items").font(.system(size: 12)).foregroundStyle(app.pal.ink3).padding(24)
+                                Text("No matching items").font(ShellType.secondary).foregroundStyle(app.pal.ink3).padding(24)
                             }
-                        }.padding(.horizontal, 8)
+                        }.padding(ShellLayout.windowGap)
                     }
-                    Button { NSWorkspace.shared.open(Paths.vault) } label: {
-                        Label("Open vault folder", systemImage: "folder").font(.system(size: 11)).foregroundStyle(app.pal.ink2)
-                    }.buttonStyle(.plain).padding(18)
-                }.frame(minWidth: 250, idealWidth: 390, maxWidth: 420).background(app.pal.hover.opacity(0.25))
-                Rectangle().fill(app.pal.hairline).frame(width: 1)
+                }.frame(minWidth: 250, idealWidth: 390, maxWidth: 420)
+                Rectangle().fill(app.pal.hairline).frame(width: ShellLayout.hairline)
                 if let selected {
-                    NoteDetail(annotation: selected, note: draftBinding(for: selected),
-                               onSave: { save(selected) }, onDelete: { delete(selected) })
+                    NoteDetail(annotation: selected, note: draftBinding(for: selected), onSave: { save(selected) })
                         .id(selected.id)
                 } else {
                     VStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass").font(.system(size: 24)).foregroundStyle(app.pal.ink3)
-                        Text("No saved items match this search").font(.system(size: 13)).foregroundStyle(app.pal.ink2)
+                        Image(systemName: "magnifyingglass").font(ShellType.title).foregroundStyle(app.pal.ink3)
+                        Text("No saved items match this search").font(ShellType.row).foregroundStyle(app.pal.ink2)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }
+    }
+
+    private func askNotes() {
+        app.attachedSources = annotations.prefix(4).map { KnowledgeSource(id: $0.id, title: $0.title, url: $0.url, text: $0.text + "\n" + $0.note, kind: "Vault note") }
+        app.knowledgeSearchPresented = true; app.show(.web)
     }
 
     private func draftBinding(for annotation: Annotation) -> Binding<String> {
@@ -136,55 +122,79 @@ struct VaultView: View {
     }
 }
 
+/// A Vault grid tile: `tileFill` with `rowRadius`, `fillSelected` plus its stroke when selected.
+private struct VaultTile: View {
+    let annotation: Annotation
+    let selected: Bool
+    @EnvironmentObject var app: AppState
+    @State private var hovering = false
+    private var host: String? { URL(string: annotation.url)?.host }
+    var body: some View {
+        Button { app.vaultSelectionID = annotation.id } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: ShellLayout.rowInsetLeading) {
+                    Favicon(host: host, size: ShellLayout.iconSize)
+                    Text(annotation.title).font(ShellType.rowSelected).foregroundStyle(app.pal.ink).lineLimit(1)
+                }
+                if !annotation.text.isEmpty {
+                    Text(annotation.text).font(ShellType.secondary).foregroundStyle(app.pal.ink2).lineLimit(2).multilineTextAlignment(.leading)
+                } else if !annotation.note.isEmpty {
+                    Text(annotation.note).font(ShellType.secondary).foregroundStyle(app.pal.ink2).lineLimit(2).multilineTextAlignment(.leading)
+                }
+                HStack(spacing: 4) {
+                    Text(host?.replacingOccurrences(of: "www.", with: "") ?? "Saved note").lineLimit(1)
+                    Spacer(minLength: 2)
+                    Text(annotation.created.formatted(.dateTime.month(.abbreviated).day()))
+                }.font(ShellType.caption).foregroundStyle(app.pal.ink3)
+                Text(annotation.provenance ?? "Legacy note").font(ShellType.caption).foregroundStyle(app.pal.ink3)
+            }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                .background(selected ? app.pal.fillSelected : (hovering ? app.pal.fillHover : app.pal.tileFill), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                .overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(selected ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline))
+                .contentShape(Rectangle())
+        }.buttonStyle(.plain).onHover { hovering = $0 }.draggable("note:\(annotation.id)")
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+}
+
 private struct NoteDetail: View {
     let annotation: Annotation
     @Binding var note: String
     let onSave: () -> Void
-    let onDelete: () -> Void
     @EnvironmentObject var app: AppState
-    @State private var deleting = false
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Label(annotation.created.formatted(.dateTime.month(.wide).day()), systemImage: "bookmark")
-                        .font(.system(size: 11)).foregroundStyle(app.pal.ink3)
-                    Spacer()
-                    IconButton("Delete note", system: "trash") { deleting = true }
-                }.padding(.bottom, 14)
-                Text(annotation.title).font(.system(size: 22, weight: .semibold)).tracking(-0.35).fixedSize(horizontal: false, vertical: true)
+                Label(annotation.created.formatted(.dateTime.month(.wide).day()), systemImage: "bookmark")
+                    .font(ShellType.caption).foregroundStyle(app.pal.ink3).padding(.bottom, 8)
+                Text(annotation.title).font(ShellType.title).fixedSize(horizontal: false, vertical: true)
                 Text([annotation.provenance ?? "Legacy note", annotation.accountScope].compactMap { $0 }.joined(separator: " · "))
-                    .font(.system(size: 11)).foregroundStyle(app.pal.ink3).padding(.top, 8)
+                    .font(ShellType.caption).foregroundStyle(app.pal.ink3).padding(.top, 4)
                 Button { if let url = URL(string: annotation.url) { app.openTab(url: url, parent: nil, activate: true) } } label: {
                     HStack(spacing: 6) {
-                        Favicon(host: URL(string: annotation.url)?.host, size: 14)
+                        Favicon(host: URL(string: annotation.url)?.host, size: ShellLayout.iconSize)
                         Text(URL(string: annotation.url)?.host?.replacingOccurrences(of: "www.", with: "") ?? "Open original").lineLimit(1)
-                        Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .medium))
-                    }.font(.system(size: 11)).foregroundStyle(app.pal.ink2)
-                }.buttonStyle(.plain).padding(.top, 10).padding(.bottom, 30).help("Open original page")
+                        Image(systemName: "arrow.up.right").font(ShellType.glyphMini)
+                    }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
+                }.buttonStyle(.plain).padding(.top, 10).padding(.bottom, 24).help("Open original page")
                 if !annotation.text.isEmpty {
-                    Text("Highlight").font(.system(size: 12, weight: .semibold)).padding(.bottom, 12)
+                    Text("Highlight").font(ShellType.label).foregroundStyle(app.pal.ink3).padding(.bottom, 10)
                     HStack(alignment: .top, spacing: 14) {
-                        RoundedRectangle(cornerRadius: 1).fill(app.pal.ink3.opacity(0.45)).frame(width: 2)
-                        Text(annotation.text).font(.system(size: 14)).lineSpacing(5).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
-                    }.fixedSize(horizontal: false, vertical: true).padding(.bottom, 30)
+                        Rectangle().fill(app.pal.hairline).frame(width: 2)
+                        Text(annotation.text).font(ShellType.row).lineSpacing(5).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
+                    }.fixedSize(horizontal: false, vertical: true).padding(.bottom, 24)
                 }
-                Text("Your note").font(.system(size: 12, weight: .semibold)).padding(.bottom, 12)
-                TextEditor(text: $note).font(.system(size: 13)).scrollContentBackground(.hidden).padding(10).frame(minHeight: 180)
-                    .background(app.pal.hover.opacity(0.65), in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(app.pal.hairline.opacity(0.65)))
+                Text("Your note").font(ShellType.label).foregroundStyle(app.pal.ink3).padding(.bottom, 10)
+                TextEditor(text: $note).font(ShellType.row).scrollContentBackground(.hidden).padding(10).frame(minHeight: 180)
+                    .background(app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                     .accessibilityLabel("Your note")
                 HStack {
-                    Text("Saved as Markdown on this Mac").font(.system(size: 10)).foregroundStyle(app.pal.ink3)
+                    Text("Saved as Markdown on this Mac").font(ShellType.caption).foregroundStyle(app.pal.ink3)
                     Spacer()
                     Button("Save changes", action: onSave)
                         .buttonStyle(.bordered).controlSize(.small).disabled(note == annotation.note)
-                }.padding(.top, 14)
-            }.frame(maxWidth: 640, alignment: .leading).padding(28).frame(maxWidth: .infinity, alignment: .top)
+                }.padding(.top, 12)
+            }.frame(maxWidth: 640, alignment: .leading).padding(24).frame(maxWidth: .infinity, alignment: .top)
         }
-        .confirmationDialog("Delete this saved note?", isPresented: $deleting) {
-            Button("Delete note", role: .destructive, action: onDelete)
-        } message: { Text("The note and its Markdown file will be removed. Your browsing history is kept.") }
     }
 }
 
@@ -197,23 +207,23 @@ struct NoteComposer: View {
     @State private var sourceTitle = ""
     @FocusState private var focused: Bool
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Save to Vault").font(.system(size: 18, weight: .semibold))
+                Text("Save to Vault").font(ShellType.title)
                 Spacer()
-                IconButton("Cancel", system: "xmark") { dismiss() }
+                LibraryBarButton("Cancel", system: "xmark") { dismiss() }
             }
-            VStack(alignment: .leading, spacing: 6) {
-                Text(sourceTitle.isEmpty ? "Current page" : sourceTitle).font(.system(size: 13, weight: .medium))
-                Text(sourceURL?.host ?? "No page selected").font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(sourceTitle.isEmpty ? "Current page" : sourceTitle).font(ShellType.rowSelected)
+                Text(sourceURL?.host ?? "No page selected").font(ShellType.caption).foregroundStyle(app.pal.ink3)
             }
             if !quote.isEmpty {
-                Text(quote).font(.system(size: 13)).lineSpacing(3).lineLimit(5).textSelection(.enabled)
-                    .padding(12).frame(maxWidth: .infinity, alignment: .leading).background(app.pal.hover.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
+                Text(quote).font(ShellType.row).lineSpacing(3).lineLimit(5).textSelection(.enabled)
+                    .padding(12).frame(maxWidth: .infinity, alignment: .leading).background(app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             }
-            Text("Add a note").font(.system(size: 12, weight: .medium))
-            TextEditor(text: $note).font(.system(size: 13)).focused($focused).scrollContentBackground(.hidden).padding(10).frame(height: 140)
-                .background(app.pal.hover, in: RoundedRectangle(cornerRadius: 8)).accessibilityLabel("Add a note")
+            Text("Add a note").font(ShellType.label).foregroundStyle(app.pal.ink3)
+            TextEditor(text: $note).font(ShellType.row).focused($focused).scrollContentBackground(.hidden).padding(10).frame(height: 140)
+                .background(app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius)).accessibilityLabel("Add a note")
                 .accessibilityIdentifier("note.composer")
             HStack {
                 Spacer()
@@ -225,8 +235,8 @@ struct NoteComposer: View {
                 }.keyboardShortcut(.defaultAction).disabled(sourceURL == nil)
                     .accessibilityIdentifier("note.save").accessibilityLabel("Save to Vault").accessibilityAddTraits(.isButton)
             }
-            if let error = app.vault.errorText { Text(error).font(.system(size: 11)).foregroundStyle(.red) }
-        }.padding(24).frame(width: 480).background(app.pal.ground)
+            if let error = app.vault.errorText { Text(error).font(ShellType.secondary).foregroundStyle(app.pal.danger) }
+        }.font(ShellType.body).padding(24).frame(width: 480).foregroundStyle(app.pal.ink).background(app.pal.pageBg).tint(app.pal.accent)
         .task {
             guard let tab = app.activeTab else { return }
             sourceURL = tab.url; sourceTitle = tab.displayTitle

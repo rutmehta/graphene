@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Archived tabs. The sidebar hosts it on the chrome plane, so its 32pt bar keeps the
+/// library bar geometry without painting `pageBg`.
 struct ArchiveView: View {
     @EnvironmentObject var app: AppState
     @State private var query = ""
@@ -9,32 +11,45 @@ struct ArchiveView: View {
             .sorted { $0.key > $1.key }.map { ($0.key, $0.value.reversed()) }
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Archived tabs").font(.system(size: 13, weight: .semibold))
-                Spacer()
-                IconButton("Close archive", system: "xmark") { app.archivePresented = false }
+        VStack(alignment: .leading, spacing: 0) {
+            LibraryBar(title: "Archive", onCard: false) {
+                LibraryBarButton("Close archive", system: "xmark") { app.archivePresented = false }
             }
-            TextField("Search archive", text: $query).textFieldStyle(.roundedBorder)
+            FilterField(placeholder: "Search archive", text: $query).padding(.vertical, ShellLayout.windowGap)
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
-                    if groups.isEmpty { Text("No archived tabs").foregroundStyle(app.pal.ink3) }
-                    ForEach(groups, id: \.0) { day, entries in
-                        Text(day, format: .dateTime.month().day().year()).font(.system(size: 11, weight: .medium)).foregroundStyle(app.pal.ink3)
-                        ForEach(entries, id: \.archiveID) { entry in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(entry.customTitle ?? entry.title ?? entry.url ?? "Tab").lineLimit(1)
-                                Text(entry.url ?? "").font(.system(size: 10)).foregroundStyle(app.pal.ink3).lineLimit(1)
-                                HStack {
-                                    Button("Restore") { if let id = entry.archiveID { app.restoreArchive(id) } }
-                                    Spacer()
-                                    Button("Delete", role: .destructive) { if let id = entry.archiveID { app.deleteArchive(id) } }
-                                }.buttonStyle(.plain).foregroundStyle(app.pal.accentText)
-                            }.padding(8).background(app.pal.hover, in: RoundedRectangle(cornerRadius: 8))
-                        }
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if groups.isEmpty {
+                        Text("No archived tabs").font(ShellType.row).foregroundStyle(app.pal.ink3).padding(.horizontal, ShellLayout.rowInsetLeading).padding(.vertical, ShellLayout.sectionGap)
                     }
-                }.font(.system(size: 12))
+                    ForEach(groups, id: \.0) { day, entries in
+                        Text(day, format: .dateTime.month().day().year()).font(ShellType.label).foregroundStyle(app.pal.ink2)
+                            .padding(.horizontal, ShellLayout.rowInsetLeading).padding(.top, ShellLayout.sectionGap).padding(.bottom, 4)
+                        ForEach(entries, id: \.archiveID) { entry in ArchiveRow(entry: entry) }
+                    }
+                }
             }
-        }.padding(12)
+        }.foregroundStyle(app.pal.ink)
+    }
+}
+
+/// An archived tab: `row` title, `caption` URL, restore and delete glyphs in `ink3`.
+private struct ArchiveRow: View {
+    let entry: AppState.SessionTab
+    @EnvironmentObject var app: AppState
+    @State private var hovering = false
+    var body: some View {
+        HStack(spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.customTitle ?? entry.title ?? entry.url ?? "Tab").font(ShellType.row).foregroundStyle(app.pal.ink).lineLimit(1)
+                Text(entry.url ?? "").font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            LibraryBarButton("Restore", system: "arrow.uturn.backward") { if let id = entry.archiveID { app.restoreArchive(id) } }
+            LibraryBarButton("Delete", system: "trash") { if let id = entry.archiveID { app.deleteArchive(id) } }
+        }
+        .padding(.leading, ShellLayout.rowInsetLeading).padding(.trailing, 4).padding(.vertical, 4)
+        .background(hovering ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .contentShape(Rectangle()).onHover { hovering = $0 }
+        .accessibilityElement(children: .contain)
     }
 }

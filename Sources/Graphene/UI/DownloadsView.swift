@@ -19,25 +19,26 @@ struct DownloadsButton: View {
         }.buttonStyle(.plain).help("Downloads").accessibilityLabel("Downloads")
             .accessibilityIdentifier("shell.downloads").accessibilityAddTraits(.isButton)
             .popover(isPresented: $app.downloadsPresented) {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack { Text("Downloads").font(.system(size: 14, weight: .semibold)); Spacer(); Button("Clear list") { store.clear() } }
-                    if let error = store.errorText { Text(error).foregroundStyle(app.pal.ink3) }
-                    if store.entries.isEmpty { Text("No downloads yet").foregroundStyle(app.pal.ink3).padding(.vertical, 24) }
+                VStack(alignment: .leading, spacing: ShellLayout.windowGap) {
+                    HStack { Text("Downloads").font(ShellType.title); Spacer(); Button("Clear list") { store.clear() }.font(ShellType.secondary) }
+                    if let error = store.errorText { Text(error).font(ShellType.secondary).foregroundStyle(app.pal.danger) }
+                    if store.entries.isEmpty { Text("No downloads yet").font(ShellType.row).foregroundStyle(app.pal.ink3).padding(.vertical, 24) }
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 12) {
+                        LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(store.entries) { entry in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(entry.destination.lastPathComponent).font(.system(size: 12, weight: .medium)).lineLimit(1)
-                                    if entry.status == .active { ProgressView(value: entry.progress) }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(entry.destination.lastPathComponent).font(ShellType.row).lineLimit(1)
+                                    if entry.status == .active { ProgressView(value: entry.progress).tint(app.pal.accent) }
                                     HStack {
-                                        Text(entry.error ?? entry.status.rawValue.capitalized).foregroundStyle(app.pal.ink3).lineLimit(2)
+                                        Text(entry.error ?? entry.status.rawValue.capitalized).foregroundStyle(entry.error == nil ? app.pal.ink3 : app.pal.danger).lineLimit(2)
                                         Spacer()
                                         if entry.status == .finished {
                                             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([entry.destination]) }
                                             Button("Open") { NSWorkspace.shared.open(entry.destination) }
                                         }
-                                    }.font(.system(size: 11))
-                                }.padding(10).background(app.pal.hover, in: RoundedRectangle(cornerRadius: 8))
+                                    }.font(ShellType.caption)
+                                }.padding(.horizontal, ShellLayout.rowInsetLeading).padding(.vertical, ShellLayout.windowGap)
+                                Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
                             }
                         }
                     }.frame(maxHeight: 350)
