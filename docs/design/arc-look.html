@@ -1,0 +1,268 @@
+<title>Graphene Arc Look</title>
+<style>
+:root{
+  --bg:#F3F3F5;--ink:#1B1B22;--ink2:#5B5B66;--ink3:#8A8A96;--hair:rgba(27,27,34,.10);--card:#FFFFFF;--acc:#4B49B8;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Inter,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141418;--ink:#EDEDF2;--ink2:#B4B4BF;--ink3:#7E7E8A;--hair:rgba(237,237,242,.10);--card:#1C1C21;--acc:#A9A7F0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141418;--ink:#EDEDF2;--ink2:#B4B4BF;--ink3:#7E7E8A;--hair:rgba(237,237,242,.10);--card:#1C1C21;--acc:#A9A7F0;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--sys);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 16px 80px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:48px 0 10px;letter-spacing:-.005em}
+h3{font-size:14px;font-weight:600;margin:24px 0 6px}
+p{max-width:68ch;color:var(--ink2);margin:0 0 12px}
+p.lede{font-size:16px;color:var(--ink);max-width:62ch}
+small,.muted{color:var(--ink3)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0 16px}
+th,td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-weight:600;color:var(--ink2);font-size:12px}
+td.num,td code{font-variant-numeric:tabular-nums}
+code{font:12px var(--mono);color:var(--ink)}
+.tbl{overflow-x:auto}
+.controls{display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin:12px 0 18px;padding:12px 14px;border:1px solid var(--hair);border-radius:8px;background:var(--card)}
+.controls label{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink2)}
+.controls input[type=range]{width:180px;accent-color:var(--acc)}
+.controls output{font:12px var(--mono);color:var(--ink);min-width:44px}
+.stage{overflow-x:auto;padding:4px 0 12px}
+.sw{display:inline-block;width:18px;height:18px;border-radius:5px;vertical-align:-4px;margin-right:8px;border:1px solid var(--hair)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:800px){.two{grid-template-columns:1fr}}
+ul{padding-left:18px;color:var(--ink2);max-width:70ch}
+li{margin:4px 0}
+
+/* ---------- window mockup: values are the spec tokens, in CSS px = pt ---------- */
+.win{position:relative;width:1040px;height:640px;border-radius:12px;overflow:hidden;font:13px var(--sys);
+  background:linear-gradient(135deg,var(--ct),var(--cb));box-shadow:inset 0 0 0 1px var(--wo),0 20px 50px rgba(0,0,0,.25);color:var(--wi)}
+.win .grain{position:absolute;inset:0;pointer-events:none;opacity:var(--gr);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>")}
+.sb{position:absolute;left:0;top:0;bottom:0;width:224px;padding:0 8px}
+.band{height:44px;position:relative}
+.tl{position:absolute;top:16px;width:12px;height:12px;border-radius:50%}
+.tl.r{left:14px;background:#FF5F57}.tl.y{left:34px;background:#FEBC2E}.tl.g{left:54px;background:#28C840}
+.band svg{position:absolute;left:76px;top:15px;width:16px;height:14px;color:var(--wi3)}
+.favs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fav{height:44px;border-radius:10px;background:var(--fill);display:grid;place-items:center;position:relative}
+.fav.sel{background:var(--fillsel);box-shadow:inset 0 0 0 1px var(--fillstroke)}
+.fav .ic{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff}
+.fav .dot{position:absolute;right:8px;bottom:8px;width:6px;height:6px;border-radius:50%;background:#FF4D4D}
+.space{display:flex;align-items:center;gap:6px;height:24px;margin-top:12px;padding-left:8px;font-size:11px;font-weight:600;color:var(--wi2)}
+.space .more{margin-left:auto;padding-right:8px;color:var(--wi3);letter-spacing:1px}
+.row{display:flex;align-items:center;height:36px;margin-bottom:4px;border-radius:8px;padding:0 8px;color:var(--wi2);gap:8px;position:relative}
+.row .ico{width:20px;display:grid;place-items:center;flex:none}
+.row .fi{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff}
+.row.sel{background:var(--rowsel);color:var(--wi);font-weight:500}
+.row.hov{background:var(--rowhov)}
+.row .x{margin-left:auto;width:24px;height:24px;display:grid;place-items:center;color:var(--wi3)}
+.row.child{margin-left:20px}
+.row.newtab{color:var(--wi3)}
+.hr{height:1px;background:var(--hairw);margin:12px 0 8px;position:relative}
+.hr .clear{position:absolute;right:8px;top:-8px;font-size:11px;font-weight:600;color:var(--wi3);background:transparent}
+.foot{position:absolute;left:8px;right:8px;bottom:0;height:36px;display:flex;align-items:center;justify-content:space-between;color:var(--wi3)}
+.foot .dots{display:flex;gap:8px;align-items:center}
+.foot .dots i{width:6px;height:6px;border-radius:50%;background:var(--wi3);display:block}
+.foot .dots i.on{background:var(--wi)}
+.foot svg{width:16px;height:16px;display:block}
+.card{position:absolute;left:224px;top:8px;right:8px;bottom:8px;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px var(--pb),var(--ps);overflow:hidden;color:#1B1B22}
+.tb{height:32px;display:flex;align-items:center;padding:0 8px;border-bottom:1px solid rgba(27,27,34,.08);position:relative}
+.tb .nav{display:flex;gap:2px}
+.tb .btn{width:28px;height:28px;display:grid;place-items:center;color:rgba(27,27,34,.5)}
+.tb .btn.dis{color:rgba(27,27,34,.25)}
+.tb svg{width:15px;height:15px}
+.tb .url{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(27,27,34,.5);padding:0 8px;height:22px;line-height:22px;border-radius:6px}
+.tb .url b{font-weight:500;color:rgba(27,27,34,.75)}
+.tb .right{margin-left:auto;display:flex;gap:2px}
+.tb .fav16{width:16px;height:16px;border-radius:4px;background:#3B6FD8}
+.tb .prog{position:absolute;left:0;bottom:-1px;height:2px;width:62%;background:var(--accent)}
+.page{padding:44px 64px}
+.page .h{height:22px;width:38%;border-radius:4px;background:#E4E4E9;margin-bottom:18px}
+.page .l{height:10px;border-radius:3px;background:#ECECF0;margin-bottom:10px}
+.win.light .card{box-shadow:inset 0 0 0 1px var(--pb),var(--ps)}
+.note{position:absolute;font-size:11px;color:var(--ink3);background:var(--card);border:1px solid var(--hair);border-radius:6px;padding:2px 7px;pointer-events:none}
+
+/* ---------- command bar mockup ---------- */
+.cmd{width:640px;border-radius:16px;background:var(--ev);box-shadow:inset 0 0 0 1px var(--hairw),0 12px 32px rgba(0,0,0,.30);color:var(--wi);font:13px var(--sys);overflow:hidden}
+.cmd .in{height:56px;display:flex;align-items:center;gap:14px;padding:0 20px;font-size:18px;color:var(--wi3);border-bottom:1px solid var(--hairw)}
+.cmd .in svg{width:18px;height:18px}
+.cmd .in span{color:var(--wi)}
+.cmd .in span i{font-style:normal;background:var(--rowsel);color:var(--wi)}
+.cmd .sec{height:24px;padding:0 20px;font-size:11px;font-weight:600;color:var(--wi3);display:flex;align-items:center;margin-top:6px}
+.cmd .r{height:44px;display:flex;align-items:center;gap:8px;margin:0 8px;padding:0 12px;border-radius:8px;color:var(--wi)}
+.cmd .r.sel{background:var(--rowhov)}
+.cmd .r .ico{width:20px;display:grid;place-items:center;color:var(--wi3)}
+.cmd .r .fi{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff}
+.cmd .r .d{font-size:12px;color:var(--wi3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmd .r .k{margin-left:auto;font-size:11px;font-weight:600;color:var(--wi3);flex:none}
+.cmd .pad{height:8px}
+.cmdwrap{padding:40px;border-radius:12px;background:linear-gradient(135deg,var(--ct),var(--cb));display:grid;place-items:center;overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <h1>Graphene, in Arc's clothes</h1>
+  <p class="lede">The window below is drawn entirely from the tokens in <code>docs/design/arc-look.md</code>. Chrome colours are computed live from the space hue with the spec's formulas, so what you see here is what the Swift <code>Palette</code> should produce. Drag the sliders to preview other spaces.</p>
+
+  <div class="controls">
+    <label>Space hue <input type="range" id="hue" min="0" max="360" value="243"><output id="hueOut">243°</output></label>
+    <label>Intensity <input type="range" id="sat" min="0" max="100" value="60"><output id="satOut">0.60</output></label>
+    <span class="muted">Reference dark space samples #0E0D26 · #150D26 · #200A26</span>
+  </div>
+
+  <h2>Dark space</h2>
+  <div class="stage">
+    <div class="win dark" id="winDark">
+      <div class="grain"></div>
+      <div class="sb">
+        <div class="band"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i>
+          <svg viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="12" rx="3"/><path d="M6 1v12"/></svg>
+        </div>
+        <div class="favs">
+          <div class="fav"><div class="ic" style="background:#EA4335">M</div></div>
+          <div class="fav"><div class="ic" style="background:#111">X</div></div>
+          <div class="fav sel"><div class="ic" style="background:#2F6FED">10</div></div>
+          <div class="fav"><div class="ic" style="background:#5865F2">D</div></div>
+          <div class="fav"><div class="ic" style="background:#24292F">G</div><i class="dot"></i></div>
+          <div class="fav"><div class="ic" style="background:#0A0A0A">N</div></div>
+        </div>
+        <div class="space"><span>🧪</span> Research <span class="more">···</span></div>
+        <div class="row"><span class="ico"><span class="fi" style="background:#F05138">S</span></span>Swift Evolution</div>
+        <div class="row"><span class="ico"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 1l4 4-4 4"/></svg></span>Reading</div>
+        <div class="row child"><span class="ico"><span class="fi" style="background:#3B6FD8">W</span></span>Graphene · Wikipedia</div>
+        <div class="row"><span class="ico"><span class="fi" style="background:#0B84F3">A</span></span>Apple Developer</div>
+        <div class="hr"><span class="clear">Clear</span></div>
+        <div class="row newtab"><span class="ico"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 1v12M1 7h12"/></svg></span>New Tab</div>
+        <div class="row sel"><span class="ico"><span class="fi" style="background:#3B6FD8">W</span></span>Graphene<span class="x"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l8 8M10 2l-8 8"/></svg></span></div>
+        <div class="row hov"><span class="ico"><span class="fi" style="background:#FF6600">Y</span></span>Hacker News<span class="x"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l8 8M10 2l-8 8"/></svg></span></div>
+        <div class="row"><span class="ico"><span class="fi" style="background:#24292F">G</span></span>apple/swift</div>
+        <div class="row"><span class="ico"><span class="fi" style="background:#6B7280">E</span></span>Example Domain</div>
+        <div class="foot">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="4.5" width="13" height="10" rx="2"/><path d="M1.5 7.5h13M6 11h4"/></svg>
+          <div class="dots"><i class="on"></i><i></i><i></i></div>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tb">
+          <div class="nav">
+            <span class="btn"><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2L4 7.5 9 13"/></svg></span>
+            <span class="btn dis"><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2l5 5.5L6 13"/></svg></span>
+            <span class="btn"><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12.5 7.5a5 5 0 1 1-1.5-3.6"/><path d="M12.5 1.5v3h-3"/></svg></span>
+          </div>
+          <div class="url"><b>en.wikipedia.org</b>/wiki/Graphene</div>
+          <div class="right">
+            <span class="btn"><span class="fav16"></span></span>
+            <span class="btn"><svg viewBox="0 0 15 15" fill="currentColor"><path d="M7.5 1l1.6 4.4L13.5 7l-4.4 1.6L7.5 13 5.9 8.6 1.5 7l4.4-1.6z"/></svg></span>
+            <span class="btn"><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2.5" width="12" height="10" rx="2"/><path d="M7.5 2.5v10"/></svg></span>
+          </div>
+          <div class="prog"></div>
+        </div>
+        <div class="page"><div class="h"></div><div class="l" style="width:92%"></div><div class="l" style="width:88%"></div><div class="l" style="width:64%"></div><div class="l" style="width:90%;margin-top:22px"></div><div class="l" style="width:81%"></div><div class="l" style="width:70%"></div></div>
+      </div>
+      <span class="note" style="left:248px;top:52px">32pt toolbar · nav, URL, controls</span>
+      <span class="note" style="left:80px;top:250px">36/40 rows · 13pt</span>
+      <span class="note" style="left:248px;top:600px">8pt gap · 10pt radius · 1px border</span>
+    </div>
+  </div>
+
+  <h2>Light space</h2>
+  <div class="stage">
+    <div class="win light" id="winLight"></div>
+  </div>
+
+  <h2>Command bar</h2>
+  <p>640 wide, 16 radius, 18pt input, 44pt rows, one section label only when more than one section shows. No chips, no legend.</p>
+  <div class="stage"><div class="cmdwrap" id="cmdWrap">
+    <div class="cmd">
+      <div class="in"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6"/><path d="M12.5 12.5L16 16"/></svg><span>swi<i>ft.org</i></span></div>
+      <div class="sec">Tabs</div>
+      <div class="r sel"><span class="ico"><span class="fi" style="background:#F05138">S</span></span>Swift Evolution<span class="d">forums.swift.org/c/evolution</span><span class="k">Switch to Tab</span></div>
+      <div class="r"><span class="ico"><span class="fi" style="background:#24292F">G</span></span>apple/swift<span class="d">github.com/apple/swift</span><span class="k">Switch to Tab</span></div>
+      <div class="sec">Commands</div>
+      <div class="r"><span class="ico"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="12" height="10" rx="2"/><path d="M7 2v10"/></svg></span>Open in Split View<span class="k">⇧↩</span></div>
+      <div class="r"><span class="ico"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><path d="M9.5 9.5L13 13"/></svg></span>Search Google for “swift”<span class="k">↩</span></div>
+      <div class="pad"></div>
+    </div>
+  </div></div>
+
+  <h2>Colour tokens at this hue</h2>
+  <div class="two">
+    <div class="tbl"><table id="tokDark"></table></div>
+    <div class="tbl"><table id="tokLight"></table></div>
+  </div>
+
+  <h2>Layout and type</h2>
+  <div class="two">
+    <div class="tbl"><table>
+      <tr><th>Layout token</th><th>pt</th></tr>
+      <tr><td>windowGap</td><td class="num">8</td></tr>
+      <tr><td>pageRadius</td><td class="num">10</td></tr>
+      <tr><td>pageToolbarHeight</td><td class="num">32</td></tr>
+      <tr><td>sidebarDefault / range</td><td class="num">224 · 180–360</td></tr>
+      <tr><td>trafficBandHeight</td><td class="num">44</td></tr>
+      <tr><td>favoriteHeight / gap / radius</td><td class="num">44 · 10 · 10</td></tr>
+      <tr><td>rowHeight / rowPitch / rowRadius</td><td class="num">36 · 40 · 8</td></tr>
+      <tr><td>iconSize / favoriteIconSize</td><td class="num">16 · 20</td></tr>
+      <tr><td>controlSize (glyph 15)</td><td class="num">28</td></tr>
+      <tr><td>footerHeight</td><td class="num">36</td></tr>
+      <tr><td>commandWidth / radius / input / row</td><td class="num">640 · 16 · 56 · 44</td></tr>
+      <tr><td>popoverRadius</td><td class="num">12</td></tr>
+      <tr><td>chatWidth</td><td class="num">420 (360–560)</td></tr>
+    </table></div>
+    <div class="tbl"><table>
+      <tr><th>Type token</th><th>Size / weight</th></tr>
+      <tr><td>label</td><td>11 semibold</td></tr>
+      <tr><td>caption</td><td>11 regular</td></tr>
+      <tr><td>secondary</td><td>12 regular</td></tr>
+      <tr><td>row / rowSelected</td><td>13 regular / 13 medium</td></tr>
+      <tr><td>body</td><td>13 regular</td></tr>
+      <tr><td>title</td><td>15 semibold</td></tr>
+      <tr><td>input</td><td>18 regular</td></tr>
+      <tr><td>display</td><td>22 semibold</td></tr>
+    </table></div>
+  </div>
+
+  <h2>What changes from the current build</h2>
+  <ul>
+    <li>Flat tinted sidebar becomes a flooded two-stop gradient with grain over the whole window. Dark spaces go deep and saturated instead of grey.</li>
+    <li>The address pill leaves the sidebar. Navigation and the URL move into a 32pt toolbar on the page card. Clicking the URL opens the command bar.</li>
+    <li>The single oversized favorite tile becomes a grid of equal 44pt tiles, three per row.</li>
+    <li>The "Research ···" header shrinks to an 11pt space label. "Tidy | Clear" becomes a hover-only "Clear" on the Today hairline. "Ask Graphene ⌘K" leaves the footer; Ask lives on the toolbar.</li>
+    <li>Threads, Vault, Mail and Board leave the sidebar. They open from the command bar, the footer library glyph and ⌘⌥1–4.</li>
+    <li>The page card gets an 8pt gap, a 1px hairline and a soft shadow instead of a thick tinted border.</li>
+    <li>Command bar loses its chips and footer legend and gains Arc's geometry.</li>
+    <li>Sidebar collapse, Little Arc and the chat panel move with springs. Reduce Motion turns everything into fades.</li>
+  </ul>
+</div>
+
+<script>
+(function(){
+  function hsb(h,s,b){h=((h%360)+360)%360;s=Math.max(0,Math.min(1,s));b=Math.max(0,Math.min(1,b));
+    var c=b*s,x=c*(1-Math.abs((h/60)%2-1)),m=b-c,r=0,g=0,bl=0;
+    if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;bl=x}else if(h<240){g=x;bl=c}else if(h<300){r=x;bl=c}else{r=c;bl=x}
+    var f=function(v){return Math.round((v+m)*255)};return {r:f(r),g:f(g),b:f(bl)};}
+  function hex(c){return '#'+[c.r,c.g,c.b].map(function(v){return ('0'+v.toString(16)).slice(-2).toUpperCase()}).join('')}
+  function rgba(c,a){return 'rgba('+c.r+','+c.g+','+c.b+','+a+')'}
+  var W='rgba(255,255,255,', K='rgba(27,27,34,';
+  function palette(h,s,dark){
+    var sp=s===0?0:0.5+0.5*s;
+    if(dark){var top=hsb(h,0.55*sp,0.15),bot=hsb(h+20,0.60*sp,0.16),acc=hsb(h,0.45,0.85);
+      return {ct:hex(top),cb:hex(bot),gr:'.03',wo:W+'.10)',wi:'#FFFFFF',wi2:W+'.72)',wi3:W+'.48)',fill:W+'.09)',fillhov:W+'.14)',fillsel:W+'.22)',fillstroke:W+'.25)',rowhov:W+'.06)',rowsel:W+'.12)',hairw:W+'.10)',pb:W+'.12)',ps:'0 2px 12px rgba(0,0,0,.35)',ev:'#26262C',accent:hex(acc),
+        list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['ink','#FFFFFF'],['ink2','white 72%'],['ink3','white 48%'],['fill','white 9%'],['fillHover','white 14%'],['fillSelected','white 22% + stroke 25%'],['rowHover','white 6%'],['rowSelected','white 12%'],['hairline','white 10%'],['pageBorder','white 12%'],['elev','#26262C'],['accent',hex(acc)]],
+        sw:[hex(top),hex(bot),'#FFFFFF','#B8B8C0','#7A7A85','#25243A','#2D2C42','#3A3950','#1F1E33','#28273D','#232238','#25243A','#26262C',hex(acc)]};}
+    var top=hsb(h,0.22*sp,0.95),bot=hsb(h+25,0.26*sp,0.92),acc=hsb(h,0.55,0.62);
+    return {ct:hex(top),cb:hex(bot),gr:'.025',wo:K+'.06)',wi:'#1B1B22',wi2:K+'.75)',wi3:K+'.50)',fill:W+'.45)',fillhov:W+'.60)',fillsel:W+'.85)',fillstroke:K+'.08)',rowhov:K+'.04)',rowsel:W+'.60)',hairw:K+'.08)',pb:K+'.08)',ps:'0 1px 10px rgba(0,0,0,.10)',ev:'#FFFFFF',accent:hex(acc),
+      list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['ink','#1B1B22'],['ink2','ink 75%'],['ink3','ink 50%'],['fill','white 45%'],['fillHover','white 60%'],['fillSelected','white 85% + stroke black 8%'],['rowHover','black 4%'],['rowSelected','white 60%'],['hairline','black 8%'],['pageBorder','black 8%'],['elev','#FFFFFF'],['accent',hex(acc)]],
+      sw:[hex(top),hex(bot),'#1B1B22','#4F4F58','#8C8C94','#E6E6F0','#EEEEF5','#F8F8FC','#D8D8E2','#EEEEF5','#D4D4DE','#D4D4DE','#FFFFFF',hex(acc)]};
+  }
+  function apply(el,p){for(var k in p){if(k==='list'||k==='sw')continue;el.style.setProperty('--'+k,p[k]);}}
+  function table(id,title,p){var t=document.getElementById(id),h='<tr><th colspan="2">'+title+'</th></tr>';
+    p.list.forEach(function(r,i){h+='<tr><td><span class="sw" style="background:'+p.sw[i]+'"></span>'+r[0]+'</td><td><code>'+r[1]+'</code></td></tr>'});t.innerHTML=h;}
+  var dark=document.getElementById('winDark'),light=document.getElementById('winLight'),cmd=document.getElementById('cmdWrap');
+  light.innerHTML=dark.innerHTML;
+  var hue=document.getElementById('hue'),sat=document.getElementById('sat');
+  function render(){var h=+hue.value,s=(+sat.value)/100;document.getElementById('hueOut').value=h+'°';document.getElementById('satOut').value=s.toFixed(2);
+    var pd=palette(h,s,true),pl=palette(h,s,false);apply(dark,pd);apply(light,pl);apply(cmd,pd);table('tokDark','Dark chrome',pd);table('tokLight','Light chrome',pl);}
+  hue.addEventListener('input',render);sat.addEventListener('input',render);render();
+})();
+</script>
