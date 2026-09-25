@@ -105,10 +105,55 @@ final class ResumePageTests: XCTestCase {
         XCTAssertEqual(app.tabs.count, count + 1)
     }
 
-    func testFreshProfileShowsOnlySearchAndLattice() {
+    func testFreshProfileShowsTheBandTilesAndOneLine() {
         let sections = ResumeSections.build(threads: [], notes: [], spaceID: space, favoriteIDs: [UUID()], sidebarCollapsed: false)
-        XCTAssertTrue(sections.isEmpty)
+        XCTAssertTrue(sections.showsEmptyLine)
         XCTAssertTrue(sections.continueRows.isEmpty && sections.savedRows.isEmpty && sections.favoriteIDs.isEmpty)
+        XCTAssertEqual(ResumeSections.emptyLine, "Open a page and Graphene will keep the thread. Select text and press ⌘D to save it.")
+        // The band's status line and the four tiles are always there, with zero counts.
+        let fresh = ResumeSummary()
+        XCTAssertTrue(fresh.status(now: now, locale: Locale(identifier: "en_GB")).hasPrefix("0 tabs · 0 threads · 0 notes · "))
+        XCTAssertEqual(fresh.tiles.map(\.surface), [.threads, .vault, .board, .mail])
+        XCTAssertEqual(fresh.tiles.map(\.name), ["Threads", "Vault", "Board", "Mail"])
+        XCTAssertEqual(fresh.tiles.map(\.detail), ["0 threads", "0 notes", "0 cards", "Not connected"])
+        XCTAssertEqual(fresh.tiles.map(\.glyph), ["point.3.connected.trianglepath.dotted", "tray.full", "rectangle.3.group", "envelope"])
+    }
+
+    func testSummaryCountsAndStatusLine() throws {
+        let summary = ResumeSummary(tabs: 12, threads: 3, notes: 5, cards: 1, mailConnected: true)
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = .current
+        let tuesday = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 9, day: 22, hour: 14, minute: 5)))
+        XCTAssertEqual(summary.status(now: tuesday, locale: Locale(identifier: "en_GB")), "12 tabs · 3 threads · 5 notes · Tuesday 14:05")
+        XCTAssertEqual(summary.tiles.map(\.detail), ["3 threads", "5 notes", "1 card", "Read-only"])
+        XCTAssertEqual(ResumeSummary.count(1, "tab"), "1 tab")
+    }
+
+    func testBandAndTileTokens() {
+        XCTAssertEqual(ShellLayout.newTabBandHeight, 160)
+        XCTAssertEqual(ShellLayout.surfaceTileHeight, 88)
+        XCTAssertEqual(ShellLayout.surfaceTileHeight, ShellLayout.favoriteHeight * 2)
+        XCTAssertEqual(ShellLayout.newTabBandFade, 24)
+        func alpha(_ color: Color) -> Double { Double(NSColor(color).usingColorSpace(.sRGB)?.alphaComponent ?? -1) }
+        for (mode, opacity) in [(ThemeMode.light, 0.55), (.dark, 0.70)] {
+            let palette = Palette(mode: mode, space: .iris)
+            XCTAssertEqual(palette.bandOpacity, opacity)
+            XCTAssertEqual(alpha(palette.bandTop), opacity, accuracy: 0.001)
+            XCTAssertEqual(alpha(palette.bandBottom), opacity, accuracy: 0.001)
+            XCTAssertEqual(alpha(palette.bandFade), 0, accuracy: 0.001)
+        }
+    }
+
+    func testPageKeepsItsIdentifiersAndDrawsTheBandBeforeTheTiles() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let source = try String(contentsOf: root.appendingPathComponent("Sources/Graphene/UI/ResumePage.swift"), encoding: .utf8)
+        for identifier in ["\"newTab.search\"", "\"newTab.threads\"", "\"newTab.empty\""] {
+            XCTAssertTrue(source.contains(identifier), identifier)
+        }
+        let band = try XCTUnwrap(source.range(of: "band(summary)")), tiles = try XCTUnwrap(source.range(of: "surfacesRow(summary)"))
+        let continueRange = try XCTUnwrap(source.range(of: "continueSection(sections.continueRows)"))
+        XCTAssertLessThan(band.lowerBound, tiles.lowerBound)
+        XCTAssertLessThan(tiles.lowerBound, continueRange.lowerBound)
+        XCTAssertTrue(source.contains("ShellLayout.newTabBandHeight") && source.contains("ShellLayout.surfaceTileHeight"))
     }
 
     func testContinueShowsNewestThreeThreadsWithCounts() {
@@ -119,7 +164,7 @@ final class ResumePageTests: XCTestCase {
         XCTAssertEqual(sections.continueRows.first?.pageCount, 6)
         XCTAssertEqual(sections.continueRows.first?.host, "site0.example")
         XCTAssertEqual(sections.continueRows.first?.url?.absoluteString, "https://site0.example/", "the favicon is requested by the page, not the host alone")
-        XCTAssertFalse(sections.isEmpty)
+        XCTAssertFalse(sections.showsEmptyLine)
         XCTAssertEqual(ResumeSections.detail(pageCount: 6, end: now.addingTimeInterval(-7200), now: now), "6 pages · 2h ago")
         XCTAssertEqual(ResumeSections.detail(pageCount: 1, end: now.addingTimeInterval(-30), now: now), "1 page · just now")
         XCTAssertEqual(ResumeSections.relative(now.addingTimeInterval(-5 * 60), now: now), "5m ago")
@@ -143,7 +188,7 @@ final class ResumePageTests: XCTestCase {
         XCTAssertTrue(expanded.favoriteIDs.isEmpty)
         let collapsed = ResumeSections.build(threads: [], notes: [], spaceID: space, favoriteIDs: favorites, sidebarCollapsed: true)
         XCTAssertEqual(collapsed.favoriteIDs, favorites)
-        XCTAssertFalse(collapsed.isEmpty)
+        XCTAssertTrue(collapsed.showsEmptyLine, "favorites alone do not replace the empty line")
     }
 
     // MARK: lattice

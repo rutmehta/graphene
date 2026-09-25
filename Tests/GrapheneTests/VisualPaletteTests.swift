@@ -63,9 +63,31 @@ final class VisualPaletteTests: XCTestCase {
     func testGraphiteChromeTopMatchesSpecInBothSchemes() throws {
         let dark = Palette(mode: .dark, space: .graphite), light = Palette(mode: .light, space: .graphite)
         try assertNear(dark.chromeTop, hex: try hsbHex(232, 0.46, 0.15), tolerance: 6)
-        try assertNear(light.chromeTop, hex: try hsbHex(232, 0.12, 0.95), tolerance: 6)
+        // Chrome presence (landing-and-tidy.md §3): light top is HSB(h, 0.30·s′, 0.93), s′ = 0.56.
+        try assertNear(light.chromeTop, hex: try hsbHex(232, 0.168, 0.93), tolerance: 6)
+        try assertNear(light.chromeBottom, hex: try hsbHex(257, 0.34 * 0.56, 0.90), tolerance: 6)
         XCTAssertGreaterThanOrEqual(dark.inkContrast, 4.5)
         XCTAssertGreaterThanOrEqual(light.inkContrast, 4.5)
+    }
+
+    @MainActor
+    func testLightChromeCarriesTheSpaceAndEveryPresetStaysReadable() throws {
+        for space in SpaceColor.allCases {
+            for mode in [ThemeMode.light, .dark] {
+                let palette = Palette(mode: mode, space: space)
+                XCTAssertGreaterThanOrEqual(palette.inkContrast, 4.5, "\(space) \(mode) top")
+                let ink = Palette.luminance(palette.ink), bottom = Palette.luminance(palette.chromeBottom)
+                XCTAssertGreaterThanOrEqual((max(ink, bottom) + 0.05) / (min(ink, bottom) + 0.05), 4.5, "\(space) \(mode) bottom")
+            }
+            let light = Palette(mode: .light, space: space), s = light.chromeSaturation
+            let theme = space.theme
+            try assertNear(light.chromeTop, hex: try hsbHex(theme.hue * 360, 0.30 * s, 0.93), tolerance: 1)
+            try assertNear(light.chromeBottom, hex: try hsbHex(theme.hue * 360 + 25, 0.34 * s, 0.90), tolerance: 1)
+        }
+        // Light `fill` is white 55% so tiles read on the deeper chrome; dark stays white 9%.
+        let alpha = { (color: Color) in Double(NSColor(color).usingColorSpace(.sRGB)?.alphaComponent ?? -1) }
+        XCTAssertEqual(alpha(Palette(mode: .light, space: .graphite).fill), 0.55, accuracy: 0.001)
+        XCTAssertEqual(alpha(Palette(mode: .dark, space: .graphite).fill), 0.09, accuracy: 0.001)
     }
 
     func testOldSpaceColorValuesStillDecode() throws {
