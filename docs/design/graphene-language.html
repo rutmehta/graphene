@@ -1,0 +1,380 @@
+<title>Graphene Design Language</title>
+<style>
+:root{
+  --bg:#F3F3F5;--ink:#1B1B22;--ink2:#5B5B66;--ink3:#8A8A96;--hair:rgba(27,27,34,.10);--card:#FFFFFF;--acc:#4B5FB8;
+  --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Inter,system-ui,sans-serif;
+  --serif:"New York","Iowan Old Style","Charter",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141418;--ink:#EDEDF2;--ink2:#B4B4BF;--ink3:#7E7E8A;--hair:rgba(237,237,242,.10);--card:#1C1C21;--acc:#A9B2F0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141418;--ink:#EDEDF2;--ink2:#B4B4BF;--ink3:#7E7E8A;--hair:rgba(237,237,242,.10);--card:#1C1C21;--acc:#A9B2F0;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--sys);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 16px 80px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:48px 0 8px}
+p{max-width:68ch;color:var(--ink2);margin:0 0 12px}
+p.lede{font-size:16px;color:var(--ink);max-width:62ch}
+.controls{display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin:12px 0 18px;padding:12px 14px;border:1px solid var(--hair);border-radius:8px;background:var(--card)}
+.controls label{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink2)}
+.controls input[type=range]{width:160px;accent-color:var(--acc)}
+.controls output{font:12px var(--mono);color:var(--ink);min-width:44px}
+.controls .seg{display:flex;border:1px solid var(--hair);border-radius:6px;overflow:hidden}
+.controls .seg button{border:0;background:transparent;color:var(--ink2);font:13px var(--sys);padding:4px 10px;cursor:pointer}
+.controls .seg button[aria-pressed=true]{background:var(--acc);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media (max-width:900px){.row2{grid-template-columns:1fr}}
+.stage{overflow-x:auto;padding:4px 0 8px}
+.cap{font-size:12px;color:var(--ink3);margin:6px 0 0}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0 16px}
+th,td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-weight:600;color:var(--ink2);font-size:12px}
+code{font:12px var(--mono)}
+ul{padding-left:18px;color:var(--ink2);max-width:70ch}li{margin:4px 0}
+
+/* ---- shared chrome tokens (set by JS from the palette formulas) ---- */
+.chrome{font:13px var(--sys);color:var(--wi);position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,var(--ct),var(--cb));box-shadow:inset 0 0 0 1px var(--wo),0 16px 40px rgba(0,0,0,.22)}
+.pg{background:var(--pb);color:var(--pi);font:13px var(--sys);border-radius:10px;box-shadow:inset 0 0 0 1px var(--pbd),var(--ps);position:relative;overflow:hidden}
+.bar{height:32px;display:flex;align-items:center;gap:2px;padding:0 8px;border-bottom:1px solid var(--phair);font-size:15px;font-weight:600}
+.bar .g{margin-left:auto;display:flex;gap:2px}
+.bar .g i{width:28px;height:28px;display:grid;place-items:center;color:var(--pi3)}
+.bar .g i svg{width:15px;height:15px}
+.lattice{position:absolute;inset:0;pointer-events:none;opacity:1;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'><path d='M28 0L56 16v32L28 64 0 48V16z M28 64v33 M0 48L0 81 M56 48v33' fill='none' stroke='%23808090' stroke-opacity='.18' stroke-width='1'/></svg>");mask-image:linear-gradient(#000 60%,transparent);-webkit-mask-image:linear-gradient(#000 60%,transparent)}
+.fi{width:16px;height:16px;border-radius:4px;display:inline-grid;place-items:center;font-size:9px;font-weight:700;color:#fff;flex:none}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.q{font:13px/1.45 var(--serif)}
+.qs{font:12px/1.4 var(--serif)}
+.lbl{font-size:11px;font-weight:600}
+.cap13{font-size:11px}
+.sec{font-size:12px}
+
+/* ---- sidebar with provenance + shelf ---- */
+.sb{width:224px;height:560px;padding:0 8px;position:relative}
+.band{height:44px;position:relative}
+.tl{position:absolute;top:16px;width:12px;height:12px;border-radius:50%}
+.tl.r{left:14px;background:#FF5F57}.tl.y{left:34px;background:#FEBC2E}.tl.g{left:54px;background:#28C840}
+.favs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fav{height:44px;border-radius:10px;background:var(--fill);display:grid;place-items:center}
+.fav .ic{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff}
+.space{display:flex;align-items:center;gap:6px;height:24px;margin-top:12px;padding-left:8px;font-size:11px;font-weight:600;color:var(--wi2)}
+.rows{position:relative}
+.r{display:flex;align-items:center;height:36px;margin-bottom:4px;border-radius:8px;padding:0 8px;color:var(--wi2);gap:8px;position:relative}
+.r .ico{width:20px;display:grid;place-items:center;flex:none}
+.r.sel{background:var(--rowsel);color:var(--wi);font-weight:500}
+.r.d1{padding-left:28px}.r.d2{padding-left:48px}
+.r.newtab{color:var(--wi3)}
+.hr{height:1px;background:var(--hairw);margin:12px 0 8px}
+.thread{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.shelf{position:absolute;left:8px;right:8px;bottom:36px;height:44px;display:flex;align-items:center;gap:6px}
+.shelf .v{font-size:11px;font-weight:600;color:var(--wi3);margin-right:2px}
+.chip{width:96px;height:32px;border-radius:8px;background:var(--fill);display:flex;align-items:center;gap:6px;padding:0 8px;color:var(--wi2);overflow:hidden;white-space:nowrap}
+.chip .qs{overflow:hidden;text-overflow:ellipsis}
+.foot{position:absolute;left:8px;right:8px;bottom:0;height:36px;display:flex;align-items:center;justify-content:space-between;color:var(--wi3)}
+.foot .dots{display:flex;gap:8px;align-items:center}.foot .dots i{width:6px;height:6px;border-radius:50%;background:var(--wi3);display:block}.foot .dots i.on{background:var(--wi)}
+.foot svg{width:16px;height:16px}
+
+/* ---- thread map ---- */
+.map{width:760px;height:400px}
+.map .canvas{position:relative;height:368px}
+.map .node{position:absolute;height:36px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:8px;color:var(--pi2);white-space:nowrap}
+.map .node.sel{background:var(--prowsel);color:var(--pi)}
+.map .node .host{font-size:11px;color:var(--pi3)}
+.map .node .dot{position:absolute;left:20px;top:22px}
+.map .qlabel{position:absolute;font-size:11px;font-weight:600;color:var(--pi3)}
+.map .time{position:absolute;font-size:11px;color:var(--pi3)}
+.map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hovercard{position:absolute;width:300px;padding:10px 12px;background:var(--ev);border-radius:12px;box-shadow:inset 0 0 0 1px var(--phair),var(--ps);color:var(--pi)}
+.hovercard .acts{display:flex;gap:12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--pi3)}
+
+/* ---- chat panel ---- */
+.chat{width:420px;height:520px;background:var(--ev);border-radius:12px;box-shadow:inset 0 0 0 1px var(--phair),var(--ps);color:var(--pi);font:13px var(--sys);display:flex;flex-direction:column;overflow:hidden}
+.chat .hd{height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;font-weight:600}
+.chat .hd .g{margin-left:auto;display:flex;gap:2px}.chat .hd .g i{width:28px;height:28px;display:grid;place-items:center;color:var(--pi3)}.chat .hd svg{width:15px;height:15px}
+.chat .ground{display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--pi3)}
+.chat .strip{display:flex;gap:6px;padding:0 12px 10px}
+.chat .c{height:24px;border-radius:8px;background:var(--efill);display:flex;align-items:center;gap:6px;padding:0 8px;font-size:12px;color:var(--pi2)}
+.chat .c .x{color:var(--pi3);font-size:10px}
+.chat .body{flex:1;padding:4px 12px;overflow:hidden}
+.chat .u{background:var(--efill);border-radius:12px;padding:8px 10px;color:var(--pi2);max-width:86%;margin:6px 0 12px auto}
+.chat .a{line-height:1.45}
+.chat .n{display:inline-grid;place-items:center;height:16px;min-width:16px;padding:0 4px;border-radius:4px;background:var(--efill);font-size:11px;font-weight:600;color:var(--pi2);vertical-align:1px;margin:0 1px}
+.chat .n.on{background:var(--hl2);color:var(--pi)}
+.chat blockquote{margin:8px 0;padding-left:10px;border-left:1px solid var(--tline);color:var(--pi);font:13px/1.45 var(--serif)}
+.chat .src{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.chat .none{font-size:11px;color:var(--pi3);margin-top:6px}
+.chat .skills{display:flex;gap:6px;padding:0 12px 8px}
+.chat .skills span{font-size:11px;font-weight:600;color:var(--pi3);padding:3px 8px;border-radius:8px;background:var(--efill)}
+.chat .comp{margin:0 12px 12px;min-height:40px;border-radius:12px;background:var(--efill);display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--pi3)}
+.chat .comp .send{margin-left:auto;width:24px;height:24px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff}
+
+/* ---- page with marks ---- */
+.page{width:520px;height:520px;padding:0}
+.page .txt{padding:28px 36px;font:15px/1.6 var(--serif);color:var(--pi)}
+.page .txt h3{font:600 22px var(--serif);margin:0 0 12px}
+mark{background:var(--hl);color:inherit;padding:0 1px;border-radius:2px}
+mark.on{background:var(--hl2)}
+mark .ix{font:600 10px var(--sys);color:var(--accent);vertical-align:super;margin-right:2px}
+.page .mdot{position:absolute;left:22px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.selbar{position:absolute;height:36px;border-radius:12px;background:var(--ev);box-shadow:inset 0 0 0 1px var(--phair),var(--ps);display:flex;align-items:center;gap:14px;padding:0 12px;font-size:11px;font-weight:600;color:var(--pi2)}
+.selbar span{display:flex;align-items:center;gap:5px}
+.notecard{position:absolute;width:300px;padding:10px 12px;background:var(--ev);border-radius:12px;box-shadow:inset 0 0 0 1px var(--phair),var(--ps);color:var(--pi);font-size:13px}
+.notecard .acts{display:flex;gap:12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--pi3)}
+
+/* ---- vault list ---- */
+.vault{width:560px;height:420px}
+.vault .list{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.vault .note{display:grid;grid-template-columns:1px 1fr;gap:10px}
+.vault .rule{background:var(--tline);margin:2px 0}
+.vault .note .t{color:var(--pi2);margin-top:4px}
+.vault .prov{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--pi3);margin-top:6px}
+.vault .prov .fi{width:12px;height:12px;font-size:7px}
+
+/* ---- resume page ---- */
+.resume{width:640px;height:460px}
+.resume .col{width:560px;margin:0 auto;padding-top:28px;position:relative}
+.resume .search{height:44px;border-radius:10px;background:var(--pfill);display:flex;align-items:center;gap:12px;padding:0 12px;color:var(--pi3)}
+.resume .search .k{margin-left:auto;font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--prowhov)}
+.resume .lbl{color:var(--pi3);margin:24px 0 6px}
+.resume .rr{height:36px;display:flex;align-items:center;gap:8px;padding:0 8px;border-radius:8px;color:var(--pi2)}
+.resume .rr .meta{font-size:12px;color:var(--pi3);margin-left:auto}
+.resume .qq{display:grid;grid-template-columns:1px 1fr;gap:10px;padding:6px 8px}
+.resume .qq .rule{background:var(--tline)}
+.resume .qq .prov{font-size:11px;color:var(--pi3)}
+
+/* ---- board ---- */
+.board{width:760px;height:400px}
+.board .cv{position:relative;height:368px}
+.board .card{position:absolute;background:var(--ev);border-radius:12px;box-shadow:inset 0 0 0 1px var(--phair),var(--ps);padding:10px 12px;color:var(--pi)}
+.board .card .h{display:flex;align-items:center;gap:6px}
+.board .card .host{font-size:11px;color:var(--pi3)}
+.board .thumb{margin-top:8px;height:90px;border-radius:6px;background:var(--pfill)}
+.board svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+/* ---- mail ---- */
+.mail{width:560px;height:360px}
+.mail .m{height:44px;display:grid;grid-template-columns:20px 1fr auto;column-gap:8px;padding:0 12px;align-items:center;border-bottom:1px solid var(--phair)}
+.mail .m .ico{display:grid;place-items:center}
+.mail .m .l1{display:flex;gap:8px}
+.mail .m .l1 .from{color:var(--pi)}
+.mail .m .l1 .sub{color:var(--pi2)}
+.mail .m .l2{font-size:12px;color:var(--pi3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mail .m .dt{font-size:11px;color:var(--pi3)}
+.mail .m.reply{padding-left:32px;position:relative}
+.mail .m.reply::before{content:"";position:absolute;left:21px;top:-1px;bottom:22px;width:1px;background:var(--tline)}
+.mail .m.reply::after{content:"";position:absolute;left:21px;top:22px;width:6px;height:1px;background:var(--tline)}
+.mail .more{font-size:11px;font-weight:600;color:var(--pi3);padding:8px 12px 8px 44px}
+</style>
+
+<div class="wrap">
+  <h1>Graphene, on top of Arc</h1>
+  <p class="lede">Everything below is the Arc base plus one drawing: the thread, a 1pt hairline that joins things that came from each other. Chrome is graphite by default, quoted page text is serif, and the lattice appears only where nothing else is. The sliders drive the same palette formulas as the app.</p>
+
+  <div class="controls">
+    <label>Space hue <input type="range" id="hue" min="0" max="360" value="232"><output id="hueOut">232°</output></label>
+    <label>Saturation <input type="range" id="sat" min="0" max="100" value="12"><output id="satOut">0.12</output></label>
+    <div class="seg"><button id="btnDark" aria-pressed="true">Dark</button><button id="btnLight" aria-pressed="false">Light</button></div>
+    <span class="cap">Graphite is hue 232°, saturation 0.12. Drag to 243° / 0.60 for the Iris pastel.</span>
+  </div>
+
+  <h2>Sidebar: provenance rows and the Vault shelf</h2>
+  <div class="row2">
+    <div>
+      <div class="stage"><div class="chrome sb" id="sb">
+        <div class="band"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i></div>
+        <div class="favs">
+          <div class="fav"><div class="ic" style="background:#3B6FD8">W</div></div>
+          <div class="fav"><div class="ic" style="background:#24292F">G</div></div>
+          <div class="fav"><div class="ic" style="background:#0B84F3">A</div></div>
+        </div>
+        <div class="space"><span class="dot" style="background:var(--wi3)"></span> Research</div>
+        <div class="r"><span class="ico"><span class="fi" style="background:#F05138">S</span></span>Swift Evolution</div>
+        <div class="hr"></div>
+        <div class="r newtab"><span class="ico">+</span>New Tab</div>
+        <div class="rows">
+          <svg class="thread" viewBox="0 0 208 160" preserveAspectRatio="none">
+            <path d="M17 28 V108" stroke="var(--tline2)" stroke-width="1" fill="none"/>
+            <path d="M17 58 h11 M17 98 h11" stroke="var(--tline2)" stroke-width="1" fill="none"/>
+            <path d="M37 108 V138 M37 138 h11" stroke="var(--tline)" stroke-width="1" fill="none"/>
+          </svg>
+          <div class="r"><span class="ico"><span class="fi" style="background:#3B6FD8">W</span></span>Graphene · Wikipedia</div>
+          <div class="r d1 sel"><span class="ico"><span class="fi" style="background:#3B6FD8">W</span></span>Carbon allotrope</div>
+          <div class="r d1"><span class="ico"><span class="fi" style="background:#24292F">G</span></span>Graphene nanoribbon</div>
+          <div class="r d2"><span class="ico"><span class="fi" style="background:#5B7">N</span></span>Nature paper, 2004</div>
+          <div class="r"><span class="ico"><span class="fi" style="background:#FF6600">Y</span></span>Hacker News</div>
+        </div>
+        <div class="shelf"><span class="v">Vault</span>
+          <div class="chip"><span class="fi" style="background:#3B6FD8">W</span><span class="qs">strongest material ever measured</span></div>
+          <div class="chip"><span class="fi" style="background:#5B7">N</span><span class="qs">single atomic layer</span></div>
+        </div>
+        <div class="foot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="4.5" width="13" height="10" rx="2"/><path d="M1.5 7.5h13M6 11h4"/></svg><div class="dots"><i class="on"></i><i></i></div><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg></div>
+      </div></div>
+      <p class="cap">Children are indented 20pt under the tab they were opened from. One hairline runs down the icon column; the branch holding the selection turns accent. The shelf shows the last saves as serif chips and disappears when the space has no notes.</p>
+    </div>
+    <div>
+      <div class="stage"><div class="pg resume" id="resume">
+        <div class="lattice"></div>
+        <div class="col">
+          <div class="search"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6"/><path d="M12.5 12.5L16 16"/></svg>Search or enter a URL<span class="k">⌘T</span></div>
+          <div class="lbl">Continue</div>
+          <div class="rr"><span class="fi" style="background:#3B6FD8">W</span>Graphene · Wikipedia<span class="meta">6 pages · 2h ago</span></div>
+          <div class="rr"><span class="fi" style="background:#F05138">S</span>SE-0413 typed throws<span class="meta">3 pages · yesterday</span></div>
+          <div class="lbl">Saved here</div>
+          <div class="qq"><div class="rule"></div><div><div class="qs">On a microscopic scale, graphene is the strongest material ever measured.</div><div class="prov">Graphene · Wikipedia</div></div></div>
+          <div class="qq"><div class="rule"></div><div><div class="qs">Typed throws let a function declare exactly which error type it throws.</div><div class="prov">SE-0413 · swift.org</div></div></div>
+        </div>
+      </div></div>
+      <p class="cap">The resume page: search, threads to continue, notes saved in this space. Sections appear only with data; an empty profile shows the search field and the lattice alone.</p>
+    </div>
+  </div>
+
+  <h2>Thread map: the navigation graph as a tree in time</h2>
+  <div class="stage"><div class="pg map" id="map">
+    <div class="bar">Threads<div class="g"><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h11M2 7.5h11M2 12h11"/></svg></i><i style="color:var(--accent)"><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="7.5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><path d="M3 4.5v7.5M3 7.5h6M3 12h6"/></svg></i><i><svg viewBox="0 0 15 15" fill="currentColor"><path d="M7.5 1l1.6 4.4L13.5 7l-4.4 1.6L7.5 13 5.9 8.6 1.5 7l4.4-1.6z"/></svg></i></div></div>
+    <div class="canvas">
+      <div class="time" style="left:20px;top:14px">Tue 14:05</div>
+      <div class="qlabel" style="left:20px;top:32px">“graphene tensile strength”</div>
+      <svg viewBox="0 0 760 368">
+        <path d="M40 74 V186 M40 114 q0 6 6 6 h134 M40 154 q0 6 6 6 h134 M40 186 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
+        <path d="M220 154 V226 M220 226 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
+        <path d="M220 154 V226 q0 6 6 6 h134 M40 74 V154 q0 6 6 6 h134" stroke="var(--tline2)" fill="none"/>
+        <path d="M400 232 V272 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
+      </svg>
+      <div class="node" style="left:20px;top:56px"><span class="fi" style="background:#3B6FD8">W</span>Graphene<span class="host">en.wikipedia.org</span></div>
+      <div class="node" style="left:200px;top:96px"><span class="fi" style="background:#3B6FD8">W</span>Carbon allotrope<span class="host">en.wikipedia.org</span></div>
+      <div class="node sel" style="left:200px;top:136px"><span class="fi" style="background:#5B7">N</span>Electric field effect…<span class="host">nature.com</span><span class="dot"></span></div>
+      <div class="node" style="left:380px;top:214px"><span class="fi" style="background:#C33">A</span>Geim &amp; Novoselov<span class="host">arxiv.org</span></div>
+      <div class="node" style="left:560px;top:260px"><span class="fi" style="background:#24292F">G</span>graphene-sim<span class="host">github.com</span></div>
+      <div class="node" style="left:200px;top:176px"><span class="fi" style="background:#FF6600">Y</span>Show HN: graphene…<span class="host">news.ycombinator.com</span></div>
+      <div class="hovercard" style="left:380px;top:96px"><div class="qs">Field-effect transistor devices made of few-layer graphene exhibited ambipolar behaviour with mobilities up to 10,000 cm²/Vs.</div><div class="acts"><span>Open</span><span>Resume from here</span><span>Note</span></div></div>
+    </div>
+  </div></div>
+  <p class="cap">Columns are depth, rows are order; a branch is contiguous under its parent, the same rule as the sidebar. No force layout, no zoom. The selected node's ancestor path is accent; the accent dot marks a page with a Vault note; hover shows the snippet in serif with Open, Resume and Note.</p>
+
+  <h2>Ask: the AI panel and the page it points at</h2>
+  <div class="row2">
+    <div>
+      <div class="stage"><div class="pg page" id="page">
+        <div class="bar" style="font-weight:400;font-size:11px;color:var(--pi3);justify-content:center">en.wikipedia.org/wiki/Graphene</div>
+        <div class="txt">
+          <h3>Graphene</h3>
+          Graphene is a variety of the element carbon which occurs naturally in small amounts. In graphene, the carbon forms a sheet of interlocked atoms as hexagons one carbon atom thick.<br><br>
+          Graphene is known for its exceptionally high tensile strength, electrical conductivity, transparency, and being the thinnest two-dimensional material in the world. <mark class="on"><span class="ix">1</span>On a microscopic scale, graphene is the strongest material ever measured</mark>, with a tensile strength of <mark><span class="ix">2</span>130 GPa</mark> and a Young's modulus of about 1 TPa.<br><br>
+          The material was first isolated and characterized in 2004 by Andre Geim and Konstantin Novoselov at the University of Manchester.
+        </div>
+        <i class="mdot" style="top:246px"></i>
+        <div class="selbar" style="left:150px;top:392px"><span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="1.5" width="8" height="9" rx="1.5"/></svg>Save ⌘D</span><span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2h8v6H5l-3 2z"/></svg>Note</span><span><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1l1.2 3.3L10.5 5.5 7.2 6.7 6 10 4.8 6.7 1.5 5.5l3.3-1.2z"/></svg>Ask</span></div>
+      </div></div>
+      <p class="cap">Citations and saved highlights share one mark: accent at 22%, text colour untouched, a numbered superscript when it belongs to an answer. Hovering a mark shows the margin dot; the selection bar is an injected card in the page's own colour scheme, not a system control.</p>
+    </div>
+    <div>
+      <div class="stage"><div class="chat" id="chat">
+        <div class="hd">Ask<div class="g"><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7.5" cy="7.5" r="6"/><path d="M7.5 4v3.5l2.5 1.5"/></svg></i><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2v11M2 7.5h11"/></svg></i><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l9 9M12 3l-9 9"/></svg></i></div></div>
+        <div class="ground"><span class="dot"></span>This page and 1 note</div>
+        <div class="strip"><div class="c"><span class="fi" style="background:#3B6FD8">W</span>Graphene<span class="x">✕</span></div><div class="c"><span style="font-family:var(--serif);font-size:14px;line-height:1">”</span>strongest material…<span class="x">✕</span></div><div class="c" style="color:var(--pi3)">+ Add</div></div>
+        <div class="body">
+          <div class="u">How strong is it, and who first isolated it?</div>
+          <div class="a">Graphene is the strongest material ever measured on a microscopic scale <span class="n on">1</span>, with a tensile strength of 130 GPa <span class="n">2</span>. It was first isolated in 2004 by Geim and Novoselov at Manchester <span class="n">3</span>.
+            <blockquote>On a microscopic scale, graphene is the strongest material ever measured.</blockquote>
+            <div class="src"><div class="c"><span class="n on">1</span><span class="fi" style="background:#3B6FD8">W</span>Graphene</div><div class="c"><span class="n">2</span><span class="fi" style="background:#3B6FD8">W</span>Graphene</div><div class="c"><span class="n">3</span><span class="fi" style="background:#3B6FD8">W</span>Graphene</div></div>
+          </div>
+        </div>
+        <div class="skills"><span>/summarize</span><span>/explain</span><span>/compare</span><span>/tldr</span></div>
+        <div class="comp"><span>@</span><span>/</span>Ask about this page…<span class="send"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 10V2M2.5 5.5L6 2l3.5 3.5"/></svg></span></div>
+      </div></div>
+      <p class="cap">The grounding line replaces the sparkle: what the model can see, with an accent dot when it is local. Inline indices match the marks in the page; hovering one scrolls the page to it. A quoted passage is serif with the thread rule. Skills are chips that vanish once you type.</p>
+    </div>
+  </div>
+
+  <h2>Vault, Board and Mail</h2>
+  <div class="row2">
+    <div>
+      <div class="stage"><div class="pg vault" id="vault">
+        <div class="bar">Vault<div class="g"><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h11M2 7.5h11M2 12h11"/></svg></i><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><path d="M9.5 9.5L13 13"/></svg></i></div></div>
+        <div class="list">
+          <div class="note"><div class="rule"></div><div><div class="q">On a microscopic scale, graphene is the strongest material ever measured.</div><div class="t">Use for the intro; cite Lee et al. 2008.</div><div class="prov"><span class="fi" style="background:#3B6FD8">W</span>Graphene · Wikipedia · Research · 2h ago</div></div></div>
+          <div class="note"><div class="rule"></div><div><div class="q">Field-effect transistor devices made of few-layer graphene exhibited ambipolar behaviour.</div><div class="prov"><span class="fi" style="background:#5B7">N</span>Electric field effect in atomically thin carbon films · nature.com · Research · 2h ago</div></div></div>
+          <div class="note"><div class="rule"></div><div><div class="q">Typed throws let a function declare exactly which error type it throws.</div><div class="prov"><span class="fi" style="background:#F05138">S</span>SE-0413 · swift.org · Research · yesterday</div></div></div>
+        </div>
+      </div></div>
+      <p class="cap">Notes are rows, not cards: the quote in serif with a thread rule at its left, your note in sans beneath, and one provenance line. Clicking the quote returns to the page, scrolled to the mark.</p>
+    </div>
+    <div>
+      <div class="stage"><div class="pg mail" id="mail">
+        <div class="bar">Mail<div class="g" style="font-size:11px;font-weight:400;color:var(--pi3);align-items:center">Read-only. Graphene never sends mail.</div></div>
+        <div class="m"><span class="ico"><span class="dot"></span></span><div><div class="l1"><span class="from">Konstantin N.</span><span class="sub">Re: graphene sample thickness</span></div><div class="l2">The AFM traces suggest three layers at the edge, not one. Could you rerun…</div></div><span class="dt">14:32</span></div>
+        <div class="m reply"><span class="ico"></span><div><div class="l1"><span class="from">Andre G.</span><span class="sub">Re: graphene sample thickness</span></div><div class="l2">Attaching the Raman spectra from this morning.</div></div><span class="dt">11:05</span></div>
+        <div class="m reply"><span class="ico"></span><div><div class="l1"><span class="from">You</span><span class="sub">graphene sample thickness</span></div><div class="l2">Starting a thread for the March batch.</div></div><span class="dt">Mon</span></div>
+        <div class="more">4 more</div>
+        <div class="m"><span class="ico"></span><div><div class="l1"><span class="from" style="color:var(--pi2)">swift.org forums</span><span class="sub">[Evolution] SE-0413 review</span></div><div class="l2">The review of SE-0413 “Typed throws” begins now and runs through…</div></div><span class="dt">Sun</span></div>
+      </div></div>
+      <p class="cap">Mail rows use the tab grammar: no avatars, an accent dot for unread, replies threaded with the same hairline as the sidebar. The body renders in the reader sheet, and links open as child tabs with provenance.</p>
+    </div>
+  </div>
+
+  <div class="stage" style="margin-top:20px"><div class="pg board" id="board">
+    <div class="bar">Board<div class="g"><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2v11M2 7.5h11"/></svg></i><i><svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l9-9M6 3h6v6"/></svg></i></div></div>
+    <div class="cv">
+      <div class="lattice" style="mask-image:none;-webkit-mask-image:none"></div>
+      <svg viewBox="0 0 760 368"><path d="M284 96 h30 q6 0 6 6 v78 q0 6 6 6 h18" stroke="var(--tline)" fill="none"/><path d="M284 96 h30 q6 0 6 6 v-24 q0 -6 6 -6 h18" stroke="var(--tline)" fill="none"/></svg>
+      <div class="card" style="left:28px;top:28px;width:256px"><div class="h"><span class="fi" style="background:#3B6FD8">W</span>Graphene<span class="host">en.wikipedia.org</span></div><div class="thumb"></div></div>
+      <div class="card" style="left:344px;top:40px;width:240px"><div class="h"><span class="fi" style="background:#5B7">N</span>Electric field effect…<span class="host">nature.com</span></div><div class="thumb" style="height:60px"></div></div>
+      <div class="card" style="left:344px;top:156px;width:300px"><div class="q">On a microscopic scale, graphene is the strongest material ever measured.</div><div class="host" style="margin-top:6px">Graphene · Wikipedia</div></div>
+      <div class="card" style="left:28px;top:196px;width:220px"><div style="font-weight:600;font-size:15px;margin-bottom:4px">Intro draft</div><div style="color:var(--pi2)">Lead with strength, then the 2004 isolation. Keep the FET result for the second section.</div></div>
+    </div>
+  </div></div>
+  <p class="cap">The Board is the one working surface that keeps the lattice. Cards snap to its 28pt cells. Connectors are never drawn by hand: when one card's page was opened from another's, the thread appears between them and follows when a card moves.</p>
+
+  <h2>Tokens this layer adds</h2>
+  <div class="row2">
+    <table>
+      <tr><th>Token</th><th>Value</th></tr>
+      <tr><td>threadIndent / threadLineInset</td><td>20 / 17</td></tr>
+      <tr><td>threadColumn / threadRowPitch / threadNodeSize</td><td>180 / 40 / 20</td></tr>
+      <tr><td>shelfHeight / shelfChipWidth / shelfChipRadius</td><td>44 / 96 / 8</td></tr>
+      <tr><td>newTabColumnWidth / newTabGap</td><td>560 / 24</td></tr>
+      <tr><td>latticeCell</td><td>28</td></tr>
+      <tr><td>annotationBarHeight / markInset</td><td>36 / 1</td></tr>
+      <tr><td>ShellType.quote / quoteSmall</td><td>New York 13/1.45 · 12</td></tr>
+    </table>
+    <table id="tok"></table>
+  </div>
+
+  <h2>Rules a reviewer can check</h2>
+  <ul>
+    <li>Every hairline outside the Arc base joins two things that came from each other, or sits at the left of a quote. Point at any line and name both ends.</li>
+    <li>Serif appears only on text that came from a page. Never on a heading, label or control.</li>
+    <li>The lattice appears only on empty Threads, empty Vault, the empty new-tab page and the Board canvas.</li>
+    <li>Every identity element disappears when its data is gone. An empty space is pixel-identical to Arc, except graphite.</li>
+    <li>The accent is the only colour Graphene owns; semantic red is for errors and unread only.</li>
+  </ul>
+</div>
+
+<script>
+(function(){
+  function hsb(h,s,b){h=((h%360)+360)%360;s=Math.max(0,Math.min(1,s));b=Math.max(0,Math.min(1,b));var c=b*s,x=c*(1-Math.abs((h/60)%2-1)),m=b-c,r=0,g=0,bl=0;
+    if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;bl=x}else if(h<240){g=x;bl=c}else if(h<300){r=x;bl=c}else{r=c;bl=x}
+    var f=function(v){return Math.round((v+m)*255)};return {r:f(r),g:f(g),b:f(bl)}}
+  function hex(c){return '#'+[c.r,c.g,c.b].map(function(v){return('0'+v.toString(16)).slice(-2).toUpperCase()}).join('')}
+  function rgba(c,a){return 'rgba('+c.r+','+c.g+','+c.b+','+a+')'}
+  var W='rgba(255,255,255,',K='rgba(27,27,34,';
+  function pal(h,s,dark){var sp=s===0?0:0.5+0.5*s;
+    if(dark){var top=hsb(h,0.82*sp,0.15),bot=hsb(h+44,0.92*sp,0.15),acc=hsb(h,0.45,0.85);
+      return {ct:hex(top),cb:hex(bot),wo:W+'.10)',wi:'#FFFFFF',wi2:W+'.72)',wi3:W+'.48)',fill:W+'.09)',rowsel:W+'.12)',hairw:W+'.10)',tline:W+'.18)',tline2:rgba(acc,.6),accent:hex(acc),
+        pb:'#FFFFFF',pi:'#1B1B22',pi2:K+'.75)',pi3:K+'.50)',pfill:K+'.06)',prowhov:K+'.04)',prowsel:K+'.08)',phair:K+'.08)',pbd:W+'.12)',ps:'0 2px 12px rgba(0,0,0,.35)',ev:'#FFFFFF',efill:K+'.05)',hl:rgba(acc,.28),hl2:rgba(acc,.45),
+        list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['accent',hex(acc)],['threadLine','ink 18%'],['threadLineActive','accent 60%'],['highlight','accent 22%'],['highlightActive','accent 38%'],['lattice','ink 4%']]}}
+    var top=hsb(h,0.22*sp,0.95),bot=hsb(h+25,0.26*sp,0.92),acc=hsb(h,0.55,0.62);
+    return {ct:hex(top),cb:hex(bot),wo:K+'.06)',wi:'#1B1B22',wi2:K+'.75)',wi3:K+'.50)',fill:W+'.45)',rowsel:W+'.60)',hairw:K+'.08)',tline:K+'.14)',tline2:rgba(acc,.6),accent:hex(acc),
+      pb:'#FFFFFF',pi:'#1B1B22',pi2:K+'.75)',pi3:K+'.50)',pfill:K+'.06)',prowhov:K+'.04)',prowsel:K+'.08)',phair:K+'.08)',pbd:K+'.08)',ps:'0 1px 10px rgba(0,0,0,.10)',ev:'#FFFFFF',efill:K+'.05)',hl:rgba(acc,.22),hl2:rgba(acc,.38),
+      list:[['chromeTop',hex(top)],['chromeBottom',hex(bot)],['accent',hex(acc)],['threadLine','ink 14%'],['threadLineActive','accent 60%'],['highlight','accent 22%'],['highlightActive','accent 38%'],['lattice','ink 4%']]}}
+  var ids=['sb','resume','map','page','chat','vault','mail','board'],dark=true;
+  var hue=document.getElementById('hue'),sat=document.getElementById('sat');
+  function render(){var h=+hue.value,s=(+sat.value)/100;document.getElementById('hueOut').value=h+'°';document.getElementById('satOut').value=s.toFixed(2);
+    var p=pal(h,s,dark);ids.forEach(function(id){var el=document.getElementById(id);for(var k in p){if(k!=='list')el.style.setProperty('--'+k,p[k])}});
+    var t=document.getElementById('tok'),html='<tr><th>Colour</th><th>'+(dark?'Dark':'Light')+'</th></tr>';p.list.forEach(function(r){html+='<tr><td>'+r[0]+'</td><td><code>'+r[1]+'</code></td></tr>'});t.innerHTML=html;
+    document.getElementById('btnDark').setAttribute('aria-pressed',dark);document.getElementById('btnLight').setAttribute('aria-pressed',!dark)}
+  hue.addEventListener('input',render);sat.addEventListener('input',render);
+  document.getElementById('btnDark').addEventListener('click',function(){dark=true;render()});
+  document.getElementById('btnLight').addEventListener('click',function(){dark=false;render()});
+  render();
+})();
+</script>
