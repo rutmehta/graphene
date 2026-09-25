@@ -158,6 +158,16 @@ enum ShellLayout {
     static let latticeCell: CGFloat = 28
     /// Padding of the in-page citation mark, in CSS px.
     static let markInset: CGFloat = 1
+    // Annotations (graphene-language.md §5.3)
+    /// The selection bar in the page.
+    static let annotationBarHeight: CGFloat = 36
+    /// The in-page note editor and note card, and their gap to the selection and the margin.
+    static let annotationCardWidth: CGFloat = 320
+    static let annotationGap: CGFloat = 8
+    /// The quote rule's inset from the top and bottom of its quote.
+    static let quoteRuleInset: CGFloat = 2
+    /// The favicon on a Vault row's provenance line.
+    static let provenanceIconSize: CGFloat = 12
     static func clampedSidebarWidth(_ width: CGFloat) -> CGFloat {
         min(sidebarRange.upperBound, max(sidebarRange.lowerBound, width))
     }
@@ -165,7 +175,9 @@ enum ShellLayout {
 
 /// The shell's type scale (arc-look.md §2.2): system face, default design, nothing above 22.
 enum ShellType {
-    static let label = Font.system(size: 11, weight: .semibold)
+    static let label = Font.system(size: labelSize, weight: .semibold)
+    /// `label`'s point size, for the in-page annotation UI (CSS px).
+    static let labelSize: CGFloat = 11
     static let caption = Font.system(size: 11, weight: .regular)
     static let secondary = Font.system(size: 12, weight: .regular)
     static let row = Font.system(size: rowSize, weight: .regular)
@@ -372,8 +384,7 @@ struct Palette {
     /// In-page citation highlight (injected as CSS).
     var highlight: Color { accent.opacity(0.22) }
     /// Hovered or selected in-page citation.
-    var highlightActive: Color { accent.opacity(0.38) }
-    /// A practically invisible fill that still receives hover and drops.
+    var highlightActive: Color { accent.opacity(0.38) }    /// A practically invisible fill that still receives hover and drops.
     var hitTarget: Color { Color.black.opacity(0.001) }
 
     // MARK: page card and elevated surfaces

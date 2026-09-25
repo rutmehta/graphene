@@ -14,6 +14,23 @@ struct Annotation: Codable, Identifiable {
     var accountScope: String?
 }
 
+extension Annotation {
+    /// The prefix of a saved note's in-page mark id; the id is the note's drag reference.
+    static let markPrefix = "note:"
+    /// The `data-graphene-cite` id of this note's mark: `note:<uuid>`.
+    var markID: String { NoteDrag.reference(id) }
+    /// The note a mark id names, or nil for any other mark (a citation, the source highlight).
+    static func noteID(markID: String) -> UUID? {
+        guard markID.hasPrefix(markPrefix) else { return nil }
+        return UUID(uuidString: String(markID.dropFirst(markPrefix.count)))
+    }
+    /// What cite.js marks for this note: its quote under `markID`, or nil when the note has
+    /// no quote (a page saved without a selection).
+    var passage: CitedPassage? {
+        CitedPassage.normalized(text).isEmpty ? nil : CitedPassage(id: markID, text: text)
+    }
+}
+
 /// The knowledge vault: annotations and daily digests as plain markdown on your
 /// disk, each carrying the source it came from. Notes never lose their origin.
 @MainActor
@@ -30,8 +47,10 @@ final class Vault: ObservableObject {
         if !inMemory { load() }
     }
 
-    func add(text: String, note: String, url: URL?, title: String, context: String, spaceID: UUID? = nil, provenance: String? = nil, accountScope: String? = nil) {
-        guard canSave else { return }
+    /// Saves a note and returns it, or nil when it could not be saved.
+    @discardableResult
+    func add(text: String, note: String, url: URL?, title: String, context: String, spaceID: UUID? = nil, provenance: String? = nil, accountScope: String? = nil) -> Annotation? {
+        guard canSave else { return nil }
         let ann = Annotation(
             id: UUID(), text: text, note: note,
             url: url?.absoluteString ?? "", title: title,
@@ -40,8 +59,9 @@ final class Vault: ObservableObject {
         )
         let previous = annotations
         annotations.insert(ann, at: 0)
-        guard persistJSON() else { annotations = previous; return }
+        guard persistJSON() else { annotations = previous; return nil }
         writeNote(ann)
+        return ann
     }
 
     func delete(_ ann: Annotation) {
@@ -89,6 +109,11 @@ final class Vault: ObservableObject {
 
     func annotations(forURL url: String) -> [Annotation] {
         annotations.filter { KnowledgeGraph.canonicalURL($0.url) == KnowledgeGraph.canonicalURL(url) }
+    }
+
+    /// The notes saved from the page at `url` that carry a quote, newest first: the page's saved marks.
+    func markedNotes(forURL url: URL) -> [Annotation] {
+        annotations(forURL: url.absoluteString).filter { $0.passage != nil }.sorted { $0.created > $1.created }
     }
 
     func forget(host: String) {

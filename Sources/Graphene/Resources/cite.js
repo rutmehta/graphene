@@ -128,7 +128,7 @@
     return { text, map };
   };
 
-  const wrap = (range, id, number) => {
+  const wrap = (range, id, number, kind) => {
     const nodes = [];
     const walker = document.createTreeWalker(range.commonAncestorContainer.nodeType === Node.TEXT_NODE
       ? range.commonAncestorContainer.parentNode : range.commonAncestorContainer, NodeFilter.SHOW_TEXT);
@@ -145,6 +145,7 @@
       if (end < target.nodeValue.length) target.splitText(end);
       const mark = document.createElement("mark");
       mark.setAttribute("data-graphene-cite", id);
+      if (kind) mark.setAttribute("data-graphene-kind", kind);
       target.parentNode.insertBefore(mark, target);
       mark.appendChild(target);
       marks.push(mark);
@@ -188,6 +189,9 @@ mark[data-graphene-cite][data-graphene-index]::before{content:attr(data-graphene
     if (id === hovered) return;
     hovered = id;
     post({ kind: "citeHover", id });
+    // The hook annotate.js draws a saved note's margin dot from.
+    const kind = mark ? mark.getAttribute("data-graphene-kind") : null;
+    document.dispatchEvent(new CustomEvent("graphene-mark-hover", { detail: { id, kind, mark } }));
   }, true);
 
   window.__grapheneCite = {
@@ -198,7 +202,8 @@ mark[data-graphene-cite][data-graphene-index]::before{content:attr(data-graphene
       const found = locate(normalize(pageText), passage);
       return found ? found.run : null;
     },
-    // passages: [{id, text, index?}]; style: {highlight, highlightActive, accent, inset}.
+    // passages: [{id, text, index?, kind?}]; style: {highlight, highlightActive, accent, inset}.
+    // `kind` ("note" for a saved Vault note) is written as data-graphene-kind.
     // Replaces marks with the same ids; returns the ids found.
     highlight(passages, style) {
       if (editable()) return [];
@@ -214,7 +219,7 @@ mark[data-graphene-cite][data-graphene-index]::before{content:attr(data-graphene
         const range = document.createRange();
         range.setStart(first.node, first.offset);
         range.setEnd(last.node, last.end);
-        if (wrap(range, String(passage.id), passage.index)) ids.push(String(passage.id));
+        if (wrap(range, String(passage.id), passage.index, passage.kind)) ids.push(String(passage.id));
       }
       return ids;
     },
@@ -228,8 +233,9 @@ mark[data-graphene-cite][data-graphene-index]::before{content:attr(data-graphene
       mark.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center", inline: "nearest" });
       return true;
     },
+    // Removes the citation marks. A saved note's mark (kind "note") is not a citation and stays.
     clear() {
-      document.querySelectorAll("mark[data-graphene-cite]").forEach(unwrap);
+      document.querySelectorAll('mark[data-graphene-cite]:not([data-graphene-kind="note"])').forEach(unwrap);
       hovered = null;
     },
   };

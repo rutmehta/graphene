@@ -150,7 +150,23 @@ final class AppState: ObservableObject, BrowserCoordinator {
     /// Links the latest Ask answer to marks in a page (D6 G4); cleared on close and navigation.
     let citations = CitationLinker()
     @Published var noteDrafts: [UUID: String] = [:]
-    @Published var noteComposerPresented = false
+    /// ⌘D and the toolbar's Save: with text selected in the page, the selection is saved as a
+    /// note and marked in place (graphene-language.md §5.3); otherwise the composer opens.
+    @Published var noteComposerPresented = false {
+        didSet {
+            guard noteComposerPresented, !oldValue, !composingPage, !isPrivate, activeSurface == .web,
+                  let engine = activeTab?.loadedEngine as? WKWebEngine else { return }
+            noteComposerPresented = false
+            Task { [weak self] in
+                guard await !engine.saveSelection(), let self else { return }
+                self.composingPage = true
+                self.noteComposerPresented = true
+                self.composingPage = false
+            }
+        }
+    }
+    /// Set while the composer opens after the page had no selection to save.
+    private var composingPage = false
     @Published var findPresented = false
     @Published var findQuery = ""
     @Published var findRequest = 0
@@ -605,6 +621,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
                 guard let tab, let owner = tab.coordinator as? AppState else { return false }
                 return owner.captureAllowed(tab)
             }
+            (engine as? WKWebEngine)?.savedNotes = { [weak tab] url in
+                (tab?.coordinator as? AppState)?.vault.markedNotes(forURL: url) ?? []
+            }
             (engine as? WKWebEngine)?.linkHandler = { [weak tab] url, modifiers in
                 guard let tab, tab.isPinned, let owner = (BrowserFocus.shared.app ?? tab.coordinator as? AppState) else { return false }
                 if modifiers.contains(.shift) { owner.showPeek(url); return true }
@@ -778,7 +797,54 @@ final class AppState: ObservableObject, BrowserCoordinator {
                   title: annotation.title, context: annotation.context, spaceID: tab.spaceID)
         if let error = vault.errorText { notify("Couldn’t save: \(error)"); return }
         if let node = tab.currentNodeID { graph.bumpAnnotationCount(nodeID: node) }
+        markSavedNotes(in: tab)
         notify("Saved to Vault")
+    }
+
+    // MARK: saved notes in pages (graphene-language.md §5.3)
+
+    /// Re-marks `tab`'s page with its saved notes (after a save, an edit or a delete).
+    func markSavedNotes(in tab: Tab) {
+        guard !isPrivate, let engine = tab.loadedEngine as? WKWebEngine else { return }
+        Task { await engine.markSavedNotes() }
+    }
+
+    /// Re-marks every open tab showing `url`.
+    func refreshNoteMarks(url: String) {
+        let key = KnowledgeGraph.canonicalURL(url)
+        for tab in tabs where tab.url.map({ KnowledgeGraph.canonicalURL($0.absoluteString) }) == key { markSavedNotes(in: tab) }
+    }
+
+    /// Changes a note's text from the Vault or from its card in the page.
+    func updateNote(_ note: Annotation, text: String) {
+        vault.update(note, note: text)
+        guard vault.errorText == nil else { notify("Couldn’t save note"); return }
+        noteDrafts.removeValue(forKey: note.id)
+        refreshNoteMarks(url: note.url)
+        notify("Note updated")
+    }
+
+    /// Deletes a note and removes its mark from open pages.
+    func deleteNote(_ note: Annotation) {
+        vault.delete(note)
+        guard !vault.annotations.contains(where: { $0.id == note.id }) else { return }
+        noteDrafts.removeValue(forKey: note.id)
+        if vaultSelectionID == note.id { vaultSelectionID = nil }
+        refreshNoteMarks(url: note.url)
+    }
+
+    /// "Open in Vault" on a note card: the Vault with the note selected.
+    func openNoteInVault(_ id: UUID) {
+        vaultSelectionID = id
+        show(.vault)
+    }
+
+    /// Ask on the selection bar: opens the Ask panel with the selected text attached as a source.
+    /// The source takes the page's graph node id, so it carries the page's space provenance.
+    func askAboutSelection(_ text: String, in tab: Tab) {
+        guard !isPrivate, aiTabAllowed(tab), let url = tab.url, let node = tab.currentNodeID else { return }
+        attachedSources = [KnowledgeSource(id: node, title: tab.displayTitle, url: url.absoluteString, text: text, kind: "Selection")]
+        sendToAsk("")
     }
 
     func openTab(url: URL, parent: Tab?, activate: Bool) {

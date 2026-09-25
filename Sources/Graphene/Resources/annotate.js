@@ -1,16 +1,45 @@
-// Graphene annotation affordance.
+// Graphene annotation affordance (graphene-language.md §5.3).
 // Injected at document-end into the main frame. All UI lives in a Shadow DOM
 // overlay so the host page's CSS and CSP can't interfere, and all styling is set
 // via CSSOM properties (not injected <style>/inline strings, which strict-CSP
-// sites block).
+// sites block). Colours, sizes and radii arrive from Swift as page-scheme tokens
+// (`window.__grapheneAnnotateTheme`, WKWebEngine.annotationStyle); saved notes arrive
+// through `window.__grapheneAnnotateNotes` and cite.js draws them as note-kind marks.
 (() => {
   if (window.__grapheneAnnotate) return;
   window.__grapheneAnnotate = true;
 
+  // Placement rules, in viewport coordinates. `sel` is the selection's bounding rect
+  // ({left, top, right, bottom}), `size` the card's {width, height}, `view` the viewport's
+  // {width, height} and `gap` the distance kept from the selection and the viewport edges.
+  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const layout = {
+    // The selection bar sits `gap` above the selection, centred on it; below it when the
+    // viewport has no room above.
+    bar(sel, size, view, gap) {
+      const left = clamp((sel.left + sel.right) / 2 - size.width / 2, gap, Math.max(gap, view.width - size.width - gap));
+      const above = sel.top - gap - size.height;
+      if (above >= gap) return { left, top: above, placement: "above" };
+      return { left, top: sel.bottom + gap, placement: "below" };
+    },
+    // The note editor never covers the selection: beside it (right, then left), else
+    // below it, else above it; when nothing fits it goes below and the page scrolls.
+    editor(sel, size, view, gap) {
+      const top = clamp(sel.top, gap, Math.max(gap, view.height - size.height - gap));
+      if (sel.right + gap + size.width <= view.width - gap) return { left: sel.right + gap, top, placement: "right" };
+      if (sel.left - gap - size.width >= gap) return { left: sel.left - gap - size.width, top, placement: "left" };
+      const left = clamp(sel.left, gap, Math.max(gap, view.width - size.width - gap));
+      if (sel.bottom + gap + size.height <= view.height - gap) return { left, top: sel.bottom + gap, placement: "below" };
+      if (sel.top - gap - size.height >= gap) return { left, top: sel.top - gap - size.height, placement: "above" };
+      return { left, top: sel.bottom + gap, placement: "below" };
+    },
+  };
+  window.__grapheneAnnotateLayout = layout;
+  if (typeof document === "undefined" || !document.documentElement) return;
+
   const post = (msg) => {
     try { window.webkit.messageHandlers.graphene.postMessage(msg); } catch (e) {}
   };
-
   // Shadow host, positioned absolutely in the document.
   const host = document.createElement("div");
   host.setAttribute("data-graphene", "");
@@ -109,49 +138,150 @@
   }, true);
   document.addEventListener('keyup', e => { if (e.key === 'Shift') { clearTimeout(hoverTimer); hovered = null; } });
 
-  // Floating action shown on selection.
-  const bar = makeEl("div", {
-    position: "absolute", display: "none", alignItems: "center", gap: "6px",
-    padding: "5px 6px 5px 10px", borderRadius: "9px",
-    background: "rgba(28,28,30,0.96)", color: "#F2F2F7",
-    font: `500 12px ${baseFont}`, boxShadow: "0 6px 22px rgba(0,0,0,0.32)",
-    border: "1px solid rgba(255,255,255,0.10)", cursor: "default",
-    userSelect: "none", whiteSpace: "nowrap",
-  });
-  const label = makeEl("span", { opacity: "0.9" }, "Save to Graphene");
-  const noteBtn = makeEl("button", {
-    font: `500 12px ${baseFont}`, color: "#F2F2F7", background: "transparent",
-    border: "1px solid rgba(255,255,255,0.16)", borderRadius: "6px",
-    padding: "3px 8px", cursor: "pointer",
-  }, "Add note");
-  const saveBtn = makeEl("button", {
-    font: `600 12px ${baseFont}`, color: "#1c1c1e", background: "#F2F2F7",
-    border: "none", borderRadius: "6px", padding: "3px 10px", cursor: "pointer",
-  }, "Save");
-  bar.append(label, noteBtn, saveBtn);
+
+  // MARK: tokens
+
+  const reducedMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const darkPage = () => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // Used only until Swift sends the page-scheme tokens (at load).
+  const fallback = () => darkPage()
+    ? { elev: "rgb(38,38,44)", hairline: "rgba(255,255,255,0.1)", ink: "rgb(255,255,255)", ink2: "rgba(255,255,255,0.72)",
+        ink3: "rgba(255,255,255,0.48)", accent: "rgb(145,150,217)", elevFill: "rgba(255,255,255,0.09)", quoteRule: "rgba(255,255,255,0.18)",
+        shadow: "rgba(0,0,0,0.35)", shadowRadius: 12, shadowY: 2, highlightActive: "rgba(145,150,217,0.38)" }
+    : { elev: "rgb(255,255,255)", hairline: "rgba(0,0,0,0.08)", ink: "rgb(27,27,34)", ink2: "rgba(27,27,34,0.75)",
+        ink3: "rgba(27,27,34,0.5)", accent: "rgb(71,78,158)", elevFill: "rgba(0,0,0,0.04)", quoteRule: "rgba(27,27,34,0.14)",
+        shadow: "rgba(0,0,0,0.1)", shadowRadius: 10, shadowY: 1, highlightActive: "rgba(71,78,158,0.38)" };
+  const sizes = { radius: 12, rowRadius: 8, barHeight: 36, cardWidth: 320, gap: 8, dot: 6, labelSize: 11, rowSize: 13, bodySize: 13,
+    quoteSize: 13, quoteLineHeight: 1.45 };
+  let theme = Object.assign({}, sizes, fallback());
+  const serifFont = 'ui-serif, "New York", Georgia, serif';
+  // §6 motion as CSS: the margin dot's spring(0.25, 0.8), the Arc popover spring(0.32, 0.8),
+  // and the 120ms fade Reduce Motion substitutes for both.
+  const DOT_SPRING = "transform 250ms cubic-bezier(0.34, 1.35, 0.64, 1), opacity 120ms ease-out";
+  const CARD_SPRING = "transform 320ms cubic-bezier(0.3, 1.25, 0.6, 1), opacity 160ms ease-out";
+  const FADE = "opacity 120ms ease-out";
+
+  // MARK: cards
+
+  const card = () => makeEl("div", { position: "absolute", display: "none", boxSizing: "border-box", cursor: "default",
+    userSelect: "none", webkitUserSelect: "none" });
+  const paintCard = (el) => {
+    Object.assign(el.style, { background: theme.elev, border: `1px solid ${theme.hairline}`, borderRadius: `${theme.radius}px`,
+      boxShadow: `0 ${theme.shadowY}px ${theme.shadowRadius * 2}px ${theme.shadow}`, color: theme.ink, font: `400 ${theme.rowSize}px ${baseFont}` });
+  };
+  const SVG = "http://www.w3.org/2000/svg";
+  const GLYPHS = {
+    save: "M4.5 2.5h5a1 1 0 0 1 1 1v8.5L7 9.6 3.5 12V3.5a1 1 0 0 1 1-1z",
+    note: "M9.6 2.4l2 2L5.2 10.8 2.7 11.3l.5-2.5z",
+    ask: "M2.5 3.2a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6.2L3.8 11.5V9.2h-.3a1 1 0 0 1-1-1z",
+  };
+  const glyph = (name) => {
+    const svg = document.createElementNS(SVG, "svg");
+    svg.setAttribute("width", "14"); svg.setAttribute("height", "14"); svg.setAttribute("viewBox", "0 0 14 14");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(SVG, "path");
+    path.setAttribute("d", GLYPHS[name]); path.setAttribute("fill", "none"); path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.2"); path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+    return svg;
+  };
+  const labelButton = (text) => makeEl("button", { display: "inline-flex", alignItems: "center", gap: "5px", height: "100%",
+    padding: "0 8px", border: "none", background: "transparent", cursor: "pointer", borderRadius: "6px", whiteSpace: "nowrap" }, text);
+  const paintLabel = (el, color) => Object.assign(el.style, { color, font: `600 ${theme.labelSize}px ${baseFont}` });
+
+  // Selection bar: Save (⌘D), Note, Ask. No brand name.
+  const bar = card();
+  Object.assign(bar.style, { alignItems: "center", padding: "0 4px", whiteSpace: "nowrap" });
+  bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "Selection");
+  const action = (name, text, hint) => {
+    const button = labelButton(null);
+    button.append(glyph(name), document.createTextNode(text));
+    if (hint) { const key = makeEl("span", {}, hint); key.setAttribute("data-hint", ""); button.appendChild(key); }
+    button.setAttribute("aria-label", text);
+    button.addEventListener("mousedown", (e) => e.preventDefault());
+    return button;
+  };
+  const saveBtn = action("save", "Save", "⌘D"), noteBtn = action("note", "Note"), askBtn = action("ask", "Ask");
+  bar.append(saveBtn, noteBtn, askBtn);
   root.appendChild(bar);
 
-  // Note editor (revealed by "Add note").
-  const editor = makeEl("div", {
-    position: "absolute", display: "none", flexDirection: "column", gap: "8px",
-    padding: "10px", borderRadius: "10px", width: "260px",
-    background: "rgba(28,28,30,0.98)", border: "1px solid rgba(255,255,255,0.10)",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-  });
-  const ta = makeEl("textarea", {
-    font: `400 12px ${baseFont}`, color: "#F2F2F7", background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.14)", borderRadius: "7px", padding: "7px 9px",
-    resize: "none", height: "64px", outline: "none",
-  });
-  ta.setAttribute("placeholder", "Note (optional)…");
-  const editorSave = makeEl("button", {
-    alignSelf: "flex-end", font: `600 12px ${baseFont}`, color: "#1c1c1e",
-    background: "#F2F2F7", border: "none", borderRadius: "6px", padding: "4px 12px", cursor: "pointer",
-  }, "Save annotation");
+  // Note editor: the same card with a `body` field and "Save note"; Escape cancels.
+  const editor = card();
+  Object.assign(editor.style, { flexDirection: "column", gap: "8px", padding: "10px" });
+  const ta = makeEl("textarea", { resize: "none", height: "72px", outline: "none", boxSizing: "border-box", width: "100%",
+    border: "none", padding: "7px 9px", userSelect: "text", webkitUserSelect: "text" });
+  ta.setAttribute("placeholder", "Add a note");
+  ta.setAttribute("aria-label", "Note");
+  const editorSave = labelButton("Save note");
+  Object.assign(editorSave.style, { alignSelf: "flex-end", height: "24px" });
   editor.append(ta, editorSave);
   root.appendChild(editor);
 
+  // The margin dot beside a hovered saved mark, and the note card it opens. The dot's
+  // padding is a larger, invisible hit area around the 6pt disc.
+  const DOT_PAD = 5;
+  const dot = makeEl("div", { position: "absolute", display: "none", borderRadius: "50%", cursor: "pointer", padding: `${DOT_PAD}px`,
+    backgroundClip: "content-box", boxSizing: "content-box" });
+  dot.setAttribute("role", "button"); dot.setAttribute("aria-label", "Show note");
+  root.appendChild(dot);
+  const noteCard = card();
+  Object.assign(noteCard.style, { flexDirection: "column", gap: "8px", padding: "12px", transformOrigin: "top left" });
+  const noteText = makeEl("div", { whiteSpace: "pre-wrap", userSelect: "text", webkitUserSelect: "text" });
+  const noteQuote = makeEl("div", { borderLeft: "1px solid", paddingLeft: "8px", margin: "2px 0", userSelect: "text", webkitUserSelect: "text",
+    maxHeight: "160px", overflow: "auto" });
+  const noteActions = makeEl("div", { display: "flex", gap: "4px", marginLeft: "-8px", height: "22px" });
+  const editBtn = labelButton("Edit"), openBtn = labelButton("Open in Vault");
+  noteActions.append(editBtn, openBtn);
+  noteCard.append(noteText, noteQuote, noteActions);
+  root.appendChild(noteCard);
+
+  function applyTheme() {
+    [bar, editor, noteCard].forEach(paintCard);
+    bar.style.height = `${theme.barHeight}px`;
+    for (const button of [saveBtn, noteBtn, askBtn]) {
+      paintLabel(button, theme.ink2);
+      const hint = button.querySelector("[data-hint]");
+      if (hint) hint.style.color = theme.ink3;
+    }
+    editor.style.width = `${theme.cardWidth}px`;
+    noteCard.style.width = `${theme.cardWidth}px`;
+    Object.assign(ta.style, { font: `400 ${theme.bodySize}px ${baseFont}`, color: theme.ink, background: theme.elevFill, borderRadius: `${theme.rowRadius}px` });
+    paintLabel(editorSave, theme.accent);
+    paintLabel(editBtn, theme.ink2); paintLabel(openBtn, theme.ink2);
+    Object.assign(noteText.style, { font: `400 ${theme.rowSize}px ${baseFont}`, color: theme.ink });
+    Object.assign(noteQuote.style, { font: `400 ${theme.quoteSize}px/${theme.quoteLineHeight} ${serifFont}`, color: theme.ink, borderLeftColor: theme.quoteRule });
+    Object.assign(dot.style, { width: `${theme.dot}px`, height: `${theme.dot}px`, backgroundColor: theme.accent });
+  }
+  applyTheme();
+  // style: WKWebEngine.annotationStyle(palette.page(dark:)).
+  window.__grapheneAnnotateTheme = (style) => { theme = Object.assign({}, sizes, fallback(), style || {}); applyTheme(); };
+
+  const view = () => ({ width: document.documentElement.clientWidth || innerWidth, height: innerHeight });
+  const rectOf = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  // Cards live in the document: the shadow host sits at its origin.
+  const put = (el, pos) => { el.style.left = `${pos.left + scrollX}px`; el.style.top = `${pos.top + scrollY}px`; };
+  const measure = (el, display) => {
+    el.style.visibility = "hidden"; el.style.display = display;
+    const size = { width: el.offsetWidth, height: el.offsetHeight };
+    el.style.visibility = "";
+    return size;
+  };
+  // The Arc popover spring on appearance; a fade under Reduce Motion.
+  const reveal = (el, display) => {
+    const reduced = reducedMotion();
+    el.style.transition = "none"; el.style.opacity = "0";
+    el.style.transform = reduced ? "none" : "scale(0.96)";
+    el.style.display = display;
+    void el.offsetWidth;
+    el.style.transition = reduced ? FADE : CARD_SPRING;
+    el.style.opacity = "1"; el.style.transform = "none";
+  };
+
+  // MARK: selection
+
   let savedRange = null;
+  // The saved note the editor is changing ({id}), or null while it writes a new one.
+  let editing = null;
 
   function selectionContext(range) {
     const container = range.commonAncestorContainer;
@@ -159,66 +289,193 @@
     return (block?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 500);
   }
 
-  function place(el, rect) {
-    el.style.display = el === editor ? "flex" : "inline-flex";
-    const top = window.scrollY + rect.bottom + 8;
-    const left = Math.max(8, window.scrollX + rect.left);
-    el.style.top = `${top}px`;
-    el.style.left = `${left}px`;
+  function hideSelectionUI() { bar.style.display = "none"; editor.style.display = "none"; editing = null; }
+  function hideNoteUI() { noteCard.style.display = "none"; hideDot(); }
+  function hideAll() { hideSelectionUI(); hideNoteUI(); }
+
+  function showBar(range) {
+    const size = measure(bar, "inline-flex");
+    put(bar, layout.bar(rectOf(range.getBoundingClientRect()), size, view(), theme.gap));
+    reveal(bar, "inline-flex");
   }
 
-  function hideAll() { bar.style.display = "none"; editor.style.display = "none"; }
-
-  function highlight(range) {
-    try {
-      const mark = document.createElement("span");
-      mark.style.backgroundColor = "rgba(180,121,79,0.28)";
-      mark.style.borderRadius = "2px";
-      range.surroundContents(mark);
-    } catch (e) { /* selection spans multiple elements — skip visual highlight */ }
+  function showEditor(rect, text) {
+    bar.style.display = "none";
+    ta.value = text || "";
+    const size = measure(editor, "flex");
+    put(editor, layout.editor(rect, size, view(), theme.gap));
+    reveal(editor, "flex");
+    ta.focus();
   }
+
+  const selectedText = (range) => range ? range.toString().trim() : "";
 
   function commit(note) {
-    if (!savedRange) return;
-    const text = savedRange.toString().trim();
-    if (!text) return;
+    const text = selectedText(savedRange);
+    if (!text) return false;
     post({ kind: "annotation", text, note: note || "", context: selectionContext(savedRange) });
-    highlight(savedRange);
-    hideAll();
+    hideSelectionUI();
     window.getSelection().removeAllRanges();
     savedRange = null;
+    return true;
   }
 
+  // ⌘D from the app menu: saves the live selection, if there is one. Returns whether it did.
+  window.__grapheneAnnotateSave = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount || !sel.toString().trim()) return false;
+    savedRange = sel.getRangeAt(0).cloneRange();
+    return commit("");
+  };
+
   document.addEventListener("mouseup", (e) => {
-    if (host.contains(e.target)) return;
+    if (e.composedPath().includes(host)) return;
     setTimeout(() => {
       const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || !sel.toString().trim()) { if (editor.style.display === "none") hideAll(); return; }
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) { if (editor.style.display === "none") hideSelectionUI(); return; }
       savedRange = sel.getRangeAt(0).cloneRange();
-      const rect = sel.getRangeAt(0).getBoundingClientRect();
-      editor.style.display = "none";
-      place(bar, rect);
+      editor.style.display = "none"; editing = null;
+      hideNoteUI();
+      showBar(savedRange);
     }, 10);
   });
 
-  noteBtn.addEventListener("click", () => {
-    if (!savedRange) return;
-    const rect = savedRange.getBoundingClientRect();
-    bar.style.display = "none";
-    place(editor, rect);
-    ta.value = "";
-    ta.focus();
-  });
   saveBtn.addEventListener("click", () => commit(""));
-  editorSave.addEventListener("click", () => commit(ta.value));
+  noteBtn.addEventListener("click", () => { if (savedRange) showEditor(rectOf(savedRange.getBoundingClientRect()), ""); });
+  askBtn.addEventListener("click", () => {
+    const text = selectedText(savedRange);
+    if (!text) return;
+    post({ kind: "ask", text: text.slice(0, 8000) });
+    hideSelectionUI();
+  });
+  const saveEditor = () => {
+    if (editing) {
+      const known = notes.get(editing.id);
+      if (known) known.note = ta.value;
+      post({ kind: "noteEdit", id: editing.id, note: ta.value });
+      hideSelectionUI();
+    } else commit(ta.value);
+  };
+  editorSave.addEventListener("click", saveEditor);
+  ta.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); hideSelectionUI(); }
+    else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEditor(); }
+  });
 
   document.addEventListener("mousedown", (e) => {
-    if (!host.contains(e.target) && bar.style.display !== "none" && editor.style.display === "none") hideAll();
+    if (e.composedPath().includes(host)) return;
+    if (bar.style.display !== "none" && editor.style.display === "none") hideSelectionUI();
+    if (noteCard.style.display !== "none") hideNoteUI();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideAll(); });
 
   document.addEventListener("copy", () => {
     const t = String(window.getSelection() || "").trim();
     if (t) post({ kind: "copy", text: t });
+  });
+
+  // MARK: saved marks (drawn by cite.js with data-graphene-kind="note")
+
+  // Mark id ("note:<uuid>") → {id, quote, note}, for this page.
+  const notes = new Map();
+  const noteMarks = (id) => Array.from(document.querySelectorAll('mark[data-graphene-kind="note"]'))
+    .filter((mark) => mark.getAttribute("data-graphene-cite") === id);
+  const unwrap = (mark) => {
+    const parent = mark.parentNode;
+    if (!parent) return;
+    while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+    parent.removeChild(mark);
+    parent.normalize();
+  };
+  let hoveredID = null, dotID = null, dotTimer = null;
+
+  // list: [{id, quote, note}], the page's saved notes. Marks of notes no longer listed go.
+  window.__grapheneAnnotateNotes = (list) => {
+    notes.clear();
+    for (const item of list || []) notes.set(String(item.id), { id: String(item.id), quote: item.quote || "", note: item.note || "" });
+    document.querySelectorAll('mark[data-graphene-kind="note"]').forEach((mark) => {
+      if (!notes.has(mark.getAttribute("data-graphene-cite"))) unwrap(mark);
+    });
+    if (dotID && !notes.has(dotID)) hideNoteUI();
+  };
+
+  // Hover raises every segment of the note's mark to highlightActive (cite.js fades it over 120ms).
+  const setHover = (id, on) => noteMarks(id).forEach((mark) => { mark.style.backgroundColor = on ? theme.highlightActive : ""; });
+  function hideDot() {
+    clearTimeout(dotTimer);
+    dot.style.display = "none";
+    dotID = null;
+  }
+  // The dot sits in the page margin, `gap` left of the line's left edge, centred on the line.
+  function showDot(id, mark) {
+    clearTimeout(dotTimer);
+    const line = mark.getClientRects()[0] || mark.getBoundingClientRect();
+    const block = mark.parentElement?.closest("p,li,dd,dt,blockquote,figcaption,td,th,h1,h2,h3,h4,h5,h6,pre,div,article,section,main,body") || document.body;
+    const edge = Math.min(block.getBoundingClientRect().left, line.left);
+    const left = Math.max(2, edge - theme.gap - theme.dot) - DOT_PAD;
+    const top = line.top + line.height / 2 - theme.dot / 2 - DOT_PAD;
+    dotID = id;
+    dot.style.left = `${left + scrollX}px`; dot.style.top = `${top + scrollY}px`;
+    dot.dataset.lineBottom = String(line.bottom + scrollY);
+    const reduced = reducedMotion();
+    dot.style.transition = "none";
+    dot.style.opacity = "0"; dot.style.transform = reduced ? "none" : "scale(0.6)";
+    dot.style.display = "block";
+    void dot.offsetWidth;
+    dot.style.transition = reduced ? FADE : DOT_SPRING;
+    dot.style.opacity = "1"; dot.style.transform = "scale(1)";
+  }
+  const scheduleDotHide = () => {
+    clearTimeout(dotTimer);
+    dotTimer = setTimeout(() => { if (noteCard.style.display === "none") hideDot(); }, 700);
+  };
+  dot.addEventListener("mouseenter", () => clearTimeout(dotTimer));
+  dot.addEventListener("mouseleave", scheduleDotHide);
+
+  // cite.js's hover hook: the pointer entered a mark ({id, kind, mark}) or left the last one.
+  document.addEventListener("graphene-mark-hover", (event) => {
+    const detail = event.detail || {};
+    if (hoveredID) setHover(hoveredID, false);
+    hoveredID = null;
+    if (detail.kind === "note" && detail.id && notes.has(detail.id) && detail.mark) {
+      hoveredID = detail.id;
+      setHover(hoveredID, true);
+      if (dotID !== detail.id || noteCard.style.display === "none") { noteCard.style.display = "none"; showDot(detail.id, detail.mark); }
+    } else if (dotID) scheduleDotHide();
+  });
+
+  dot.addEventListener("mousedown", (e) => e.preventDefault());
+  // The note card: anchored to the margin under the line, 320 wide.
+  dot.addEventListener("click", () => {
+    const note = dotID && notes.get(dotID);
+    if (!note) return;
+    clearTimeout(dotTimer);
+    noteText.textContent = note.note;
+    noteText.style.display = note.note ? "block" : "none";
+    noteQuote.textContent = note.quote;
+    const size = measure(noteCard, "flex");
+    const v = view();
+    const left = parseFloat(dot.style.left) + DOT_PAD - scrollX;
+    const top = Number(dot.dataset.lineBottom) - scrollY + theme.gap;
+    put(noteCard, { left: clamp(left, theme.gap, Math.max(theme.gap, v.width - size.width - theme.gap)), top });
+    reveal(noteCard, "flex");
+  });
+  // Edit opens the editor where the card was: below the marked line, never over it.
+  editBtn.addEventListener("click", () => {
+    const note = dotID && notes.get(dotID);
+    if (!note) return;
+    const r = noteCard.getBoundingClientRect();
+    hideNoteUI();
+    editing = { id: note.id };
+    ta.value = note.note;
+    measure(editor, "flex");
+    put(editor, { left: r.left, top: r.top });
+    reveal(editor, "flex");
+    ta.focus();
+  });
+  openBtn.addEventListener("click", () => {
+    const id = dotID;
+    hideNoteUI();
+    if (id) post({ kind: "noteOpen", id });
   });
 })();
