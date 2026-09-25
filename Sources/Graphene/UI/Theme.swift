@@ -90,6 +90,12 @@ enum ShellLayout {
     }
     /// Small inline key-hint chips ("esc", "⌘T").
     static let chipRadius: CGFloat = 4
+    // Vault shelf (graphene-identity.md §3.5)
+    /// The shelf row above the sidebar footer.
+    static let shelfHeight: CGFloat = 44
+    /// A shelf chip's width at most; chips are 32 tall.
+    static let shelfChipWidth: CGFloat = 96
+    static let shelfChipRadius: CGFloat = 8
     // Top-tabs layout strip
     static let topTabHeight: CGFloat = 40
     // Command bar
@@ -152,6 +158,8 @@ enum ShellType {
     static let glyphMini = Font.system(size: 10, weight: .regular)
     /// Code blocks in chat answers.
     static let code = Font.system(size: 12, weight: .regular, design: .monospaced)
+    /// Page text quoted in chrome at small size (graphene-language.md §3): snippets, shelf chips.
+    static let quoteSmall = Font.system(size: 12, weight: .regular, design: .serif)
     /// Chat body line height as a multiple of the font size.
     static let rowLineHeight: CGFloat = 1.45
     /// Extra leading that turns `row` into `rowLineHeight`.

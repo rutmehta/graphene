@@ -81,6 +81,7 @@ struct Sidebar: View {
             if let tab = app.tabs.first(where: { $0.id == app.mediaTabID }) {
                 NowPlayingRow(tab: tab).padding(.horizontal, ShellLayout.windowGap)
             }
+            VaultShelf()
             SidebarFooter(store: app.downloads, deleteSpace: $deleteSpace)
         }
         .background(SidebarSwipe { app.selectRelativeSpace($0) })

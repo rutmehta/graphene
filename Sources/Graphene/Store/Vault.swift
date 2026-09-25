@@ -66,12 +66,25 @@ final class Vault: ObservableObject {
 
     private func writeNote(_ annotation: Annotation) {
         let destination = noteFile(annotation.id)
-        let quote = annotation.text.split(separator: "\n").map { "> \($0)" }.joined(separator: "\n")
-        let body = "# \(annotation.title)\n\n\(quote)\n\n\(annotation.note)\n\n[Source](\(annotation.url))\n\nSaved \(annotation.created.formatted(date: .long, time: .shortened))\n"
+        let body = Self.markdown(for: annotation)
         do {
             try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try body.write(to: destination, atomically: true, encoding: .utf8)
         } catch { errorText = error.localizedDescription }
+    }
+
+    /// A note as Markdown: title, the quote as a block quote, the note, the source link and
+    /// the save date. The note's file on disk and a shelf chip dragged out carry the same text.
+    static func markdown(for annotation: Annotation) -> String {
+        let quote = annotation.text.split(separator: "\n").map { "> \($0)" }.joined(separator: "\n")
+        return "# \(annotation.title)\n\n\(quote)\n\n\(annotation.note)\n\n[Source](\(annotation.url))\n\nSaved \(annotation.created.formatted(date: .long, time: .shortened))\n"
+    }
+
+    /// Notes saved in `space`, newest first, at most `limit` when given.
+    func notes(inSpace space: UUID, limit: Int? = nil) -> [Annotation] {
+        let notes = annotations.filter { $0.spaceID == space }.sorted { $0.created > $1.created }
+        guard let limit else { return notes }
+        return Array(notes.prefix(max(0, limit)))
     }
 
     func annotations(forURL url: String) -> [Annotation] {
