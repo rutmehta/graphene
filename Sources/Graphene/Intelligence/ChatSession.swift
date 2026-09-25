@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AppKit
 
 struct ChatSession: Codable, Identifiable {
     var id = UUID()
@@ -18,7 +19,10 @@ struct ChatSession: Codable, Identifiable {
     }
 }
 
-/// One source an answer cites, numbered per answer in order of first mention (D6 §3.4).
+/// One passage an answer cites: a source and the excerpt of it that supports one or more
+/// claims, numbered per answer in order of first mention (D6 §3.4). Two claims citing the same
+/// source with different passages are two citations with two indices; the sources line under
+/// the answer still lists each source once.
 struct ChatCitation: Codable, Equatable, Identifiable {
     /// Stable across reloads: derived from the answer's id and the index. Also the page mark's id.
     var citationID: String
@@ -27,26 +31,33 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     /// The `[n]` the model wrote, 1-based into the answer's sources.
     var sourceNumber: Int
     var sourceID: UUID
-    /// The exact excerpt of the source the model was given that supports the citing sentence.
+    /// The exact excerpt of the source the model was given that supports the citing sentences.
     var passage: String?
     /// Answer sentences this citation was matched to without a `[n]` marker (the fallback for a
     /// model that did not cite); the inline chip is drawn after each. `nil` for marker citations.
     var anchors: [String]? = nil
+    /// The `[n]` markers of the answer this citation stands for, as 0-based positions among all
+    /// its `[n]` markers in reading order. `nil` in citations stored before per-claim passages:
+    /// their markers resolve by source number.
+    var markers: [Int]? = nil
     var id: String { citationID }
 
     static func citationID(messageID: UUID, index: Int) -> String { "cite-\(messageID.uuidString.lowercased())-\(index)" }
     /// `[n]` markers the answer uses, as source numbers in the model's own numbering.
     static let marker = #"\[(\d+)\]"#
 
-    /// Assigns per-answer indices to every valid `[n]` in `answer` (first mention first) and,
-    /// with `passages`, picks each source's supporting passage from the text the model received.
-    /// With `passages` (a finished answer), sentences the model left uncited are matched to the
-    /// sources by `fallbackMatch`; explicit markers always take precedence, but a marker whose
-    /// sentence finds no passage (a restated source label) still gets one from the others.
+    /// Assigns per-answer citations to every valid `[n]` in `answer` and, with `passages`, picks
+    /// each citing sentence's own supporting passage from the text the model received. Claims
+    /// of one source that find the same passage share a citation; a claim that finds none (a
+    /// restated source label, "Source [1]: Graphene - Wikipedia") joins its source's first
+    /// citation that has one. With `passages` (a finished answer), sentences the model left
+    /// uncited are matched to the sources by `fallbackMatch`; explicit markers always win.
+    /// Indices follow first mention.
     static func assign(answer: String, sources: [KnowledgeSource], messageID: UUID, passages: Bool = true) -> [ChatCitation] {
         guard let regex = try? NSRegularExpression(pattern: marker) else { return [] }
-        var order: [Entry] = []
+        var uses: [Use] = []
         var previous = ""
+        var ordinal = 0
         // The last claim sentence without a marker, settled once we know no bare marker follows it.
         var pending: String?
         for range in PageContext.sentenceRanges(answer) {
@@ -55,47 +66,74 @@ struct ChatCitation: Codable, Equatable, Identifiable {
             let bare = sentence.replacingOccurrences(of: marker, with: "", options: .regularExpression)
             let hasClaim = !PageContext.terms(bare).isEmpty
             let claim = hasClaim ? sentence : previous
-            let numbers = regex.matches(in: sentence, range: NSRange(sentence.startIndex..., in: sentence)).compactMap { match -> Int? in
-                guard let r = Range(match.range(at: 1), in: sentence), let n = Int(sentence[r]), n > 0, n <= sources.count else { return nil }
-                return n
+            var numbers: [(n: Int, ordinal: Int)] = []
+            for match in regex.matches(in: sentence, range: NSRange(sentence.startIndex..., in: sentence)) {
+                defer { ordinal += 1 }
+                guard let r = Range(match.range(at: 1), in: sentence), let n = Int(sentence[r]), n > 0, n <= sources.count else { continue }
+                numbers.append((n, ordinal))
             }
-            if hasClaim, let waiting = pending { fallback(waiting, sources: sources, into: &order); pending = nil }
+            if hasClaim, let waiting = pending { fallback(waiting, sources: sources, into: &uses); pending = nil }
             if !hasClaim, !numbers.isEmpty { pending = nil }
-            for n in numbers {
-                if let existing = order.firstIndex(where: { $0.n == n }) { order[existing].claims.append(claim) }
-                else { order.append(Entry(n: n, claims: [claim])) }
-            }
+            for number in numbers { uses.append(Use(n: number.n, claim: claim, marker: number.ordinal)) }
             if passages, hasClaim, numbers.isEmpty { pending = sentence }
             if hasClaim { previous = sentence }
         }
-        if let waiting = pending { fallback(waiting, sources: sources, into: &order) }
-        return order.enumerated().map { offset, entry in
-            let source = sources[entry.n - 1]
-            return ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: entry.n, sourceID: source.id,
-                                passage: passages ? passage(for: entry, in: source) : nil, anchors: entry.anchors.isEmpty ? nil : entry.anchors)
+        if let waiting = pending { fallback(waiting, sources: sources, into: &uses) }
+        if passages { resolvePassages(&uses, sources: sources) }
+        return group(uses).enumerated().map { offset, group in
+            ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: group.n, sourceID: sources[group.n - 1].id,
+                         passage: group.passage, anchors: group.anchors.isEmpty ? nil : group.anchors, markers: group.markers.isEmpty ? nil : group.markers)
         }
     }
-    /// A citation being assigned: its source number, the sentences that cite it with a marker,
-    /// the passages uncited sentences matched in it and those sentences (its anchors).
-    private struct Entry {
+    /// One mention of a source: a `[n]` marker on `claim`, or an uncited sentence the fallback
+    /// matched (its anchor), with the passage it resolves to.
+    private struct Use {
         var n: Int
-        var claims: [String] = []
-        var matched: [String] = []
+        var claim: String
+        var marker: Int?
+        var passage: String?
+    }
+    /// A citation being assembled from its uses.
+    private struct Group {
+        var n: Int
+        var passage: String?
+        var first: Int
+        var markers: [Int] = []
         var anchors: [String] = []
     }
-    /// The passage a citation marks: the first marker sentence that states a claim and finds one,
-    /// else the first passage an uncited sentence matched, else (for an answer whose only marker
-    /// sits on a restated source label, "Source [1]: Graphene - Wikipedia") the label's own match.
-    /// A marker never stands in the way of a passage: every sentence that cites or matches the
-    /// source is tried.
-    private static func passage(for entry: Entry, in source: KnowledgeSource) -> String? {
-        let claims = entry.claims.filter { !isLabel($0, source: source) }
-        let labels = entry.claims.filter { isLabel($0, source: source) }
-        for claim in claims { if let found = PageContext.passage(for: claim, in: source) { return found } }
-        for claim in claims { if let found = fallbackMatch(claim, sources: [source])?.passage { return found } }
-        if let matched = entry.matched.first { return matched }
-        for claim in labels { if let found = PageContext.passage(for: claim, in: source) { return found } }
-        return nil
+    /// Each marker use's own passage: the claim's best passage in its source, else its fallback
+    /// match there. A source label finds none, unless nothing else of that source did (an
+    /// answer whose only claim is a label), when the label's own match is tried.
+    private static func resolvePassages(_ uses: inout [Use], sources: [KnowledgeSource]) {
+        for i in uses.indices where uses[i].marker != nil {
+            let source = sources[uses[i].n - 1]
+            guard !isLabel(uses[i].claim, source: source) else { continue }
+            uses[i].passage = PageContext.passage(for: uses[i].claim, in: source) ?? fallbackMatch(uses[i].claim, sources: [source])?.passage
+        }
+        for i in uses.indices where uses[i].passage == nil && uses[i].marker != nil {
+            let n = uses[i].n
+            guard !uses.contains(where: { $0.n == n && $0.passage != nil }) else { continue }
+            uses[i].passage = PageContext.passage(for: uses[i].claim, in: sources[n - 1])
+        }
+    }
+    /// Uses of the same source and passage become one citation; a use without a passage joins
+    /// its source's first citation, or stands alone when the source has no passage at all.
+    /// Citations are ordered by their first use in the answer.
+    private static func group(_ uses: [Use]) -> [Group] {
+        var groups: [Group] = []
+        func add(_ use: Use, at position: Int, to index: Int) {
+            if let marker = use.marker { groups[index].markers.append(marker) } else { groups[index].anchors.append(use.claim) }
+            groups[index].first = min(groups[index].first, position)
+        }
+        for (position, use) in uses.enumerated() where use.passage != nil {
+            if let existing = groups.firstIndex(where: { $0.n == use.n && $0.passage == use.passage }) { add(use, at: position, to: existing) }
+            else { groups.append(Group(n: use.n, passage: use.passage, first: position)); add(use, at: position, to: groups.count - 1) }
+        }
+        for (position, use) in uses.enumerated() where use.passage == nil {
+            if let existing = groups.firstIndex(where: { $0.n == use.n }) { add(use, at: position, to: existing) }
+            else { groups.append(Group(n: use.n, first: position)); add(use, at: position, to: groups.count - 1) }
+        }
+        return groups.sorted { $0.first < $1.first }.map { var group = $0; group.markers.sort(); return group }
     }
     /// Whether `sentence` only restates where the answer comes from ("Source [1]: Graphene -
     /// Wikipedia", "According to the article [1]"): no content word beyond attribution words and
@@ -105,36 +143,43 @@ struct ChatCitation: Codable, Equatable, Identifiable {
         return PageContext.terms(bare).subtracting(attributionWords).subtracting(PageContext.terms(source.title)).isEmpty
     }
 
-    /// Share of an uncited answer sentence's content words its source sentence must contain.
+    /// Share of an uncited answer sentence's content words its source passage must contain.
     static let fallbackCoverage = 0.6
-    /// Fewest content words an uncited sentence must share with its source sentence.
+    /// Fewest content words an uncited sentence must share with its source passage.
     static let fallbackMinimumShared = 3
     /// Words that say where a claim came from rather than what it claims.
     private static let attributionWords: Set<String> = ["page", "article", "source", "text", "according", "states", "says", "mentions", "notes", "describes"]
 
-    /// The source sentence that best supports `sentence`, by content-word overlap: it must hold at
-    /// least `fallbackCoverage` of the sentence's content words, and at least `fallbackMinimumShared`
-    /// of them. Returns the source's 1-based number and the exact (clipped) source sentence.
+    /// The source passage that best supports `sentence` (`PageContext.best`): it must hold at
+    /// least `fallbackCoverage` of the sentence's content words, and at least
+    /// `fallbackMinimumShared` of them. Returns the source's 1-based number and the exact passage.
     static func fallbackMatch(_ sentence: String, sources: [KnowledgeSource]) -> (n: Int, passage: String)? {
         let wanted = PageContext.terms(sentence).subtracting(attributionWords)
         guard wanted.count >= fallbackMinimumShared else { return nil }
-        var best: (n: Int, passage: String, shared: Int)?
+        var best: (n: Int, candidate: PageContext.Candidate)?
         for (offset, source) in sources.enumerated() {
-            for candidate in PageContext.sentences(source.text) {
-                let shared = PageContext.terms(candidate).intersection(wanted).count
-                if shared > (best?.shared ?? 0) { best = (offset + 1, candidate, shared) }
-            }
+            if let candidate = PageContext.best(for: wanted, in: source.text), candidate.shared > (best?.candidate.shared ?? 0) { best = (offset + 1, candidate) }
         }
-        guard let best, best.shared >= fallbackMinimumShared, Double(best.shared) >= fallbackCoverage * Double(wanted.count) else { return nil }
-        return (best.n, PageContext.clip(best.passage))
+        guard let best, best.candidate.shared >= fallbackMinimumShared, Double(best.candidate.shared) >= fallbackCoverage * Double(wanted.count) else { return nil }
+        return (best.n, best.candidate.passage)
     }
-    /// Adds `sentence`'s fallback citation: a new one for a source not yet cited, else an anchor on
-    /// that source's citation (one citation per source per answer).
-    private static func fallback(_ sentence: String, sources: [KnowledgeSource], into order: inout [Entry]) {
+    /// Adds `sentence`'s fallback use, anchored after that sentence.
+    private static func fallback(_ sentence: String, sources: [KnowledgeSource], into uses: inout [Use]) {
         guard let match = fallbackMatch(sentence, sources: sources) else { return }
-        let anchor = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let existing = order.firstIndex(where: { $0.n == match.n }) { order[existing].anchors.append(anchor); order[existing].matched.append(match.passage) }
-        else { order.append(Entry(n: match.n, matched: [match.passage], anchors: [anchor])) }
+        uses.append(Use(n: match.n, claim: sentence.trimmingCharacters(in: .whitespacesAndNewlines), passage: match.passage))
+    }
+}
+
+extension ChatCitation {
+    /// The sources line under an answer: one entry per source, in order of its first index,
+    /// each holding that source's citations (one per distinct passage).
+    static func sourcesLine(_ citations: [ChatCitation]) -> [[ChatCitation]] {
+        var entries: [[ChatCitation]] = []
+        for citation in citations.sorted(by: { $0.index < $1.index }) {
+            if let existing = entries.firstIndex(where: { $0.first?.sourceNumber == citation.sourceNumber }) { entries[existing].append(citation) }
+            else { entries.append([citation]) }
+        }
+        return entries
     }
 }
 
@@ -182,9 +227,31 @@ struct CitationPage {
     var setActive: @MainActor (String?) async -> Void
     var scroll: @MainActor (String) async -> Void
     var clear: @MainActor () async -> Void
+    /// The first mark's rect in the page viewport, in points (`WebEngine.highlightRect`).
+    var rect: @MainActor (String) async -> CGRect? = { _ in nil }
+    /// The page view's frame in its window's content, top-left origin, in points; `nil` off-window.
+    var frame: @MainActor () -> CGRect? = { nil }
+    /// Scrolls the page by `dy` points: smooth, or a jump under Reduce Motion.
+    var scrollBy: @MainActor (CGFloat) async -> Void = { _ in }
     @MainActor static func engine(_ engine: WebEngine) -> CitationPage {
         CitationPage(highlight: { await engine.highlight(passages: $0) }, setActive: { await engine.setActiveHighlight($0) },
-                     scroll: { await engine.scrollToHighlight($0) }, clear: { await engine.clearHighlights() })
+                     scroll: { await engine.scrollToHighlight($0) }, clear: { await engine.clearHighlights() },
+                     rect: { await engine.highlightRect(id: $0) },
+                     frame: { contentFrame(of: engine.hostView) },
+                     scrollBy: { dy in
+                         let width = engine.hostView.bounds.width
+                         guard width > 0, dy.isFinite else { return }
+                         // Points to CSS pixels by the viewport's own ratio, so page zoom is honoured.
+                         await engine.evaluateJavaScript("window.scrollBy({top: \(Double(dy)) * window.innerWidth / \(Double(width)), behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'})")
+                     })
+    }
+    /// `view`'s frame in its window's content view, top-left origin: the space SwiftUI's
+    /// `.global` frames use in the window.
+    @MainActor static func contentFrame(of view: NSView) -> CGRect? {
+        guard let window = view.window, let content = window.contentView else { return nil }
+        let inWindow = view.convert(view.bounds, to: nil)
+        let inContent = content.convert(inWindow, from: nil)
+        return content.isFlipped ? inContent : CGRect(x: inContent.minX, y: content.bounds.height - inContent.maxY, width: inContent.width, height: inContent.height)
     }
 }
 
@@ -200,11 +267,12 @@ enum CitationChipLink: Equatable {
     case source
 
     /// The chip's help text. "Passage not found" is said only of the page the source is; a
-    /// source elsewhere is "not on this page".
-    func help(title: String?, note: Bool = false) -> String {
+    /// source elsewhere is "not on this page". A linked mark under the floating Ask panel
+    /// (`behind`) says so.
+    func help(title: String?, note: Bool = false, behind: Bool = false) -> String {
         let name = title.flatMap { $0.isEmpty ? nil : $0 }
         switch self {
-        case .page: return "Show in page"
+        case .page: return behind ? CitationLinker.behindPanelHelp : "Show in page"
         case .unlinkedPage: return "Passage not found on this page"
         case .tab: return "Not on this page. Switch to \(name ?? "its tab")"
         case .source: return note ? (name ?? "Open note") : "Not on this page. Open \(name ?? "the source")"
@@ -222,8 +290,14 @@ final class CitationLinker: ObservableObject {
     @Published private(set) var linkedIDs: Set<String> = []
     /// The raised chip and mark, from a chip hover or a mark hover.
     @Published private(set) var activeID: String?
+    /// Linked marks that sit under the floating Ask panel, as last measured.
+    @Published private(set) var behindIDs: Set<String> = []
+    /// The Ask panel's frame in the window's content (top-left origin, points), reported by
+    /// the panel; the part over the page is kept clear when scrolling to a mark.
+    var panelFrame: CGRect?
     private var page: CitationPage?
     private var generation = UUID()
+    nonisolated static let behindPanelHelp = "Behind the Ask panel; scroll to see"
 
     /// Passages eligible for `tabID`'s page: citations whose source is that tab (or its URL) and that carry a passage.
     static func eligible(_ citations: [ChatCitation], sources: [KnowledgeSource], tabID: UUID, url: URL?) -> [CitedPassage] {
@@ -244,6 +318,41 @@ final class CitationLinker: ObservableObject {
         return .source
     }
 
+    // MARK: the panel over the page
+
+    /// The part of the page (frame `page`, window content coordinates) under the panel
+    /// (`panel`), in the page viewport's coordinates; `nil` when they do not overlap.
+    static func covered(panel: CGRect?, page: CGRect?) -> CGRect? {
+        guard let panel, let page else { return nil }
+        let overlap = panel.intersection(page)
+        guard !overlap.isNull, overlap.width > 0, overlap.height > 0 else { return nil }
+        return overlap.offsetBy(dx: -page.minX, dy: -page.minY)
+    }
+    /// The largest clear rectangle of a `viewport`-sized page around `covered`.
+    static func uncovered(viewport: CGSize, covered: CGRect?) -> CGRect {
+        let full = CGRect(origin: .zero, size: viewport)
+        guard let covered = covered?.intersection(full), !covered.isNull, !covered.isEmpty else { return full }
+        let sides = [CGRect(x: 0, y: 0, width: covered.minX, height: viewport.height),
+                     CGRect(x: covered.maxX, y: 0, width: viewport.width - covered.maxX, height: viewport.height),
+                     CGRect(x: 0, y: 0, width: viewport.width, height: covered.minY),
+                     CGRect(x: 0, y: covered.maxY, width: viewport.width, height: viewport.height - covered.maxY)]
+        return sides.max { $0.width * $0.height < $1.width * $1.height } ?? full
+    }
+    /// How far to scroll so `mark` (viewport points) sits in the vertical centre of the page's
+    /// uncovered area, and whether it is `behind` the panel: most of its width under it while
+    /// the page is wider than the uncovered area. A mark behind the panel keeps the plain
+    /// behaviour (centred in the whole viewport); only its chip's help text changes.
+    static func reveal(mark: CGRect, viewport: CGSize, covered: CGRect?) -> (dy: CGFloat, behind: Bool) {
+        let clear = uncovered(viewport: viewport, covered: covered)
+        var behind = false
+        if let covered, clear.width < viewport.width, mark.width > 0 {
+            let under = max(0, min(mark.maxX, covered.maxX) - max(mark.minX, covered.minX))
+            behind = under > mark.width / 2
+        }
+        let target = behind ? viewport.height / 2 : clear.midY
+        return (mark.midY - target, behind)
+    }
+
     /// Marks `citations` in the page of `tabID`, replacing any earlier link. Returns the linked ids.
     @discardableResult
     func link(messageID: UUID, citations: [ChatCitation], sources: [KnowledgeSource], tabID: UUID, url: URL?, page: CitationPage) async -> Set<String> {
@@ -255,19 +364,40 @@ final class CitationLinker: ObservableObject {
         let found = await page.highlight(passages)
         guard generation == token else { return [] }
         linkedIDs = Self.linked(passages, found: found)
+        for id in linkedIDs.sorted() { _ = await measure(id) }
         return linkedIDs
     }
-    /// Pointer over (`id`) or off (`nil`) a linked chip: raise its mark.
+    /// Pointer over (`id`) or off (`nil`) a linked chip: raise its mark and scroll the page to it.
     func hoverChip(_ id: String?) {
         guard let page, id.map(linkedIDs.contains) ?? true, activeID != id else { return }
         activeID = id
-        Task { await page.setActive(id) }
+        Task {
+            await page.setActive(id)
+            if let id, activeID == id { await reveal(id) }
+        }
     }
     /// Click on a linked chip: scroll the page to its mark.
     func focus(_ id: String) async {
         guard let page, linkedIDs.contains(id) else { return }
         activeID = id
-        await page.setActive(id); await page.scroll(id)
+        await page.setActive(id); await reveal(id)
+    }
+    /// Scrolls the page so the mark sits in the middle of the area the panel leaves clear; with
+    /// no measurement (no window, no rect), the page's own centring scroll.
+    private func reveal(_ id: String) async {
+        guard let page else { return }
+        if let plan = await measure(id) {
+            if abs(plan.dy) >= 1 { await page.scrollBy(plan.dy) }
+        } else {
+            await page.scroll(id)
+        }
+    }
+    /// Measures the mark `id` against the panel and records whether it is behind it.
+    private func measure(_ id: String) async -> (dy: CGFloat, behind: Bool)? {
+        guard let page, let frame = page.frame(), let mark = await page.rect(id), linkedIDs.contains(id) else { return nil }
+        let plan = Self.reveal(mark: mark, viewport: frame.size, covered: Self.covered(panel: panelFrame, page: frame))
+        if plan.behind != behindIDs.contains(id) { if plan.behind { behindIDs.insert(id) } else { behindIDs.remove(id) } }
+        return plan
     }
     /// The page reports its mark hovered: raise the matching chip.
     func markHovered(_ id: String?, tabID: UUID) {
@@ -289,6 +419,7 @@ final class CitationLinker: ObservableObject {
         if tabID != nil { tabID = nil }
         if messageID != nil { messageID = nil }
         if !linkedIDs.isEmpty { linkedIDs = [] }
+        if !behindIDs.isEmpty { behindIDs = [] }
         if activeID != nil { activeID = nil }
         return old
     }

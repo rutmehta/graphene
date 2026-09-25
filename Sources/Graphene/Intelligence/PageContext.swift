@@ -85,17 +85,6 @@ enum PageContext {
     static func terms(_ text: String) -> Set<String> {
         Set(text.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { ($0.count >= 3 || $0.first?.isNumber == true) && !stopWords.contains($0) })
     }
-    /// Sentences (and lines) of `text`, each an exact trimmed substring at least `passageMinimum` long.
-    static func sentences(_ text: String) -> [String] {
-        var result: [String] = []
-        for range in sentenceRanges(text) {
-            for line in text[range].split(whereSeparator: \.isNewline) {
-                let trimmed = trimMarkerFragments(line.trimmingCharacters(in: .whitespaces))
-                if trimmed.count >= passageMinimum { result.append(trimmed) }
-            }
-        }
-        return result
-    }
     /// `sentence` without the footnote-marker pieces a sentence break leaves at its edges: the
     /// sentence break falls inside "measured.[7][8] The", leaving "7][8] The …" and "… properties.[".
     /// Still an exact substring of the source.
@@ -125,22 +114,131 @@ enum PageContext {
         return abbreviations.contains(token.lowercased())
     }
     /// The excerpt of `source` that supports `claim`: a quote the claim echoes verbatim, else
-    /// the source sentence sharing the most terms with it. Always an exact substring of the
-    /// text the model was given (the budgeted source), never the model's paraphrase; `nil`
-    /// when nothing matches well enough.
+    /// the shortest source segment holding the most of the claim's content words (`best`).
+    /// Always an exact substring of the text the model was given (the budgeted source), never
+    /// the model's paraphrase; `nil` when nothing matches well enough.
     static func passage(for claim: String, in source: KnowledgeSource) -> String? {
         for quote in quotes(in: claim) where quote.count >= passageMinimum {
             if let range = source.text.range(of: quote) { return clip(String(source.text[range])) }
         }
         let wanted = terms(claim.replacingOccurrences(of: #"\[\d+\]"#, with: " ", options: .regularExpression))
-        guard !wanted.isEmpty else { return nil }
-        var best: (text: String, score: Int)?
-        for sentence in sentences(source.text) {
-            let score = terms(sentence).intersection(wanted).count
-            if score > (best?.score ?? 0) { best = (sentence, score) }
+        guard !wanted.isEmpty, let best = best(for: wanted, in: source.text), best.shared >= min(2, wanted.count) else { return nil }
+        return best.passage
+    }
+
+    // MARK: segments
+
+    /// Most words a passage spans.
+    static let passageWordLimit = 40
+    /// Fewest words of a prose segment; shorter sentences are fragments.
+    static let proseWordMinimum = 8
+    /// Most words of a table row cut from a run of table text.
+    static let rowWordLimit = 12
+
+    /// A piece of source text a passage can come from: a sentence, a line or a table cell,
+    /// always an exact trimmed substring of the source.
+    struct Segment: Equatable {
+        var text: String
+        /// Ends a sentence (after any footnote markers).
+        var terminal: Bool
+        var wordCount: Int { PageContext.words(text).count }
+        /// A whole sentence of 8–40 words: preferred over a table fragment with the same match.
+        var prose: Bool { terminal && (PageContext.proseWordMinimum...PageContext.passageWordLimit).contains(wordCount) }
+    }
+    /// `text` split at sentence ends, newlines and table-cell boundaries (tabs), each piece
+    /// trimmed of footnote-marker fragments and at least `passageMinimum` long.
+    static func segments(_ text: String) -> [Segment] {
+        var result: [Segment] = []
+        for range in sentenceRanges(text) {
+            for line in text[range].split(whereSeparator: { $0.isNewline || $0 == "\t" }) {
+                let trimmed = trimMarkerFragments(line.trimmingCharacters(in: .whitespaces))
+                guard trimmed.count >= passageMinimum else { continue }
+                result.append(Segment(text: trimmed, terminal: isTerminal(trimmed)))
+            }
         }
-        guard let best, best.score >= min(2, wanted.count) else { return nil }
-        return clip(best.text)
+        return result
+    }
+    /// Sentences (and lines) of `text`, each an exact trimmed substring at least `passageMinimum` long.
+    static func sentences(_ text: String) -> [String] { segments(text).map(\.text) }
+    /// Whether `segment` ends a sentence: a full stop, question or exclamation mark, before any
+    /// closing quotes, brackets or footnote markers ("… Manchester.[10]").
+    static func isTerminal(_ segment: String) -> Bool {
+        let bare = segment.replacingOccurrences(of: #"(\s*\[[^\[\]]{1,30}\])+\s*$"#, with: "", options: .regularExpression)
+        guard let last = bare.last(where: { !"\"'”’)]".contains($0) }) else { return false }
+        return ".!?…".contains(last)
+    }
+    /// Whitespace-separated words of `text` with their ranges.
+    static func words(_ text: String) -> [Range<String.Index>] {
+        var result: [Range<String.Index>] = []
+        var start: String.Index?
+        var index = text.startIndex
+        while index < text.endIndex {
+            if text[index].isWhitespace { if let s = start { result.append(s..<index); start = nil } } else if start == nil { start = index }
+            index = text.index(after: index)
+        }
+        if let s = start { result.append(s..<text.endIndex) }
+        return result
+    }
+
+    /// A candidate passage for a set of content words: its exact text, how many of the words
+    /// it holds, whether it is prose and how many words it spans.
+    struct Candidate: Equatable {
+        var passage: String
+        var shared: Int
+        var prose: Bool
+        var words: Int
+    }
+    /// The candidate `segment` offers for `wanted`: a sentence of at most 40 words whole; a
+    /// longer sentence cut to the shortest run of at most 40 words holding the most wanted
+    /// words; a table fragment (no sentence end) cut to the shortest row of at most
+    /// `rowWordLimit` words holding them, so one infobox row stands alone.
+    static func candidate(_ segment: Segment, wanted: Set<String>) -> Candidate? {
+        let shared = terms(segment.text).intersection(wanted).count
+        guard shared > 0 else { return nil }
+        let count = segment.wordCount
+        if segment.terminal, count <= passageWordLimit { return Candidate(passage: segment.text, shared: shared, prose: segment.prose, words: count) }
+        guard let cut = window(segment.text, wanted: wanted, limit: segment.terminal ? passageWordLimit : rowWordLimit) else { return nil }
+        return Candidate(passage: cut.text, shared: cut.shared, prose: false, words: cut.words)
+    }
+    /// How well a run of `span + 1` words holding `held` wanted words fits a claim: each wanted
+    /// word counts one, each word past the first costs 1/`proseWordMinimum`, so a far-off
+    /// repeat of a common word ("Graphene" closing an infobox) does not stretch a row.
+    private static func density(_ held: Int, _ span: Int) -> Double { Double(held) - Double(span) / Double(proseWordMinimum) }
+    /// The densest run of whole words of `text` (at most `limit`) holding `wanted` words,
+    /// widened to `passageMinimum` characters when shorter. An exact substring of `text`.
+    static func window(_ text: String, wanted: Set<String>, limit: Int) -> (text: String, shared: Int, words: Int)? {
+        let ranges = words(text)
+        let found = ranges.map { terms(String(text[$0])).intersection(wanted) }
+        let hits = found.indices.filter { !found[$0].isEmpty }
+        var best: (start: Int, end: Int, shared: Int)?
+        for (a, start) in hits.enumerated() {
+            var held = Set<String>()
+            for end in hits[a...] {
+                guard end - start < limit else { break }
+                held.formUnion(found[end])
+                let better = best.map { density(held.count, end - start) > density($0.shared, $0.end - $0.start) } ?? true
+                if better { best = (start, end, held.count) }
+            }
+        }
+        guard var best else { return nil }
+        func span() -> String { String(text[ranges[best.start].lowerBound..<ranges[best.end].upperBound]) }
+        while span().count < passageMinimum, best.end - best.start + 1 < limit, best.start > 0 || best.end < ranges.count - 1 {
+            if best.end < ranges.count - 1 { best.end += 1 } else { best.start -= 1 }
+        }
+        return (span(), best.shared, best.end - best.start + 1)
+    }
+    /// The best passage in `text` for `wanted`: the most wanted words, then prose over table
+    /// fragments, then the fewest words, then the earliest. Clipped to `passageLimit`.
+    static func best(for wanted: Set<String>, in text: String) -> Candidate? {
+        var best: Candidate?
+        for segment in segments(text) {
+            guard let candidate = candidate(segment, wanted: wanted) else { continue }
+            guard let current = best else { best = candidate; continue }
+            if candidate.shared != current.shared { if candidate.shared > current.shared { best = candidate }; continue }
+            if candidate.prose != current.prose { if candidate.prose { best = candidate }; continue }
+            if candidate.words < current.words { best = candidate }
+        }
+        return best.map { var clipped = $0; clipped.passage = clip($0.passage); return clipped }
     }
     /// Quoted runs in `text` ("…" or “…”).
     static func quotes(in text: String) -> [String] {

@@ -73,19 +73,22 @@ final class CitationTests: XCTestCase {
         let message = UUID()
         let answer = "Graphene has a tensile strength of 130 GPa. It was first theorized in 1947 by Philip Wallace."
         let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: message)
-        // One citation per source per answer, numbered from 1, its passage the first matched sentence verbatim.
-        XCTAssertEqual(citations.count, 1)
+        // One citation per claim, numbered from 1, each passage its own source sentence verbatim.
+        XCTAssertEqual(citations.count, 2)
         let citation = try XCTUnwrap(citations.first)
-        XCTAssertEqual(citation.index, 1)
-        XCTAssertEqual(citation.sourceNumber, 1)
+        XCTAssertEqual(citations.map(\.index), [1, 2])
+        XCTAssertEqual(citations.map(\.sourceNumber), [1, 1])
         XCTAssertEqual(citation.sourceID, page.id)
         XCTAssertEqual(citation.citationID, ChatCitation.citationID(messageID: message, index: 1))
         XCTAssertEqual(citation.passage, "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa.")
-        XCTAssertTrue(page.text.contains(try XCTUnwrap(citation.passage)))
-        XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa.", "It was first theorized in 1947 by Philip Wallace."])
+        XCTAssertEqual(citations[1].passage, "In 1947, Philip Wallace first theorized the electronic band structure of graphite.")
+        for c in citations { XCTAssertTrue(page.text.contains(try XCTUnwrap(c.passage))) }
+        XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa."])
+        XCTAssertEqual(citations[1].anchors, ["It was first theorized in 1947 by Philip Wallace."])
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2]], "one sources-line entry for the one source")
         // The inline chip is drawn after each matched sentence.
         let shown = ChatMarkdown.anchored(answer, citations: citations)
-        XCTAssertEqual(ChatMarkdown.segments(shown), [.text("Graphene has a tensile strength of 130 GPa. "), .anchored(1), .text(" It was first theorized in 1947 by Philip Wallace. "), .anchored(1)])
+        XCTAssertEqual(ChatMarkdown.segments(shown), [.text("Graphene has a tensile strength of 130 GPa. "), .anchored(1), .text(" It was first theorized in 1947 by Philip Wallace. "), .anchored(2)])
         XCTAssertTrue(ChatMarkdown.hasMarkers(shown))
         // Streaming and older chats derive no fallback: only a finished answer is matched.
         XCTAssertTrue(ChatCitation.assign(answer: answer, sources: [page], messageID: message, passages: false).isEmpty)
@@ -116,10 +119,13 @@ final class CitationTests: XCTestCase {
         // The marked sentence keeps the model's citation and its passage; it is never re-matched.
         let answer = "Graphene conducts heat and electricity very efficiently [1]. Graphene has a tensile strength of 130 GPa."
         let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: UUID())
-        XCTAssertEqual(citations.count, 1, "the uncited sentence joins the source's existing citation")
+        XCTAssertEqual(citations.count, 2, "the uncited sentence finds another passage of the same source: its own citation")
         let citation = try XCTUnwrap(citations.first)
         XCTAssertEqual(citation.passage, "Graphene conducts heat and electricity very efficiently along its plane.")
-        XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa."])
+        XCTAssertNil(citation.anchors)
+        XCTAssertEqual(citation.markers, [0])
+        XCTAssertEqual(citations[1].anchors, ["Graphene has a tensile strength of 130 GPa."])
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).count, 1)
         // A bare marker after the full stop cites the sentence before it, so that sentence is not a fallback.
         let trailing = ChatCitation.assign(answer: "Graphene has a tensile strength of 130 GPa. [1]", sources: [page], messageID: UUID())
         XCTAssertEqual(trailing.count, 1)
@@ -141,10 +147,17 @@ final class CitationTests: XCTestCase {
         XCTAssertFalse(ChatCitation.isLabel("Tensile strength: 130 GPa [1]", source: page))
         XCTAssertNil(PageContext.passage(for: "Source [1]: Graphene - Wikipedia", in: page), "the label alone matches nothing")
         let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: UUID())
-        XCTAssertEqual(citations.count, 1)
+        // Each claim its own passage; the label's marker joins the source's first citation.
+        XCTAssertEqual(citations.count, 2)
         let passage = try XCTUnwrap(citations.first?.passage)
         XCTAssertEqual(passage, "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa.")
         XCTAssertTrue(page.text.contains(passage))
+        XCTAssertEqual(citations[1].passage, "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
+        XCTAssertEqual(citations.map(\.markers), [[0, 1], [2]])
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2]])
+        // Each marker becomes its own citation's chip.
+        let shown = ChatMarkdown.anchored(answer, citations: citations)
+        XCTAssertEqual(shown, "Source ⁅1⁆: Graphene - Wikipedia\nTensile strength: 130 GPa ⁅1⁆\nFirst isolated: Andre Geim and Konstantin Novoselov in 2004. ⁅2⁆")
 
         // Only the label carries a marker: the uncited claim that matches the source supplies the passage.
         let labelOnly = ChatCitation.assign(answer: "Source [1]: Graphene - Wikipedia\nGraphene was first isolated by Andre Geim and Konstantin Novoselov in 2004.",
@@ -230,15 +243,15 @@ final class CitationTests: XCTestCase {
         let history = source("History", "Delta is fourth.", kind: "Visited page", url: "https://history.example")
         let sources = [page, elsewhere, history]
         let citations = ChatCitation.assign(answer: "Alpha is first [1]. Beta is second [1]... Gamma is third [2]. Delta is fourth [3].", sources: sources, messageID: message)
-        XCTAssertEqual(citations.count, 3)
+        XCTAssertEqual(citations.count, 4, "two claims of the page with two passages are two citations")
         let eligible = CitationLinker.eligible(citations, sources: sources, tabID: tab, url: URL(string: page.url))
-        XCTAssertEqual(eligible.map(\.id), [citations[0].citationID], "only passages whose source is the page are offered to it")
-        XCTAssertEqual(eligible.first?.index, 1)
+        XCTAssertEqual(eligible.map(\.id), [citations[0].citationID, citations[1].citationID], "only passages whose source is the page are offered to it")
+        XCTAssertEqual(eligible.map(\.index), [1, 2])
 
         let linker = CitationLinker(), recorder = PageRecorder(found: [])
         let linked = await linker.link(messageID: message, citations: citations, sources: sources, tabID: tab, url: URL(string: page.url), page: recorder.page)
         XCTAssertTrue(linked.isEmpty, "a passage the page did not find is not linked")
-        XCTAssertEqual(recorder.highlighted.first?.map(\.text), [citations[0].passage!])
+        XCTAssertEqual(recorder.highlighted.first?.map(\.text), ["Alpha is first.", "Beta is second."])
 
         let found = PageRecorder(found: [citations[0].citationID, "stray"])
         await linker.link(messageID: message, citations: citations, sources: sources, tabID: tab, url: URL(string: page.url), page: found.page)
@@ -251,18 +264,21 @@ final class CitationTests: XCTestCase {
             CitationLinker.chipLink(c, source: s, linkedIDs: linker.linkedIDs, linkedTabID: linker.tabID, activeTab: (tab, URL(string: page.url)), openTabIDs: open)
         }
         XCTAssertEqual(link(citations[0], page), .page)
-        XCTAssertEqual(link(citations[1], elsewhere), .tab(otherTab))
-        XCTAssertEqual(link(citations[2], history), .source)
+        XCTAssertEqual(link(citations[1], page), .unlinkedPage)
+        XCTAssertEqual(link(citations[2], elsewhere), .tab(otherTab))
+        XCTAssertEqual(link(citations[3], history), .source)
         XCTAssertEqual(CitationLinker.chipLink(citations[0], source: page, linkedIDs: [], linkedTabID: nil, activeTab: (tab, nil), openTabIDs: open), .unlinkedPage)
         XCTAssertEqual(CitationLinker.chipLink(citations[0], source: page, linkedIDs: linker.linkedIDs, linkedTabID: tab, activeTab: (otherTab, nil), openTabIDs: open), .tab(tab), "a linked tab that is no longer active switches back first")
 
-        // Chip hover raises the mark; click scrolls; a mark hover raises the chip.
+        // Chip hover raises the mark and scrolls to it; click scrolls; a mark hover raises the chip.
+        // Unmeasured (no window), both use the page's own centring scroll.
         linker.hoverChip(citations[0].citationID)
         linker.hoverChip("not-linked")
+        for _ in 0..<10 { await Task.yield() }
         await linker.focus(citations[0].citationID)
         for _ in 0..<10 { await Task.yield() }
         XCTAssertEqual(found.active.compactMap { $0 }, [citations[0].citationID, citations[0].citationID])
-        XCTAssertEqual(found.scrolled, [citations[0].citationID])
+        XCTAssertEqual(found.scrolled, [citations[0].citationID, citations[0].citationID])
         linker.markHovered(nil, tabID: tab)
         XCTAssertNil(linker.activeID)
         linker.markHovered(citations[0].citationID, tabID: otherTab)
@@ -316,6 +332,124 @@ final class CitationTests: XCTestCase {
         XCTAssertTrue(app.citations.linkedIDs.isEmpty)
     }
 
+    // MARK: G8 passage granularity
+
+    func testSegmentsSplitAtSentencesLinesAndTableCells() {
+        let text = "Graphene is a single layer of carbon atoms.[1] It is strong.\nYoung's modulus (E)\t≈1 TPa and more\nShort\tTensile strength (σt) 130 GPa"
+        let segments = PageContext.segments(text)
+        // The sentence break inside "atoms.[1] It" leaves marker fragments; they are trimmed.
+        XCTAssertEqual(segments.map(\.text), ["Graphene is a single layer of carbon atoms.", "It is strong.", "Young's modulus (E)", "≈1 TPa and more", "Tensile strength (σt) 130 GPa"])
+        XCTAssertEqual(segments.map(\.terminal), [true, true, false, false, false])
+        XCTAssertEqual(segments.map(\.prose), [true, false, false, false, false], "prose is a whole sentence of 8–40 words")
+        for segment in segments { XCTAssertTrue(text.contains(segment.text)) }
+    }
+
+    /// The live infobox: captured text runs its rows together with no sentence end, so the
+    /// passage is the densest short run of it, the row alone, not the 60-word block.
+    func testATableRowStandsAloneAndProseWinsATie() throws {
+        let infobox = "Graphene Graphene is an atomic-scale honeycomb structure made of carbon atoms Material type Allotrope of carbon Chemical properties Chemical formula C "
+            + "Mechanical properties Young's modulus (E) ≈1 TPa Tensile strength (σt) 130 GPa Thermal properties Thermal conductivity (k) 5300 W⋅m−1⋅K−1 "
+            + "Graphene Graphene is a variety of the element carbon which occurs naturally in small amounts."
+        let page = source("Graphene - Wikipedia", infobox + " In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
+        XCTAssertEqual(PageContext.passage(for: "Tensile strength: 130 GPa [1]", in: page), "Tensile strength (σt) 130 GPa")
+        XCTAssertEqual(PageContext.passage(for: "Graphene's tensile strength is 130 GPa [1]", in: page), "Tensile strength (σt) 130 GPa", "a far-off repeat of a word does not stretch the row")
+        XCTAssertEqual(PageContext.passage(for: "First isolated: Andre Geim and Konstantin Novoselov in 2004. [1]", in: page),
+                       "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
+
+        // The same words in a row and in a sentence of 8–40 words: the sentence.
+        let both = source("Page", "Tensile strength (σt) 130 GPa\nIts tensile strength of 130 GPa is the highest ever measured for any material.")
+        XCTAssertEqual(PageContext.passage(for: "Tensile strength: 130 GPa", in: both), "Its tensile strength of 130 GPa is the highest ever measured for any material.")
+        // More of the claim's words in the row: the row.
+        let row = source("Page", "Tensile strength (σt) 130 GPa\nGraphene has remarkable strength and stiffness among all known materials today.")
+        XCTAssertEqual(PageContext.passage(for: "Tensile strength: 130 GPa", in: row), "Tensile strength (σt) 130 GPa")
+
+        // A sentence longer than 40 words is cut to at most 40 around the claim, still exact.
+        let filler = (1...50).map { "filler\($0)" }.joined(separator: " ")
+        let long = source("Page", "Early on \(filler) the measured tensile strength reached 130 GPa in careful tests \(filler).")
+        let cut = try XCTUnwrap(PageContext.passage(for: "The tensile strength reached 130 GPa.", in: long))
+        XCTAssertLessThanOrEqual(PageContext.words(cut).count, PageContext.passageWordLimit)
+        XCTAssertTrue(cut.contains("tensile strength reached 130 GPa"))
+        XCTAssertTrue(long.text.contains(cut))
+    }
+
+    func testEachClaimGetsItsOwnPassageAndTheSourceOneEntry() throws {
+        let page = source("Graphene - Wikipedia", wiki)
+        let other = source("Swift", "Swift is a general-purpose programming language developed by Apple. Swift compiles to native code with LLVM.")
+        let answer = "Graphene conducts heat very efficiently [1]. Its tensile strength is 130 GPa [1]. Swift compiles with LLVM [2]. It conducts electricity along its plane [1]."
+        let citations = ChatCitation.assign(answer: answer, sources: [page, other], messageID: UUID())
+        XCTAssertEqual(citations.map(\.index), [1, 2, 3])
+        XCTAssertEqual(citations.map(\.sourceNumber), [1, 1, 2])
+        XCTAssertEqual(citations.map(\.markers), [[0, 3], [1], [2]], "claims that find the same passage share its citation")
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2], [3]])
+        XCTAssertEqual(ChatMarkdown.segments(ChatMarkdown.anchored(answer, citations: citations)).filter { if case .anchored = $0 { return true }; return false },
+                       [.anchored(1), .anchored(2), .anchored(3), .anchored(1)])
+        // Citations stored before per-claim passages carry no markers: `[n]` stays and resolves by source.
+        let legacy = citations.map { var old = $0; old.markers = nil; return old }
+        XCTAssertEqual(ChatMarkdown.anchored(answer, citations: legacy), answer)
+    }
+
+    // MARK: G8 quoted passages
+
+    func testASentenceEchoingAPassageIsSetAsAQuote() {
+        let passage = "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester."
+        let echo = "In 2004 the material was isolated and characterized by Andre Geim ⁅1⁆"
+        XCTAssertTrue(ChatMarkdown.echoes(echo, passages: [passage]), "eight words in a row, punctuation and chips aside")
+        XCTAssertFalse(ChatMarkdown.echoes("The material was isolated in 2004 by Geim and Novoselov.", passages: [passage]), "a paraphrase is prose")
+        XCTAssertFalse(ChatMarkdown.echoes("was isolated and characterized by Andre Geim", passages: [passage]), "seven words are not enough")
+        XCTAssertEqual(ChatMarkdown.echoWords, 8)
+        let line = "It was a milestone. In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov. ⁅1⁆ Later work followed."
+        XCTAssertEqual(ChatMarkdown.pieces(line, passages: [passage]).map(\.quote), [false, true, false])
+        XCTAssertEqual(ChatMarkdown.pieces(line, passages: [passage])[1].text.trimmingCharacters(in: .whitespaces),
+                       "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov. ⁅1⁆", "a chip after the full stop stays with its quote")
+        XCTAssertEqual(ChatMarkdown.pieces("Plain prose here. More prose.", passages: [passage]), [ChatMarkdown.Piece(text: "Plain prose here. More prose.", quote: false)])
+    }
+
+    // MARK: G8 the panel over the page
+
+    func testAMarkBehindThePanelSaysSoAndScrollsKeepItClear() async {
+        // A 1000×800 page at x 300 in the window; the 420pt panel floats over its right side, inset 16.
+        let pageFrame = CGRect(x: 300, y: 50, width: 1000, height: 800)
+        let panel = CGRect(x: 1300 - 16 - 420, y: 66, width: 420, height: 768)
+        let covered = CitationLinker.covered(panel: panel, page: pageFrame)
+        XCTAssertEqual(covered, CGRect(x: 564, y: 16, width: 420, height: 768))
+        XCTAssertNil(CitationLinker.covered(panel: CGRect(x: 0, y: 0, width: 200, height: 200), page: pageFrame), "a docked panel covers nothing")
+        XCTAssertEqual(CitationLinker.uncovered(viewport: pageFrame.size, covered: covered), CGRect(x: 0, y: 0, width: 564, height: 800))
+
+        let clear = CitationLinker.reveal(mark: CGRect(x: 40, y: 1200, width: 300, height: 20), viewport: pageFrame.size, covered: covered)
+        XCTAssertEqual(clear.dy, 1210 - 400)
+        XCTAssertFalse(clear.behind)
+        let behind = CitationLinker.reveal(mark: CGRect(x: 700, y: 100, width: 200, height: 20), viewport: pageFrame.size, covered: covered)
+        XCTAssertTrue(behind.behind)
+        XCTAssertEqual(behind.dy, 110 - 400, "a mark behind the panel keeps the plain centring")
+        XCTAssertFalse(CitationLinker.reveal(mark: CGRect(x: 450, y: 100, width: 200, height: 20), viewport: pageFrame.size, covered: covered).behind, "mostly clear of the panel")
+        XCTAssertFalse(CitationLinker.reveal(mark: CGRect(x: 700, y: 100, width: 200, height: 20), viewport: pageFrame.size, covered: nil).behind)
+
+        XCTAssertEqual(CitationChipLink.page.help(title: "Graphene", behind: true), "Behind the Ask panel; scroll to see")
+        XCTAssertEqual(CitationChipLink.page.help(title: "Graphene", behind: false), "Show in page")
+        XCTAssertEqual(CitationChipLink.unlinkedPage.help(title: "Graphene", behind: true), "Passage not found on this page")
+
+        // Linked and measured: the behind state is recorded, and a click scrolls by the plan, not by centring.
+        let tab = UUID(), message = UUID()
+        let page = source("Page", "Alpha is the first letter. Beta is the second letter.", id: tab)
+        let citations = ChatCitation.assign(answer: "Alpha is the first letter [1]. Beta is the second letter [1].", sources: [page], messageID: message)
+        let recorder = PageRecorder(found: citations.map(\.citationID))
+        recorder.frame = pageFrame
+        recorder.rects = [citations[0].citationID: CGRect(x: 40, y: 1200, width: 300, height: 20), citations[1].citationID: CGRect(x: 700, y: 100, width: 200, height: 20)]
+        let linker = CitationLinker()
+        linker.panelFrame = panel
+        await linker.link(messageID: message, citations: citations, sources: [page], tabID: tab, url: nil, page: recorder.page)
+        XCTAssertEqual(linker.behindIDs, [citations[1].citationID])
+        await linker.focus(citations[0].citationID)
+        XCTAssertEqual(recorder.scrolledBy, [810])
+        XCTAssertTrue(recorder.scrolled.isEmpty)
+        linker.clear()
+        XCTAssertTrue(linker.behindIDs.isEmpty)
+    }
+
+    func testTheEmptyStateIsOneLine() {
+        XCTAssertEqual(ChatGrounding.emptyState, "Attach a page with @ or ask about this one.")
+    }
+
     // MARK: answer rendering
 
     func testMarkersSplitIntoChipsAndQuotesUseTheSerifBlock() {
@@ -335,11 +469,16 @@ private final class PageRecorder {
     var active: [String?] = []
     var scrolled: [String] = []
     var clears = 0
+    /// Mark rects in the viewport and the page view's frame; unset, the page is unmeasured.
+    var rects: [String: CGRect] = [:]
+    var frame: CGRect?
+    var scrolledBy: [CGFloat] = []
     let found: [String]
     init(found: [String]) { self.found = found }
     var page: CitationPage {
         CitationPage(highlight: { self.highlighted.append($0); return self.found }, setActive: { self.active.append($0) },
-                     scroll: { self.scrolled.append($0) }, clear: { self.clears += 1 })
+                     scroll: { self.scrolled.append($0) }, clear: { self.clears += 1 },
+                     rect: { self.rects[$0] }, frame: { self.frame }, scrollBy: { self.scrolledBy.append($0) })
     }
 }
 

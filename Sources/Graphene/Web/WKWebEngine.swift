@@ -202,6 +202,21 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         await callCite("if (window.__grapheneCite) window.__grapheneCite.scrollTo(id);", arguments: ["id": id])
     }
 
+    func highlightRect(id: String) async -> CGRect? {
+        guard !isPrivate else { return nil }
+        // Reads the mark's box only; cite.js is not involved. CSS pixels are scaled to the host
+        // view's points by the viewport's width, which absorbs page zoom.
+        let value = await callCite("""
+            const mark = Array.from(document.querySelectorAll('mark[data-graphene-cite]')).find(m => m.getAttribute('data-graphene-cite') === id);
+            if (!mark) return null;
+            const r = mark.getBoundingClientRect();
+            return [r.left, r.top, r.width, r.height, window.innerWidth];
+            """, arguments: ["id": id])
+        guard let numbers = (value as? [Any])?.compactMap({ ($0 as? NSNumber)?.doubleValue }), numbers.count == 5, numbers[4] > 0 else { return nil }
+        let scale = webView.bounds.width / numbers[4]
+        return CGRect(x: numbers[0] * scale, y: numbers[1] * scale, width: numbers[2] * scale, height: numbers[3] * scale)
+    }
+
     func clearHighlights() async {
         guard !isPrivate else { return }
         await callCite("if (window.__grapheneCite) window.__grapheneCite.clear();", arguments: [:])
