@@ -276,6 +276,7 @@ struct WebPageToolbar: View {
                     addressAction: { app.activate(tab.id); app.focusAddress() },
                     backgroundTap: paneCount > 1 ? { app.activate(tab.id) } : nil) {
             SiteControlsButton(tab: tab)
+            ToolbarLibraryButton()
             ToolbarGlyphButton(title: "Ask Graphene (⌘K)", system: ShellGlyph.ask, on: app.knowledgeSearchPresented, identifier: "toolbar.chat") {
                 app.toggleKnowledge()
             }.disabled(app.isPrivate)

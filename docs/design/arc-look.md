@@ -156,7 +156,7 @@ Left group, starting at x=8 (or 84 when the sidebar is collapsed): back, forward
 
 Centre: the address. A flat text run, not a pill: page host in `caption` `ink2`, the rest of the path in `caption` `ink3`, truncated in the middle, centred in the remaining width, max width 60% of the card. Lock glyph at 11pt before the host when the connection is secure; no glyph otherwise. Hover shows `rowHover` behind it with `rowRadius`; click opens the command bar seeded with the URL selected. `⌘L` does the same.
 
-Right group, ending at x = width − 8: site controls (the favicon acts as the button, 16pt), chat toggle (15pt "sparkle" glyph, `ink3`, `accent` when the panel is open), split (15pt). Same control style as the left.
+Right group, ending at x = width − 8: site controls (the favicon acts as the button, 16pt), Library (15pt `books.vertical`, opens the Library popover anchored to the toolbar; the footer glyph stays), chat toggle (15pt "sparkle" glyph, `ink3`, `accent` when the panel is open), split (15pt). Same control style as the left.
 
 Loading: a 2pt `accent` progress bar along the toolbar's bottom edge, replacing the hairline while loading, fading out over 200ms at completion.
 
@@ -215,7 +215,7 @@ All use `elev`, `popoverRadius`, hairline stroke and `pageShadow`.
 
 ### 3.7 Settings, onboarding, library views
 
-Settings is native `Settings` scene: 180 sidebar list, pages use `body` and `secondary` type, `title` page headings, `Form` grouped style. No custom colours beyond `accent`. Onboarding sheet 540×420: `display` heading, `body` copy, a live 3-swatch space picker rendering the actual gradient. Threads, Vault, Mail and Board render inside the page card with a 32pt toolbar identical to the web toolbar (title instead of URL), `pageBg` background, `row`/`secondary` type and `hairline` separators. Mail drops its serif headings.
+Settings is native `Settings` scene: 180 sidebar list, pages use `body` and `secondary` type, `title` page headings, `Form` grouped style. No custom colours beyond `accent`. Onboarding sheet 540×420: `display` heading, `body` copy, a live 3-swatch space picker rendering the actual gradient. Threads, Vault, Mail and Board render inside the page card with a 32pt toolbar identical to the web toolbar (title instead of URL), `pageBg` background, `row`/`secondary` type and `hairline` separators. Mail drops its serif headings. The library bar is also the way around: a `chevron.left` "Back to web" glyph before the title (⌥⌘1) and, after the title, a compact switcher of Threads, Vault, Board and Mail (the landing tiles' order and glyphs, titles shown while they fit, the current one `ink` on `rowHover`, each button's help quoting its shortcut). Escape on a library surface returns to the web unless a text field, the command bar, a sheet or an overlay has the key. Returning to the web reselects the tab you left; while a library view shows, no sidebar row or top tab reads as current.
 
 ## 4. Motion
 

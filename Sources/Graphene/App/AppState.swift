@@ -730,7 +730,17 @@ final class AppState: ObservableObject, BrowserCoordinator {
     func toggleSidebar() { sidebarCollapsed.toggle(); persistSoon() }
     func show(_ surface: Surface) {
         guard !isPrivate || surface == .web else { notify("Private windows don’t access your saved knowledge or mail."); return }
-        activeSurface = surface; persistSoon()
+        activeSurface = surface
+        if surface == .web {
+            // Back on the web the tab you left is selected again; if it closed meanwhile, the
+            // space's last active tab, else its first, else a new one.
+            if activeTab == nil {
+                activeTabID = visibleTabs.first(where: { $0.id == lastActiveTabs[activeSpaceID] })?.id ?? visibleTabs.first?.id
+                if activeTabID == nil { newTab() }
+            }
+            focusBrowser()
+        }
+        persistSoon()
     }
 
     var activeTab: Tab? { tabs.first { $0.id == activeTabID } }

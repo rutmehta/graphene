@@ -47,11 +47,13 @@ private struct TopTabChip: View {
     @State private var targeted = false
     @State private var renaming = false
     @State private var name = ""
+    /// The chip reads as current only on the web surface; a library view is its own "current".
+    private var current: Bool { app.activeTabID == tab.id && app.activeSurface == .web }
     var body: some View {
         HStack(spacing: 6) {
             Favicon(host: tab.url?.host, size: ShellLayout.iconSize)
             if !pinned {
-                Text(tab.displayTitle).font(app.activeTabID == tab.id ? ShellType.rowSelected : ShellType.row).lineLimit(1)
+                Text(tab.displayTitle).font(current ? ShellType.rowSelected : ShellType.row).lineLimit(1)
                 Spacer(minLength: 0)
                 Button { app.requestCloseTab(tab.id) } label: { Image(systemName: "xmark").font(ShellType.glyphMini).frame(width: 18, height: 24) }
                     .buttonStyle(.plain).opacity(hovered ? 1 : 0).help("Close tab").accessibilityLabel("Close \(tab.displayTitle)")
@@ -59,12 +61,12 @@ private struct TopTabChip: View {
             }
         }.padding(.horizontal, pinned ? 0 : 8).frame(maxWidth: .infinity).frame(height: 32)
             .foregroundStyle(app.pal.ink2)
-            .background(app.activeTabID == tab.id ? app.pal.ground : hovered ? app.pal.hover : app.pal.sidebarBg, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+            .background(current ? app.pal.ground : hovered ? app.pal.hover : app.pal.sidebarBg, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             .overlay(alignment: .leading) { if targeted { Rectangle().fill(app.pal.accent).frame(width: 2) } }
             .contentShape(Rectangle()).onTapGesture { app.activate(tab.id); app.show(.web) }
             .onHover { hovered = $0 }.help(tab.displayTitle)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: hovered)
-            .accessibilityAddTraits(app.activeTabID == tab.id ? [.isSelected] : [])
+            .accessibilityAddTraits(current ? [.isSelected] : [])
             .accessibilityElement(children: .contain).accessibilityIdentifier("topTabs.tab.\(tab.id)")
             .accessibilityLabel(tab.displayTitle).accessibilityAddTraits(.isButton)
             .accessibilityAction { app.activate(tab.id); app.show(.web) }

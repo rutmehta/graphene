@@ -22,7 +22,7 @@ struct EaselView: View {
         let frames = liveFrames(items)
         let links = BoardLinks.derive(items: items, graph: app.graph)
         VStack(spacing: 0) {
-            LibraryBar(title: "\(app.activeSpace.name) Board", detail: items.isEmpty ? nil : "\(items.count)") {
+            LibraryBar(title: "\(app.activeSpace.name) Board", detail: items.isEmpty ? nil : "\(items.count)", surface: .board) {
                 LibraryBarButton("Add note", system: "note.text.badge.plus") { addNote() }
                 LibraryBarButton("Add link", system: "link.badge.plus") { addCurrentTab() }.disabled(app.activeTab?.url == nil)
                 LibraryBarButton("Export Markdown", system: "square.and.arrow.up") { export() }.disabled(items.isEmpty)

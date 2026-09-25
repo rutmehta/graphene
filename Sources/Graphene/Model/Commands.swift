@@ -293,7 +293,10 @@ extension AppState {
     }
     func sendToAsk(_ query: String) {
         guard !isPrivate else { return }
-        askRequest = AskRequest(query: query, tabIDs: Array(Set(commandContextIDs + (attachedSources.isEmpty ? (activeTabID.map { [$0] } ?? []) : []))))
+        // Grounded on the @-mentioned tabs, else on the current page (unless sources were attached).
+        var seen = Set<UUID>()
+        let tabs = !commandContextIDs.isEmpty ? commandContextIDs : (attachedSources.isEmpty ? (activeTabID.map { [$0] } ?? []) : [])
+        askRequest = AskRequest(query: query, tabIDs: tabs.filter { seen.insert($0).inserted })
         commandContextIDs = []; knowledgeThreadID = nil; commandBarPresented = false
         // The panel floats over whichever surface is showing; never swap a library view for the web.
         knowledgeSearchPresented = true
@@ -345,6 +348,8 @@ struct AskRequest: Identifiable {
     let id = UUID()
     let query: String
     let tabIDs: [UUID]
+    /// A question is sent as soon as the panel takes the request; an empty one only opens it.
+    var sends: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 
 enum BrowserLayout: String, Codable, CaseIterable {
