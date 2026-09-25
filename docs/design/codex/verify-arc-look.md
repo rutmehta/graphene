@@ -15,10 +15,10 @@ Build the current `master` of this repository, run it on an isolated profile, ex
 - Make four of them Favorites (tab context menu → Add to Favorites, or drag to the favorites area).
 - Pin three others (context menu → Pin); create a folder (context menu → New Folder) named `Reading` and move one pinned tab into it.
 - Leave four Today tabs. Create a second space with ⌘⌥N named `Personal`, then return to the first space.
-- Set the first space's theme to a dark blue-violet (space label → … → theme; hue near 243°) and confirm Appearance is Dark for the dark captures, then Light for the light captures (Settings → Appearance, or ⇧⌘L).
+- Set the first space's theme through Settings → Spaces → Theme: choose the Iris preset, then read back the hue/saturation values shown and record them (hue near 243° and saturation 0.6 are the reference; if the sliders cannot be set precisely, record what they read) and confirm Appearance is Dark for the dark captures, then Light for the light captures (Settings → Appearance, or ⇧⌘L).
 
 ## Captures (window-only, Retina, `screencapture -l <windowid> -o`)
-All at 1280×820. Verify each PNG with `sips -g pixelWidth -g pixelHeight` and by viewing it.
+Get the window id with `swift scripts/window-id.swift -p <PID>` (the PID you launched). Capture with `screencapture -l <id> -o -x <file>.png`; this is a shell command that needs no UI focus, so run it right after putting the app into the wanted state via computer use. Do not use `screencapture -i` (interactive) or `-R` for whole-window shots. All at 1280×820. Verify each PNG with `sips -g pixelWidth -g pixelHeight` and by viewing it. If a state cannot be held (a hover, a held key), say so and skip it; never substitute a wrong-surface capture.
 1. `main-dark.png`, `main-light.png`: Wikipedia tab active, sidebar open, page loaded.
 2. `row-hover-dark.png`: pointer over an unselected Today row (hover fill and close glyph must show).
 3. `today-hairline-hover.png`: pointer over the hairline between pinned and Today (the "Clear" label must appear).
