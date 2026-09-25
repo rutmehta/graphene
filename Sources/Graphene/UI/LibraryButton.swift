@@ -23,7 +23,8 @@ struct LibraryButton: View {
         Button { app.libraryPresented = false; action() } label: {
             HStack(spacing: ShellLayout.iconGap) {
                 Image(systemName: symbol).frame(width: ShellLayout.iconSlot); Text(title); Spacer(); Text(hint).font(ShellType.label).foregroundStyle(app.pal.ink3)
-            }.font(ShellType.row).padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.controlSize)
+            }.font(ShellType.row).padding(.horizontal, ShellLayout.rowInsetLeading).frame(maxWidth: .infinity).frame(height: ShellLayout.controlSize)
+                .contentShape(Rectangle())
         }.buttonStyle(ShellButtonStyle()).accessibilityIdentifier("library.\(title)")
             .accessibilityLabel(title).accessibilityAddTraits(.isButton)
     }
