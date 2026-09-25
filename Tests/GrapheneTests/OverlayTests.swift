@@ -33,6 +33,17 @@ final class OverlayTests: XCTestCase {
         XCTAssertEqual(ShellLayout.commandMaxRows, 8)
     }
 
+    @MainActor
+    func testTitlebarDrawsNoSeparator() {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled, .closable], backing: .buffered, defer: true)
+        XCTAssertNotEqual(window.titlebarSeparatorStyle, .none)
+        WindowAccessor.flattenTitlebar(window)
+        XCTAssertEqual(window.titlebarSeparatorStyle, .none)
+        XCTAssertTrue(window.titlebarAppearsTransparent)
+        XCTAssertTrue(window.styleMask.contains(.fullSizeContentView))
+        XCTAssertEqual(window.titleVisibility, .hidden)
+    }
+
     func testCommandBarTopIsIndependentOfItsHeight() {
         // The top edge is a function of the window height only; nothing about the card's content feeds it.
         for height in [600.0, 820.0, 1200.0] as [CGFloat] {

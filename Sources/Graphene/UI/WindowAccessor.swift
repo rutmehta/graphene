@@ -14,13 +14,21 @@ struct WindowAccessor: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {
         DispatchQueue.main.async { write(nsView.window) }
     }
+    /// A transparent, full-size titlebar with no separator. AppKit draws the titlebar
+    /// separator across the whole window width at the titlebar's bottom edge once a scroll
+    /// view (the sidebar list, the page) sits under it; that was the rule through the top band.
+    static func flattenTitlebar(_ window: NSWindow) {
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.titlebarSeparatorStyle = .none
+        window.styleMask.insert(.fullSizeContentView)
+    }
+
     private func write(_ window: NSWindow?) {
         guard let window, window.windowNumber > 0 else { return }
         state?.attach(window)
         if window.isKeyWindow { onKeyWindow() }
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.styleMask.insert(.fullSizeContentView)
+        Self.flattenTitlebar(window)
         window.isMovableByWindowBackground = false
         if !window.styleMask.contains(.fullScreen) {
             for (index, kind) in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].enumerated() {

@@ -25,7 +25,7 @@ final class LittleArcWindow: NSObject, NSWindowDelegate {
         (tab.engine as? WKWebEngine)?.downloads = app.downloads
         panel = LittlePanel(contentRect: NSRect(origin: .zero, size: ShellLayout.littleArcSize), styleMask: [.titled, .closable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         super.init()
-        panel.title = "Little Graphene"; panel.titlebarAppearsTransparent = true; panel.titleVisibility = .hidden
+        panel.title = "Little Graphene"; WindowAccessor.flattenTitlebar(panel)
         panel.backgroundColor = NSColor(app.pal.chromeTop)
         panel.isReleasedWhenClosed = false; panel.level = .floating; panel.delegate = self
         panel.contentView = NSHostingView(rootView: LittleArcRoot(tab: tab, close: { [weak self] in self?.panel.close() })
