@@ -7,7 +7,7 @@ final class BrowserLibrary: ObservableObject {
     @Published var tabs: [Tab] = []
     @Published var settings = Settings()
     @Published var profiles: [Profile] = []
-    @Published var spaces = [SpaceInfo(id: UUID(), name: "Research", color: .tide), SpaceInfo(id: UUID(), name: "Personal", color: .iris)]
+    @Published var spaces = [SpaceInfo(id: UUID(), name: "Research", color: SpaceColor.defaultPreset), SpaceInfo(id: UUID(), name: "Personal", color: .iris)]
     @Published var folders: [TabFolder] = []
     @Published var archivedTabs: [AppState.SessionTab] = []
     @Published var splits: [TabSplit] = []

@@ -28,10 +28,11 @@ final class VisualPaletteTests: XCTestCase {
     func testPresetsDriveTheChromeAtSixtyPercentSaturation() throws {
         XCTAssertEqual(SpaceColor.slate.theme.saturation, 0, "Slate is the neutral preset: grey chrome, no hue")
         for space in SpaceColor.allCases where space != .slate {
-            XCTAssertGreaterThanOrEqual(space.theme.saturation, 0.6, space.rawValue)
-            XCTAssertGreaterThanOrEqual(Palette(mode: .dark, space: space).chromeSaturation, 0.8, space.rawValue)
             let swatch = try XCTUnwrap(NSColor(space.c1).usingColorSpace(.sRGB))
             XCTAssertEqual(space.theme.hue, Double(swatch.hueComponent), accuracy: 0.0001, "Presets keep the swatch hue")
+            guard space != .graphite else { continue }
+            XCTAssertGreaterThanOrEqual(space.theme.saturation, 0.6, space.rawValue)
+            XCTAssertGreaterThanOrEqual(Palette(mode: .dark, space: space).chromeSaturation, 0.8, space.rawValue)
         }
         // Iris no longer collapses to a flat purple: the two dark stops differ clearly in hue and chroma.
         let iris = Palette(mode: .dark, space: .iris)
@@ -39,6 +40,52 @@ final class VisualPaletteTests: XCTestCase {
         XCTAssertGreaterThan(top.saturationComponent, 0.45)
         // A custom theme keeps its own saturation.
         XCTAssertEqual(Palette(mode: .dark, space: .iris, theme: SpaceTheme(hue: 0.68, saturation: 0.2)).chromeSaturation, 0.6, accuracy: 0.0001)
+    }
+
+    // MARK: graphite (graphene-identity.md §3.2)
+
+    private func hsbHex(_ hue: Double, _ saturation: Double, _ brightness: Double) throws -> String {
+        let c = try XCTUnwrap(NSColor(Color(hue: hue / 360, saturation: saturation, brightness: brightness)).usingColorSpace(.sRGB))
+        return [c.redComponent, c.greenComponent, c.blueComponent].map { String(format: "%02X", Int(($0 * 255).rounded())) }.joined()
+    }
+
+    @MainActor
+    func testGraphitePresetIsHue232AtSaturation012() throws {
+        XCTAssertEqual(SpaceColor.graphite.label, "Graphite")
+        XCTAssertEqual(SpaceColor.graphite.presetSaturation, 0.12)
+        XCTAssertEqual(SpaceColor.graphite.theme.hue * 360, 232, accuracy: 0.5)
+        XCTAssertEqual(Palette(mode: .dark, space: .graphite).chromeSaturation, 0.56, accuracy: 0.0001)
+        XCTAssertEqual(SpaceColor.slate.presetSaturation, 0)
+        XCTAssertEqual(SpaceColor.allCases, [.graphite, .iris, .tide, .moss, .clay, .slate], "Picker order")
+    }
+
+    @MainActor
+    func testGraphiteChromeTopMatchesSpecInBothSchemes() throws {
+        let dark = Palette(mode: .dark, space: .graphite), light = Palette(mode: .light, space: .graphite)
+        try assertNear(dark.chromeTop, hex: try hsbHex(232, 0.46, 0.15), tolerance: 6)
+        try assertNear(light.chromeTop, hex: try hsbHex(232, 0.12, 0.95), tolerance: 6)
+        XCTAssertGreaterThanOrEqual(dark.inkContrast, 4.5)
+        XCTAssertGreaterThanOrEqual(light.inkContrast, 4.5)
+    }
+
+    func testOldSpaceColorValuesStillDecode() throws {
+        for raw in ["clay", "moss", "tide", "iris", "slate"] {
+            let decoded = try JSONDecoder().decode([SpaceColor].self, from: Data("[\"\(raw)\"]".utf8))
+            XCTAssertEqual(decoded.first?.rawValue, raw)
+        }
+    }
+
+    @MainActor
+    func testNewSpacesAndFreshOnboardingDefaultToGraphite() {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let app = AppState(directory: directory)
+        XCTAssertEqual(OnboardingView.swatches, [.graphite, .iris, .tide])
+        // Onboarding marks the swatch matching the active space's preset as selected.
+        XCTAssertEqual(app.activeSpace.color, .graphite, "A fresh profile's first space is graphite")
+        XCTAssertNil(app.activeSpace.theme)
+        let id = app.createSpace(name: "Fresh")
+        XCTAssertEqual(app.spaces.first { $0.id == id }?.color, .graphite)
     }
 
     @MainActor

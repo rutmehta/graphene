@@ -235,7 +235,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
 
     @discardableResult
     func createSpace(name: String = "New Space") -> UUID {
-        let space = SpaceInfo(id: UUID(), name: name, color: .tide)
+        let space = SpaceInfo(id: UUID(), name: name, color: SpaceColor.defaultPreset)
         spaces.append(space)
         selectSpace(space.id)
         return space.id
