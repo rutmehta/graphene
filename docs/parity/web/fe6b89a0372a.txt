@@ -1,0 +1,22 @@
+Dia Browser | Update 1.13.1
+v
+1.13.1
+January 7, 2026
+What's New in Dia v1.13.1
+Dia v1.13.0 kicks off the new year by tidying up the everyday details in Dia.
+Tab groups improvements.
+Closed tab groups now overflow into a simple button instead of crowding your strip. Group menus show icons and colors to make destinations easier to spot, and new groups drop you straight into renaming so you can label projects in the moment. Command‑click‑created single‑tab groups automatically ungroup once only the original tab remains, so quick one‑offs don’t linger.
+A calmer side panel.
+The side panel has a refined look and no longer flickers when you move between tabs with different side panel states, keeping context changes feeling smooth and steady.
+Better ad block coverage.
+Ad blocker blocklists have been updated to give you better coverage while reducing odd breakages on the sites you rely on.
+No more missing favicons.
+Dia now pre‑warms the favicon cache on launch so icons appear right away as you restore tabs and windows. A Notion‑specific favicon bug has also been resolved, so workspaces show up with the right identity.
+Bookmarks that are easier to file.
+When you save a bookmark, the interstitial now shows the full folder tree inline, making it faster to drop links into the right place without digging.
+Lists in Chat that read cleanly.
+Chat now renders bulleted and numbered lists with correct markers and indentation, avoids hard‑to‑read lists‑in‑tables, and can auto‑correct slightly off list formatting so your writing and pasted content stay legible.
+More resilient Notion attachments.
+We've shipped a series of page scrapping improvements for more reliable attachments from Notion and other tools.
+A cleaner look for meeting reminders.
+Meeting reminders now use richer, platform‑specific branding.

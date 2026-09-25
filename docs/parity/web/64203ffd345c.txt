@@ -1,0 +1,12 @@
+Full text notes for every Arc release:
+Arc for macOS
+Arc for macOS - 2024 - 2026 Release Notes
+Arc for macOS - 2023 Release Notes
+Arc for macOS - 2022 Release Notes
+Arc for macOS - 2021 Release Notes
+Arc Search for iOS
+Arc Search for iOS - 2024 Release Notes
+Arc for Windows
+Arc for Windows - 2023-2026 Release Notes
+Arc Search for Android
+Arc Search for Android - 2024 Release Notes

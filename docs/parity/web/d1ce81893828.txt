@@ -1,0 +1,15 @@
+Dia Browser | Update 1.8.0
+v
+1.8.0
+December 3, 2025
+What's New in Dia v1.8.0
+Dia v1.8.0 is filled with simple, team favorite, updates that smooth out daily frictions. Here's what's new:
+Tab renaming. Double‑click any tab to rename it in place.
+Faster, clearer voice input. Voice input gets a refreshed UI plus keyboard shortcuts so it's easier to start dictation from wherever you are.
+More Slack in context. You can now use Slack activity search to see mentions, unreads, and recent workspace activity directly in Dia. It's a quicker way to pull up the details that matter without hunting through channels.
+Create docs without breaking flow. Type "new …" into the Command Bar to spin up a new document, spreadsheet, slide deck, or ticket right from Dia. It's the fast path from idea to artifact.
+Fewer flashes and empty tabs. Closing a tab no longer flashes the background page—Dia simply brings the next site into view. Under the hood, we now protect your last 10 recently used tabs from being proactively discarded (they can still be closed under heavy memory pressure or by extensions).
+Downloads under control. Paused downloads can finally be canceled directly, fixing a long‑standing bug that left them stuck in limbo.
+Meeting PiP fixes. Picture‑in‑Picture for Google Meet behaves more reliably. When you switch around Dia, the PiP window now appears when and where you expect it, so you can move between tabs without losing sight of the conversation.
+Chrome pinned tabs come along. When you import from Chrome, your pinned tabs now arrive in Dia already pinned, so your anchors stay right where you expect them.
+Thanks for browsing with Dia. If anything doesn't feel quite right in v1.8.0, tell us—each fix helps keep the browser feeling fast, stable, and ready for real work.

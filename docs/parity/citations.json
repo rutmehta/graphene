@@ -1,0 +1,953 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://resources.arc.net/hc/en-us/articles/20595231349911-Keyboard-Shortcuts",
+      "title": "Keyboard Shortcuts – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 2,
+      "url": "https://resources.arc.net/hc/en-us/categories/16435255982103-Features",
+      "title": "Features – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 3,
+      "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI",
+      "title": "Arc Max: Boost Your Browsing with AI – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 4,
+      "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes",
+      "title": "Arc for macOS - 2024 - 2026 Release Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 5,
+      "url": "https://www.diabrowser.com/release-notes/latest",
+      "title": "Dia Browser | Latest Release Notes",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 6,
+      "url": "https://www.diabrowser.com/changelog",
+      "title": "Dia Browser | Latest Release Notes",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 7,
+      "url": "https://www.diabrowser.com/security",
+      "title": "Dia Browser | Security",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 8,
+      "url": "https://www.diabrowser.com/sitemap.xml",
+      "title": "https://www.diabrowser.com/sitemap.xml",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 9,
+      "url": "https://resources.arc.net/hc/en-us/sections/19211965457687-Multitask",
+      "title": "Multitask – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 10,
+      "url": "https://resources.arc.net/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once",
+      "title": "Split View: View Multiple Tabs at Once – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 11,
+      "url": "https://resources.arc.net/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs",
+      "title": "Peek: Preview Sites From Pinned Tabs – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 12,
+      "url": "https://resources.arc.net/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites",
+      "title": "Previews: Glance Top Sites – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 13,
+      "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging",
+      "title": "Little Arc: Quick Lookups & Instant Triaging – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 14,
+      "url": "https://resources.arc.net/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse",
+      "title": "Mini Player: Watch or Listen as you Browse – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 15,
+      "url": "https://resources.arc.net/hc/en-us/sections/19211905723543-Create",
+      "title": "Create – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 16,
+      "url": "https://resources.arc.net/hc/en-us/articles/22557798824855-Customize-Default-Notes-App",
+      "title": "Customize Default Notes App – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 17,
+      "url": "https://resources.arc.net/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools",
+      "title": "Developer Mode: Instant Dev Tools – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 18,
+      "url": "https://resources.arc.net/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes",
+      "title": "Phasing Out Arc Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 19,
+      "url": "https://resources.arc.net/hc/en-us/articles/19231142050071-Easels-Capture-Create",
+      "title": "Easels: Capture & Create – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 20,
+      "url": "https://resources.arc.net/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone",
+      "title": "Share Spaces, Folders & Splits with Anyone – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 21,
+      "url": "https://resources.arc.net/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website",
+      "title": "Boosts: Customize Any Website – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 22,
+      "url": "https://resources.arc.net/hc/en-us/sections/19211839689111-Organize",
+      "title": "Organize – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 23,
+      "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars",
+      "title": "Live Calendars – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 24,
+      "url": "https://resources.arc.net/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing",
+      "title": "Air Traffic Control: Automate Your Link Routing – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 25,
+      "url": "https://resources.arc.net/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders",
+      "title": "Automatic GitHub Live Folders – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 26,
+      "url": "https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around",
+      "title": "Pinned Tabs: Tabs you want to stick around – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 27,
+      "url": "https://resources.arc.net/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space",
+      "title": "Favorites: Top Tabs Across Every Space – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 28,
+      "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more",
+      "title": "Library: A home for your downloads, archived tabs, easels and more. – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 29,
+      "url": "https://resources.arc.net/hc/en-us/sections/16435226323607-Rev-Up",
+      "title": "Rev Up – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 30,
+      "url": "https://resources.arc.net/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop",
+      "title": "How to Set Custom Keyboard Shortcuts on Arc for Desktop – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 31,
+      "url": "https://resources.arc.net/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop",
+      "title": "How Do You Switch Between Tabs Quickly on Arc Desktop? – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 32,
+      "url": "https://resources.arc.net/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop",
+      "title": "How Do You Change Your Download Location in Arc for Desktop? – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 33,
+      "url": "https://resources.arc.net/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop",
+      "title": "How Do You Switch Your Default Search Engine on Arc for Desktop? – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 34,
+      "url": "https://resources.arc.net/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call",
+      "title": "How Can I Quickly Switch the Tab I’m Sharing on a Google Meet Call? – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 35,
+      "url": "https://resources.arc.net/hc/en-us/sections/20497738798231-Release-Notes",
+      "title": "Release Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 36,
+      "url": "https://resources.arc.net/hc/en-us/articles/20498285812375-Release-Notes",
+      "title": "Release Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 37,
+      "url": "https://resources.arc.net/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes",
+      "title": "Arc for macOS - 2023 Release Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 38,
+      "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes",
+      "title": "Arc for macOS - 2024 - 2026 Release Notes – Arc Help Center",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 39,
+      "url": "https://diabrowser.com",
+      "title": "Dia | A browser you won't dread opening",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 40,
+      "url": "https://diabrowser.com/download",
+      "title": "Download Dia Browser for macOS – a smart browser where you can chat, write, learn, plan and shop with your tabs.",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 41,
+      "url": "https://diabrowser.com/students",
+      "title": "Dia for Students",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 42,
+      "url": "https://diabrowser.com/changelog",
+      "title": "Dia Browser | Latest Release Notes",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 43,
+      "url": "https://diabrowser.com/changelog/1-15-0",
+      "title": "Dia Browser | Update 1.15.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 44,
+      "url": "https://diabrowser.com/changelog/1-14-0",
+      "title": "Dia Browser | Update 1.14.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 45,
+      "url": "https://diabrowser.com/changelog/1-9-0",
+      "title": "Dia Browser | Update 1.9.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 46,
+      "url": "https://diabrowser.com/changelog/1-16-0",
+      "title": "Dia Browser | Update 1.16.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 47,
+      "url": "https://diabrowser.com/changelog/1-10-1",
+      "title": "Dia Browser | Update 1.10.1",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 48,
+      "url": "https://diabrowser.com/changelog/1-6-0",
+      "title": "Dia Browser | Update 1.6.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 49,
+      "url": "https://diabrowser.com/changelog/1-8-0",
+      "title": "Dia Browser | Update 1.8.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 50,
+      "url": "https://diabrowser.com/changelog/0-43-0",
+      "title": "Dia Browser | Update 0.43.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 51,
+      "url": "https://diabrowser.com/changelog/0-44-0",
+      "title": "Dia Browser | Update 0.44.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 52,
+      "url": "https://diabrowser.com/changelog/0-45-0",
+      "title": "Dia Browser | Update 0.45.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 53,
+      "url": "https://diabrowser.com/changelog/0-46-0",
+      "title": "Dia Browser | Update 0.46.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 54,
+      "url": "https://diabrowser.com/changelog/0-47-0",
+      "title": "Dia Browser | Update 0.47.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 55,
+      "url": "https://diabrowser.com/changelog/0-48-0",
+      "title": "Dia Browser | Update 0.48.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 56,
+      "url": "https://diabrowser.com/changelog/0-49-0",
+      "title": "Dia Browser | Update 0.49.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 57,
+      "url": "https://diabrowser.com/changelog/1-0-1",
+      "title": "Dia Browser | Update 1.0.1",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 58,
+      "url": "https://diabrowser.com/changelog/1-1-0",
+      "title": "Dia Browser | Update 1.1.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 59,
+      "url": "https://diabrowser.com/changelog/1-2-0",
+      "title": "Dia Browser | Update 1.2.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 60,
+      "url": "https://diabrowser.com/changelog/1-3-1",
+      "title": "Dia Browser | Update 1.3.1",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 61,
+      "url": "https://diabrowser.com/changelog/1-4-0",
+      "title": "Dia Browser | Update 1.4.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 62,
+      "url": "https://diabrowser.com/changelog/1-5-0",
+      "title": "Dia Browser | Update 1.5.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 63,
+      "url": "https://diabrowser.com/changelog/1-7-0",
+      "title": "Dia Browser | Update 1.7.0",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 64,
+      "url": "https://diabrowser.com/changelog/1-13-1",
+      "title": "Dia Browser | Update 1.13.1",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 65,
+      "url": "https://diabrowser.com/release-notes",
+      "title": "Dia Browser | Latest Release Notes",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 66,
+      "url": "https://diabrowser.com/release-notes/1-8-0-direct-from-the-team",
+      "title": "Dia Browser | Direct from Team Dia",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 67,
+      "url": "https://diabrowser.com/release-notes/1-19-0-tab-groups-and-proactive-suggestions",
+      "title": "Dia Browser | Multiplying tabs? Dia keeps them in check",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 68,
+      "url": "https://diabrowser.com/release-notes/1-23-0-from-review-to-merge-to-whats-next",
+      "title": "Dia Browser | From review to merge to what’s next",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 69,
+      "url": "https://diabrowser.com/release-notes/Linear",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 70,
+      "url": "https://diabrowser.com/release-notes/1-21-0-before-you-reach-for-it",
+      "title": "Dia Browser | Before you reach for it…",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 71,
+      "url": "https://diabrowser.com/release-notes/1-30-0-keeping-tabs-tidy",
+      "title": "Dia Browser | Keeping Tabs Tidy",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 72,
+      "url": "https://diabrowser.com/release-notes/1-13-1-new-year-new-polish",
+      "title": "Dia Browser | Carrying it forward in 2026",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 73,
+      "url": "https://diabrowser.com/release-notes/1-5-0-meet-me-in-dia",
+      "title": "Dia Browser | Meet Me in Dia",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 74,
+      "url": "https://diabrowser.com/release-notes/1-32-0-outside-work",
+      "title": "Dia Browser | Outside of work",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 75,
+      "url": "https://diabrowser.com/release-notes/windows-wednesdays",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 76,
+      "url": "https://diabrowser.com/release-notes/1-22-0-dont-think",
+      "title": "Dia Browser | Don’t think about the next step. Take it.",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 77,
+      "url": "https://diabrowser.com/release-notes/granola",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 78,
+      "url": "https://diabrowser.com/release-notes/1-37-0-morning-brief",
+      "title": "Dia Browser | What we're building, unfiltered",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 79,
+      "url": "https://diabrowser.com/release-notes/Tools",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 80,
+      "url": "https://diabrowser.com/release-notes/Notion",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 81,
+      "url": "https://diabrowser.com/release-notes/1-36-0-pip-stash",
+      "title": "Dia Browser | Stash your PiP out of the way",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 82,
+      "url": "https://diabrowser.com/release-notes/context-switching",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 83,
+      "url": "https://diabrowser.com/release-notes/1-38-0-closing-the-week",
+      "title": "Dia Browser | Closing out the week with Dia",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 84,
+      "url": "https://diabrowser.com/release-notes/1-26-0-sync-is-here",
+      "title": "Dia Browser | Pick up where you left off",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 85,
+      "url": "https://diabrowser.com/release-notes/questions",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 86,
+      "url": "https://diabrowser.com/release-notes/1-39-1-reports",
+      "title": "Dia Browser | Meet Reports",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 87,
+      "url": "https://diabrowser.com/release-notes/1-34-1-pittsburgh",
+      "title": "Dia Browser | The week in Pittsburgh",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 88,
+      "url": "https://diabrowser.com/release-notes/1-20-0-little-moments-big-feeling",
+      "title": "Dia Browser | Little moments. Big feeling.",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 89,
+      "url": "https://diabrowser.com/release-notes/1-10-1-year-end-release",
+      "title": "Dia Browser | No loose ends",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 90,
+      "url": "https://diabrowser.com/release-notes/1-25-0-details-that-delight",
+      "title": "Dia Browser | Details that delight",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 91,
+      "url": "https://diabrowser.com/release-notes/1-15-1-polish-galore",
+      "title": "Dia Browser | Better organization, better context",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 92,
+      "url": "https://diabrowser.com/release-notes/security-team-question",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 93,
+      "url": "https://diabrowser.com/release-notes/1-33-0-tab-performance",
+      "title": "Dia Browser | Everything in Its Place",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 94,
+      "url": "https://diabrowser.com/release-notes/linkedin-integration",
+      "title": "Dia Browser | Notes from the roadmap",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 95,
+      "url": "https://diabrowser.com/release-notes/1-7-0-flow-state",
+      "title": "Dia Browser | Find Yourself in Flow State",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 96,
+      "url": "https://diabrowser.com/release-notes/1-24-0-dia-got-faster",
+      "title": "Dia Browser | Dia got faster",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 97,
+      "url": "https://diabrowser.com/release-notes/1-27-0-your-work-comes-to-you",
+      "title": "Dia Browser | Your work comes to you",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 98,
+      "url": "https://diabrowser.com/release-notes/1-16-0-organization-that-grows",
+      "title": "Dia Browser | Onboarding without tab overload",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 99,
+      "url": "https://diabrowser.com/release-notes/1-9-0-tab-groups",
+      "title": "Dia Browser | Organize your Tabs",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 100,
+      "url": "https://diabrowser.com/release-notes/1-31-0-pr-hover",
+      "title": "Dia Browser | Stop opening PRs blind",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 101,
+      "url": "https://diabrowser.com/release-notes/1-14-0-meeting-tab-groups",
+      "title": "Dia Browser | Join the call. We’ll handle the tabs.",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 102,
+      "url": "https://diabrowser.com/release-notes/1-18-1-your-setup-your-way",
+      "title": "Dia Browser | Your setup, your way",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 103,
+      "url": "https://diabrowser.com/release-notes/1-6-0-conversations-context-chat",
+      "title": "Dia Browser | Conversations, Context, and Chat",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 104,
+      "url": "https://diabrowser.com/release-notes/1-17-0-github-live-tab-groups",
+      "title": "Dia Browser | Live Tab Groups are here",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 105,
+      "url": "https://diabrowser.com/release-notes/1-28-0-look-closer",
+      "title": "Dia Browser | A closer look",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 106,
+      "url": "https://diabrowser.com/release-notes/1-29-0-sync-unpinned-tabs",
+      "title": "Dia Browser | Sync unpinned tabs",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 107,
+      "url": "https://diabrowser.com/forwork",
+      "title": "Dia Browser | Work",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 108,
+      "url": "https://diabrowser.com/plans",
+      "title": "Dia Browser | Plans",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 109,
+      "url": "https://www.diabrowser.com/release-notes/1-8-0-direct-from-the-team",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 110,
+      "url": "https://www.diabrowser.com/release-notes/1-19-0-tab-groups-and-proactive-suggestions",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 111,
+      "url": "https://www.diabrowser.com/release-notes/1-23-0-from-review-to-merge-to-whats-next",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 112,
+      "url": "https://www.diabrowser.com/release-notes/Linear",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 113,
+      "url": "https://www.diabrowser.com/release-notes/1-21-0-before-you-reach-for-it",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 114,
+      "url": "https://www.diabrowser.com/release-notes/1-30-0-keeping-tabs-tidy",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 115,
+      "url": "https://www.diabrowser.com/release-notes/1-13-1-new-year-new-polish",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 116,
+      "url": "https://www.diabrowser.com/release-notes/1-5-0-meet-me-in-dia",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 117,
+      "url": "https://www.diabrowser.com/release-notes/1-32-0-outside-work",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 118,
+      "url": "https://www.diabrowser.com/release-notes/windows-wednesdays",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 119,
+      "url": "https://www.diabrowser.com/release-notes/1-22-0-dont-think",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 120,
+      "url": "https://www.diabrowser.com/release-notes/granola",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 121,
+      "url": "https://www.diabrowser.com/release-notes/1-37-0-morning-brief",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 122,
+      "url": "https://www.diabrowser.com/release-notes/Tools",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 123,
+      "url": "https://www.diabrowser.com/release-notes/Notion",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 124,
+      "url": "https://www.diabrowser.com/release-notes/1-36-0-pip-stash",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 125,
+      "url": "https://www.diabrowser.com/release-notes/context-switching",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 126,
+      "url": "https://www.diabrowser.com/release-notes/1-38-0-closing-the-week",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 127,
+      "url": "https://www.diabrowser.com/release-notes/1-26-0-sync-is-here",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 128,
+      "url": "https://www.diabrowser.com/release-notes/questions",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 129,
+      "url": "https://www.diabrowser.com/release-notes/1-39-1-reports",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 130,
+      "url": "https://www.diabrowser.com/release-notes/1-34-1-pittsburgh",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 131,
+      "url": "https://www.diabrowser.com/release-notes/1-20-0-little-moments-big-feeling",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 132,
+      "url": "https://www.diabrowser.com/release-notes/1-10-1-year-end-release",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 133,
+      "url": "https://www.diabrowser.com/release-notes/1-25-0-details-that-delight",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 134,
+      "url": "https://www.diabrowser.com/release-notes/1-15-1-polish-galore",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 135,
+      "url": "https://www.diabrowser.com/release-notes/security-team-question",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 136,
+      "url": "https://www.diabrowser.com/release-notes/1-33-0-tab-performance",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 137,
+      "url": "https://www.diabrowser.com/release-notes/linkedin-integration",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 138,
+      "url": "https://www.diabrowser.com/release-notes/1-7-0-flow-state",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 139,
+      "url": "https://www.diabrowser.com/release-notes/1-24-0-dia-got-faster",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 140,
+      "url": "https://www.diabrowser.com/release-notes/1-27-0-your-work-comes-to-you",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 141,
+      "url": "https://www.diabrowser.com/release-notes/1-16-0-organization-that-grows",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 142,
+      "url": "https://www.diabrowser.com/release-notes/1-9-0-tab-groups",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 143,
+      "url": "https://www.diabrowser.com/release-notes/1-31-0-pr-hover",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 144,
+      "url": "https://www.diabrowser.com/release-notes/1-14-0-meeting-tab-groups",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 145,
+      "url": "https://www.diabrowser.com/release-notes/1-18-1-your-setup-your-way",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 146,
+      "url": "https://www.diabrowser.com/release-notes/1-6-0-conversations-context-chat",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 147,
+      "url": "https://www.diabrowser.com/release-notes/1-17-0-github-live-tab-groups",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 148,
+      "url": "https://www.diabrowser.com/release-notes/1-28-0-look-closer",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 149,
+      "url": "https://www.diabrowser.com/release-notes/1-29-0-sync-unpinned-tabs",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 150,
+      "url": "https://resources.arc.net/hc/en-us/articles/19228855311127-Auto-Archive-Clean-as-you-go",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 151,
+      "url": "https://resources.arc.net/hc/en-us/articles/19228419623447-Folders-Stash-Similar-Tabs-Together",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 152,
+      "url": "https://resources.arc.net/hc/en-us/articles/19228064149143-Spaces-Distinct-Browsing-Areas",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 153,
+      "url": "https://resources.arc.net/hc/en-us/articles/19227964556183-Profiles-Separate-Work-Personal-Browsing",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 154,
+      "url": "https://resources.arc.net/hc/en-us/articles/19335089616791-Import-Bookmarks-Logins-History-Extensions-from-Your-Previous-Browser",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 155,
+      "url": "https://resources.arc.net/hc/en-us/articles/19434259167767-Extensions-in-Arc-How-to-Import-Add-Open",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 156,
+      "url": "https://resources.arc.net/hc/en-us/articles/20855018192791-Site-Search-Directly-Search-any-Website",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 157,
+      "url": "https://www.diabrowser.com/getting-started",
+      "title": "",
+      "accessed": "2026-09-10"
+    },
+    {
+      "id": 158,
+      "url": "https://www.diabrowser.com/help",
+      "title": "",
+      "accessed": "2026-09-10"
+    }
+  ]
+}

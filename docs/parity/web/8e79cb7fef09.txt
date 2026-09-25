@@ -1,0 +1,25 @@
+Dia Browser | Update 1.0.1
+v
+1.0.1
+October 8, 2025
+What's New in Dia v1.0.1
+Dia v1.0.1 brings Dia to general availability on macOS! Plus, major upgrades for Skills and Memory.
+Anyone can now download Dia for macOS from
+diabrowser.com
+, create an account, and start using Dia immediately—no more waitlist.
+We've revamped the Skill builder: you can now edit Skills in a separate popup window for added ease, and build Skills with distinct steps. Give it a try by opening the "Skills" dropdown below the Command Bar and clicking "New Skill."
+The Command Bar and Skill builder now include a new toolbar for mentioning actions (like
+Search Memory
+) and formats (
+list
+,
+table
+,
+code
+, and more).
+You'll notice a shimmer animation when @-mentioning items in the Command Bar for improved visual feedback during prompt creation.
+Search Memory
+now replaces
+@History
+in prompts and Skills, referencing personal context more reliably and intuitively.
+This week includes a bump to Chromium 141.0.7390.66, which includes improvements to security, stability, and performance.

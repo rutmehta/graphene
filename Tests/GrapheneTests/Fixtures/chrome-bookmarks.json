@@ -1,0 +1,1 @@
+{"roots":{"bookmark_bar":{"type":"folder","children":[{"type":"url","name":"Graphene","url":"https://en.wikipedia.org/wiki/Graphene"},{"type":"folder","children":[{"type":"url","name":"Example","url":"https://example.com"},{"type":"url","name":"Unsafe","url":"javascript:alert(1)"}]}]}}}

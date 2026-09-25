@@ -1,0 +1,29 @@
+This article applies to Arc on
+macOS
+What is Library
+Library stores all the stuff you've visited, downloaded, created, or saved on Arc. You can open Library from the
+bottom-left icon
+in your Sidebar, or by hitting
+Command-T and typing "Open Library"
+.
+Library has 5 sections:
+Media
+: images, videos, screenshots, and captures taken throughout the web.
+Downloads
+: files you've downloaded, including in-progress downloads.
+Easels & Notes
+:
+Easels
+&
+Notes
+you've created or have shared access to.
+Spaces
+: view and move around all your tabs across all
+Spaces
+.
+Archived Tabs
+: search or browse closed and
+auto archived
+tabs across Spaces.
+Access Recent Files
+Hovering over the Library icon allows you to open and drag recent files. You can edit which items appear on hover by right-clicking the Library icon and selecting / deselecting certain file types.

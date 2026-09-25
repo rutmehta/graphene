@@ -1,0 +1,14 @@
+Dia Browser | Update 1.7.0
+v
+1.7.0
+November 30, 2025
+What's New in Dia v1.7.0
+Dia v1.7 keeps you in flow with series of ergonomic improvements and bug fixes the team was eager to work on. Here's what's new:
+AppleScript and Raycast integration: AppleScript support lets external apps query windows and tabs or focus them. Use the new Raycast integration to jump to the right Dia tab from your launcher.
+Search Memory, where you need it: Memory Search is now accessible from the Tab Overflow menu, so finding past work happens right in the flow.
+Bookmarks, upgraded search: Bookmarks appear in Command Bar results alongside history, ranked for relevance. Your go‑to links are now faster to reach.
+Tab hover actions: Pin, add to Bookmarks, Split with Tab, or Open Chat directly from tab hover.
+Fewer flashes: Reduced high‑contrast flashes (like sudden whites) when switching or navigating tabs. Transitions feel steadier and easier on the eyes.
+Presented tab indicator: When you're sharing your screen on a call, the tab favicon shows a presentation indicator—clear signaling for what's live.
+Meeting reminder in PiP: Just‑in‑time meeting reminders now live in Picture‑in‑Picture, making placement consistent and movement smooth.
+Thanks for using Dia and for the regular feedback that helps us tune the details.

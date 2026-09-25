@@ -1,0 +1,72 @@
+Dia Browser | Update 0.44.0
+v
+0.44.0
+August 27, 2025
+What’s New in Dia v0.44.0
+Power and personality are at the forefront of this week's Dia.
+Chat feels sharper and Memory is easier to shape. And each change makes Dia feel a little more
+yours
+.
+A more capable Chat
+Chat is where the action happens.
+It's where the internet and your personal context meet. And this week includes a package of updates that make Chat smarter, more dependable, and even better in your day-to-day.
+🗂️
+@history includes Chats.
+Mention @history in any Chat or Skill to pull in recent Chats and websites, bringing more context to your present task.
+📄
+Smarter PDFs.
+Our PDF reader is now more accurate and comprehensive, so you can reference documents without fear of missing info.
+🎨
+Write and Code polish.
+Writing and coding are two of the most common functions in Chat. Drafts and code blocks are now cleaner and easier to read, whether you’re writing or debugging.
+🫰
+Try Skills instantly.
+Test a Skill from the [Skills Gallery](diabrowser.com/skills) on any tab, no install required. Just click Try Skill in the pop-up menu.
+🔎
+Better tab attachments.
+When you @-mention tabs, the dropdown hides the ones you’ve already mentioned, making it faster to add the context you need.
+🤖
+More models, fewer errors.
+If something goes wrong, Chat now switches to backup AI models so your work continues uninterrupted.
+More personal Memories
+Memory means less repeating yourself.
+This release gives you more control — choose when and where Memory is used, and decide what to forget. As you tailor Memory to your needs, Chat becomes more relevant and helpful with every interaction.
+🪞
+Sharper answers.
+We’ve made some prompt updates under the hood to help Memory focus on what matters, reduce repetition, and adapt as you go.
+👥
+Profile-level control.
+You can now enable or disable Memory for each Profile in Settings. Perfect when you want to forget about work or remember your school projects.
+🧹
+Forget anything.
+It’s easy to remove Memories that aren’t relevant or feel incorrect. Click Personalized with Memory, then use the menu to delete a specific item.
+🗣
+Per-Chat Personalization.
+Temporarily disable Personalization (which includes both Memory and written instructions) by clicking the signature button on the top right corner. Chat will answer neutrally until you flip it back on.
+Plus some major boosts to performance and security:
+When
+browsing in a split tab
+, open links on the righthand side by holding
+Shift+Option
+while clicking. A simple shortcut to keep things tidy
+Safety alerts are more accurate
+thanks to improvements in how Dia detects real risks and filters out the noise. You’ll only be notified when something really needs your attention.
+Download notifications are
+clearer and safer
+they no longer show the website address where a file came from. This helps prevent confusion or spoofing by tricky domains, so what you see is exactly what you downloaded.
+The
+downloads menu
+also pops up when it should and includes all of your previous downloads thanks to some fixes under the hood.
+Profiles that aren’t being used will
+automatically unload
+to free up memory and keep Dia fast. To switch profiles, just click the toggle in the top left corner.
+Bluetooth dialogs now display the full web address when
+something’s trying to connect, so you can clearly see exactly who is making a request before you approve it.
+We'll be back with more next week!
+Dia’s more
+powerful
+and
+personal
+with every new release. And it’s all thanks to your feedback. If anything’s not right — with Chat, Memory, or something else — please let us know!
+Thanks for the memories,
+💗 Your friends at Team Dia

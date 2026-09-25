@@ -1,0 +1,18 @@
+This article applies to Arc for
+macOS
+, but not on Arc for
+Windows
+.
+What is Developer Mode?
+Developer Mode is a mode for your tab that offers the full url bar across the top of your window, developer shortcuts, and a different UI.
+Entering Developer Mode also automatically installs the JSON Formatter extension for an easier reading experience.
+How to Turn On / Off Developer Mode
+Developer Mode turns on automatically for any localhost site!
+You can manually turn on Developer Mode on any tab by:
+Going to Site Settings in the URL Bar (under the Site Control Center icon) and checking on "Developer Mode"
+Hitting Command-T then typing "Turn on Developer Mode for this site"
+Note:
+Developer Mode tabs have a yellow and black outline when focused.
+Learn more about how Developer Mode was built here!
+Portrait Mode
+Developer Mode includes a handy feature for taking pretty screenshots. Click the screenshot button in the toolbar (when in Developer Mode) or use CMD T... "Capture in Portrait Mode" to use it.

@@ -1,0 +1,8 @@
+macOS
+Open Settings from Arc > Settings from the Mac Menu Bar or the Command-Comma shortcut
+Go to Profiles and select a Profile to change the download location
+Select a new download location from the dropdown
+Windows
+Open Settings from Arc menu > Settings or the Control-Comma shortcut
+Go to Profiles and select a Profile to change the download location
+Select a new download location by navigating to Related Settings > "Save downloads to" and making a selection from the dropdown

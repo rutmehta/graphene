@@ -14,6 +14,7 @@ let package = Package(
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
-        )
+        ),
+        .testTarget(name: "GrapheneTests", dependencies: ["Graphene"], path: "Tests/GrapheneTests", resources: [.copy("Fixtures")])
     ]
 )

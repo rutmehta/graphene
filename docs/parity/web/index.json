@@ -1,0 +1,913 @@
+[
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20595231349911-Keyboard-Shortcuts",
+    "status": 200,
+    "file": "docs/parity/web/initial-0.txt",
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "#main-content"
+      },
+      {
+        "title": "",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Getting Started",
+        "url": "/hc/en-us/categories/19211797395223-Getting-Started"
+      },
+      {
+        "title": "The Basics",
+        "url": "/hc/en-us/sections/19211878646295-The-Basics"
+      },
+      {
+        "title": "customize keyboard shortcuts",
+        "url": "/hc/en-us/articles/25622899860631"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "/hc/en-us/search?content_tags=01J56C3KKQ30YN60VFZCWV229C&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Submit a ticket",
+        "url": "/hc/en-us/requests/new"
+      },
+      {
+        "title": "Return to top",
+        "url": "#article-container"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfccjO7EjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpBg%3D%3D--e18b3fa5c6ae2f6c59030aff8727694a3f4bfcbd"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfccjO7EjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kH--7efb00a67457d74bfd4d707a4328935be44c1b35"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfccjO7EjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQg%3D--17c8badbdd42830adadd011582b0e43927f8d8e1"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfu7uF8EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfccjO7EjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJFL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4MDY0MTQ5MTQzLVNwYWNlcy1EaXN0aW5jdC1Ccm93c2luZy1BcmVhcwY7CFQ6CXJhbmtpCQ%3D%3D--5681dea24df941a3750b3acf652652192314099a"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfccjO7EjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCg%3D%3D--8e8310aecd5d5c49ac5bfa55e929bb17c5687c5f"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "/hc/requests/new"
+      },
+      {
+        "title": "",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Privacy Policy",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "Security",
+        "url": "https://arc.net/security"
+      },
+      {
+        "title": "Arc Max",
+        "url": "https://arc.net/max"
+      },
+      {
+        "title": "Arc for iPhone",
+        "url": "https://apps.apple.com/us/app/arc-search-find-it-faster/id6472513080"
+      },
+      {
+        "title": "Arc Boosts",
+        "url": "https://arc.net/boosts"
+      },
+      {
+        "title": "Integrations",
+        "url": "https://arc.net/integrations"
+      },
+      {
+        "title": "Credits",
+        "url": "https://arc.net/credits"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes"
+      },
+      {
+        "title": "Blog",
+        "url": "https://arc.net/blog"
+      },
+      {
+        "title": "FAQ",
+        "url": "https://arc.net/faq"
+      },
+      {
+        "title": "Careers @ BCNY",
+        "url": "https://thebrowser.company/careers/"
+      },
+      {
+        "title": "",
+        "url": "https://www.youtube.com/c/TheBrowserCompany"
+      },
+      {
+        "title": "",
+        "url": "https://twitter.com/browsercompany"
+      },
+      {
+        "title": "",
+        "url": "https://thebrowser.company/"
+      }
+    ]
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/categories/16435255982103-Features",
+    "status": 200,
+    "file": "docs/parity/web/initial-1.txt",
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "#main-content"
+      },
+      {
+        "title": "",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Features",
+        "url": "#"
+      },
+      {
+        "title": "Multitask",
+        "url": "/hc/en-us/sections/19211965457687-Multitask"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once"
+      },
+      {
+        "title": "Peek: Preview Sites From Pinned Tabs",
+        "url": "/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs"
+      },
+      {
+        "title": "Previews: Glance Top Sites",
+        "url": "/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites"
+      },
+      {
+        "title": "Little Arc: Quick Lookups & Instant Triaging",
+        "url": "/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging"
+      },
+      {
+        "title": "Mini Player: Watch or Listen as you Browse",
+        "url": "/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse"
+      },
+      {
+        "title": "See more",
+        "url": "/hc/en-us/sections/19211965457687-Multitask"
+      },
+      {
+        "title": "Create",
+        "url": "/hc/en-us/sections/19211905723543-Create"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "/hc/en-us/articles/22557798824855-Customize-Default-Notes-App"
+      },
+      {
+        "title": "Developer Mode: Instant Dev Tools",
+        "url": "/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools"
+      },
+      {
+        "title": "Phasing Out Arc Notes",
+        "url": "/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "/hc/en-us/articles/19231142050071-Easels-Capture-Create"
+      },
+      {
+        "title": "Share Spaces, Folders & Splits with Anyone",
+        "url": "/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone"
+      },
+      {
+        "title": "Boosts: Customize Any Website",
+        "url": "/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website"
+      },
+      {
+        "title": "See more",
+        "url": "/hc/en-us/sections/19211905723543-Create"
+      },
+      {
+        "title": "Organize",
+        "url": "/hc/en-us/sections/19211839689111-Organize"
+      },
+      {
+        "title": "Live Calendars",
+        "url": "/hc/en-us/articles/24158102740631-Live-Calendars"
+      },
+      {
+        "title": "Air Traffic Control: Automate Your Link Routing",
+        "url": "/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing"
+      },
+      {
+        "title": "Automatic GitHub Live Folders",
+        "url": "/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around"
+      },
+      {
+        "title": "Favorites: Top Tabs Across Every Space",
+        "url": "/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space"
+      },
+      {
+        "title": "Library: A home for your downloads, archived tabs, easels and more.",
+        "url": "/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+      },
+      {
+        "title": "See more",
+        "url": "/hc/en-us/sections/19211839689111-Organize"
+      },
+      {
+        "title": "Rev Up",
+        "url": "/hc/en-us/sections/16435226323607-Rev-Up"
+      },
+      {
+        "title": "How to Open .pdf Files in Arc for Windows by Default",
+        "url": "/hc/en-us/articles/25628042954007-How-to-Open-pdf-Files-in-Arc-for-Windows-by-Default"
+      },
+      {
+        "title": "How to Set Custom Keyboard Shortcuts on Arc for Desktop",
+        "url": "/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop"
+      },
+      {
+        "title": "How Do You Switch Between Tabs Quickly on Arc Desktop?",
+        "url": "/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop"
+      },
+      {
+        "title": "How Do You Change Your Download Location in Arc for Desktop?",
+        "url": "/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop"
+      },
+      {
+        "title": "How Do You Switch Your Default Search Engine on Arc for Desktop?",
+        "url": "/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop"
+      },
+      {
+        "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call?",
+        "url": "/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call"
+      },
+      {
+        "title": "See more",
+        "url": "/hc/en-us/sections/16435226323607-Rev-Up"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/sections/20497738798231-Release-Notes"
+      },
+      {
+        "title": "Arc Search for Android - Release Notes",
+        "url": "/hc/en-us/articles/27306904379031-Arc-Search-for-Android-Release-Notes"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "/hc/en-us/articles/23528454620311-Arc-Search-for-iOS-Release-Notes"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "/hc/en-us/articles/22513842649623-Arc-for-Windows-2023-2026-Release-Notes"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/articles/20498285812375-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2023 Release Notes",
+        "url": "/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes"
+      },
+      {
+        "title": "See more",
+        "url": "/hc/en-us/sections/20497738798231-Release-Notes"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "/hc/requests/new"
+      },
+      {
+        "title": "",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Privacy Policy",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "Security",
+        "url": "https://arc.net/security"
+      },
+      {
+        "title": "Arc Max",
+        "url": "https://arc.net/max"
+      },
+      {
+        "title": "Arc for iPhone",
+        "url": "https://apps.apple.com/us/app/arc-search-find-it-faster/id6472513080"
+      },
+      {
+        "title": "Arc Boosts",
+        "url": "https://arc.net/boosts"
+      },
+      {
+        "title": "Integrations",
+        "url": "https://arc.net/integrations"
+      },
+      {
+        "title": "Credits",
+        "url": "https://arc.net/credits"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes"
+      },
+      {
+        "title": "Blog",
+        "url": "https://arc.net/blog"
+      },
+      {
+        "title": "FAQ",
+        "url": "https://arc.net/faq"
+      },
+      {
+        "title": "Careers @ BCNY",
+        "url": "https://thebrowser.company/careers/"
+      },
+      {
+        "title": "",
+        "url": "https://www.youtube.com/c/TheBrowserCompany"
+      },
+      {
+        "title": "",
+        "url": "https://twitter.com/browsercompany"
+      },
+      {
+        "title": "",
+        "url": "https://thebrowser.company/"
+      }
+    ]
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI",
+    "status": 200,
+    "file": "docs/parity/web/initial-2.txt",
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "#main-content"
+      },
+      {
+        "title": "",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Features",
+        "url": "/hc/en-us/categories/16435255982103-Features"
+      },
+      {
+        "title": "Rev Up",
+        "url": "/hc/en-us/sections/16435226323607-Rev-Up"
+      },
+      {
+        "title": "learn more about what we send",
+        "url": "https://thebrowser.company/privacy/#what-personal-data-do-we-collect-and-how-do-we-collect-it"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc Max",
+        "url": "/hc/en-us/search?content_tags=01J591FYESM7Q7DEP5EGGCPJTS&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Submit a ticket",
+        "url": "/hc/en-us/requests/new"
+      },
+      {
+        "title": "Return to top",
+        "url": "#article-container"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdJYtGVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--193852d9bc85939b532cf2aa201821ed85d1f1b4"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdJYtGVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBw%3D%3D--4f22d2e3e84b98d34d9a9a9b9c5d1fddacb914b2"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdJYtGVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQg%3D--2b1280f6ac470c4e2a89f6a438670cc0f2032ab4"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdJYtGVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQk%3D--3d1101434c6893a22ba0691b0ae7df4005a76c9d"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdaC6GkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdJYtGVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI0L2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mjg1ODEyMzc1LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQo%3D--e109d233ae6bc6b49c8b1516f848538b774ce9e8"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "/hc/requests/new"
+      },
+      {
+        "title": "",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Privacy Policy",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "Security",
+        "url": "https://arc.net/security"
+      },
+      {
+        "title": "Arc Max",
+        "url": "https://arc.net/max"
+      },
+      {
+        "title": "Arc for iPhone",
+        "url": "https://apps.apple.com/us/app/arc-search-find-it-faster/id6472513080"
+      },
+      {
+        "title": "Arc Boosts",
+        "url": "https://arc.net/boosts"
+      },
+      {
+        "title": "Integrations",
+        "url": "https://arc.net/integrations"
+      },
+      {
+        "title": "Credits",
+        "url": "https://arc.net/credits"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes"
+      },
+      {
+        "title": "Blog",
+        "url": "https://arc.net/blog"
+      },
+      {
+        "title": "FAQ",
+        "url": "https://arc.net/faq"
+      },
+      {
+        "title": "Careers @ BCNY",
+        "url": "https://thebrowser.company/careers/"
+      },
+      {
+        "title": "",
+        "url": "https://www.youtube.com/c/TheBrowserCompany"
+      },
+      {
+        "title": "",
+        "url": "https://twitter.com/browsercompany"
+      },
+      {
+        "title": "",
+        "url": "https://thebrowser.company/"
+      }
+    ]
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes",
+    "status": 200,
+    "file": "docs/parity/web/initial-3.txt",
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "#main-content"
+      },
+      {
+        "title": "",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "/hc/en-us"
+      },
+      {
+        "title": "Features",
+        "url": "/hc/en-us/categories/16435255982103-Features"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/sections/20497738798231-Release-Notes"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/search?q=arc%20search&c=apps&hl=en_US"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc&pli=1"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/security/bulletins"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/blog/CVE-2024-45489-incident-response"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://podcasters.spotify.com/pod/show/the-browser-company/episodes/Focusing-on-the-only-thing-that-matters-a-leapfrog-product-e2n5ed4"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/show/512srmQyB2LQTLVQzIsFV3"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/imagining-arc-by-the-browser-company/id1758984150"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://overcast.fm/+ABJxP-HZFfg"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/episode/6ncSdy6yeYDmyk0x3JGmYp"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/three-product-decisions-and-one-big-question/id1758984150?i=1000667083348"
+      },
+      {
+        "title": "\"Focusing on the only thing that matters: our board recap.\"",
+        "url": "https://overcast.fm/+ABJxP9blJr4)"
+      },
+      {
+        "title": "Known Issues macOS Sequoia Beta",
+        "url": "https://resources.arc.net/hc/en-us/articles/24391085331735-Known-Issues-macOS-Sequoia-Beta"
+      },
+      {
+        "title": "Josh shares a little behind the scenes right here",
+        "url": "https://open.spotify.com/episode/5jPL1kHema54RCD2JGrS8E"
+      },
+      {
+        "title": "Command+Shift+C",
+        "url": "https://arc.net/l/quote/pljiwjqr"
+      },
+      {
+        "title": "Library",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+      },
+      {
+        "title": "Tidy Downloads",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI#tidydownloads"
+      },
+      {
+        "title": "GitHub Live Folders",
+        "url": "/hc/en-us/articles/22731612065815"
+      },
+      {
+        "title": "Live Calendar",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars"
+      },
+      {
+        "title": "Sign up today",
+        "url": "https://arc.net/earlybirds"
+      },
+      {
+        "title": "Arc Search app",
+        "url": "https://apps.apple.com/us/app/arc-search/id6472513080"
+      },
+      {
+        "title": "Head here for instructions",
+        "url": "https://browserinc.notion.site/Getting-Started-with-Arc-for-Windows-145ece36acbb40f381ce1817747cb7ca"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/311118A6-3CB8-4337-8C1D-B40BB81AA342"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/C84895A2-2651-42D8-BCDC-4AD43A3C92E9"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "https://resources.arc.net"
+      },
+      {
+        "title": "Bug Reporter",
+        "url": "https://resources.arc.net/hc/en-us/requests/new"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/6157EDF8-0F3B-45F8-A993-7EB8C5E4218A"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/search?content_tags=01J58N95MSANNDP87784DH91XX&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Submit a ticket",
+        "url": "/hc/en-us/requests/new"
+      },
+      {
+        "title": "Return to top",
+        "url": "#article-container"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--c121455c37d7212b2faed4c39889026c835c5e84"
+      },
+      {
+        "title": "Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdaC6GkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI0L2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mjg1ODEyMzc1LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQc%3D--3f92180767c49f89fd7de6f557dd66258c1cb15a"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcEBe%2BkEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI2L2hjL2VuLXVzL2FydGljbGVzLzE5NDAwMDgyMzkyMjE1LUFyYy1mb3ItV2luZG93cwY7CFQ6CXJhbmtpCA%3D%3D--bbd3450df22d3d75820d2856945081f3793021d2"
+      },
+      {
+        "title": "Update Arc for Desktop",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdz%2BHKLEzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI9L2hjL2VuLXVzL2FydGljbGVzLzIxNDg5NjUwMjY3MDMxLVVwZGF0ZS1BcmMtZm9yLURlc2t0b3AGOwhUOglyYW5raQk%3D--a29f72e842e82fb92384399593bec54b1155060b"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcELiVmFToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIzNTI4NDU0NjIwMzExLUFyYy1TZWFyY2gtZm9yLWlPUy1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kK--92ded197e5007c9facb2785c785aefe12f9ec2b1"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "/hc/requests/new"
+      },
+      {
+        "title": "",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Privacy Policy",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "Security",
+        "url": "https://arc.net/security"
+      },
+      {
+        "title": "Arc Max",
+        "url": "https://arc.net/max"
+      },
+      {
+        "title": "Arc for iPhone",
+        "url": "https://apps.apple.com/us/app/arc-search-find-it-faster/id6472513080"
+      },
+      {
+        "title": "Arc Boosts",
+        "url": "https://arc.net/boosts"
+      },
+      {
+        "title": "Integrations",
+        "url": "https://arc.net/integrations"
+      },
+      {
+        "title": "Credits",
+        "url": "https://arc.net/credits"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes"
+      },
+      {
+        "title": "Blog",
+        "url": "https://arc.net/blog"
+      },
+      {
+        "title": "FAQ",
+        "url": "https://arc.net/faq"
+      },
+      {
+        "title": "Careers @ BCNY",
+        "url": "https://thebrowser.company/careers/"
+      },
+      {
+        "title": "",
+        "url": "https://www.youtube.com/c/TheBrowserCompany"
+      },
+      {
+        "title": "",
+        "url": "https://twitter.com/browsercompany"
+      },
+      {
+        "title": "",
+        "url": "https://thebrowser.company/"
+      }
+    ]
+  },
+  {
+    "url": "https://www.diabrowser.com/release-notes/latest",
+    "status": 200,
+    "file": "docs/parity/web/initial-4.txt",
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "/release-notes/security-team-question"
+      }
+    ]
+  },
+  {
+    "url": "https://www.diabrowser.com/changelog",
+    "status": 200,
+    "file": "docs/parity/web/initial-5.txt",
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "/release-notes/security-team-question"
+      }
+    ]
+  },
+  {
+    "url": "https://www.diabrowser.com/security",
+    "status": 200,
+    "file": "docs/parity/web/initial-6.txt",
+    "links": [
+      {
+        "title": "",
+        "url": "/"
+      },
+      {
+        "title": "What's New",
+        "url": "/release-notes/latest"
+      },
+      {
+        "title": "Security",
+        "url": "/security"
+      },
+      {
+        "title": "Introducing Reports",
+        "url": "/start"
+      },
+      {
+        "title": "",
+        "url": "/"
+      },
+      {
+        "title": "What's New",
+        "url": "/release-notes/latest"
+      },
+      {
+        "title": "Security",
+        "url": "/security"
+      },
+      {
+        "title": "Introducing Reports",
+        "url": "/start"
+      },
+      {
+        "title": "Keeping Dia Secure",
+        "url": "#keeping-dia-secure"
+      },
+      {
+        "title": "The Browser Company Bounty Program",
+        "url": "#the-browser-company-bounty-program"
+      },
+      {
+        "title": "FAQ",
+        "url": "#faq"
+      },
+      {
+        "title": "Security Bulletin",
+        "url": "/security/bulletins"
+      },
+      {
+        "title": "HackerOne program",
+        "url": "https://hackerone.com/bcny"
+      },
+      {
+        "title": "HackerOne program.",
+        "url": "https://hackerone.com/bcny"
+      },
+      {
+        "title": "Privacy\u00a0\u2197",
+        "url": "https://www.diabrowser.com/privacy"
+      },
+      {
+        "title": "Privacy\u00a0\u2197",
+        "url": "https://www.diabrowser.com/privacy"
+      },
+      {
+        "title": "Chromium enterprise",
+        "url": "https://chromeenterprise.google/policies/"
+      },
+      {
+        "title": "Google Chrome Cloud Management,",
+        "url": "https://chromeenterprise.google/products/chrome-enterprise-core/"
+      },
+      {
+        "title": "https://diabrowser.com/privacy",
+        "url": "https://diabrowser.com/privacy"
+      }
+    ]
+  },
+  {
+    "url": "https://www.diabrowser.com/sitemap.xml",
+    "status": 200,
+    "file": "docs/parity/web/initial-7.txt",
+    "links": []
+  }
+]

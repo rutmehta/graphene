@@ -1,0 +1,57 @@
+Dia Browser | Notes from the roadmap
+Reading our release notes in another browser?
+Try Dia
+Reading our release notes in another browser?
+Try Dia
+August 6, 2026 2:30 PM ET
+Brooklyn, USA
+Issue No.
+App Version
+August 6, 2026 2:30 PM ET
+Brooklyn, USA
+Issue No.
+App Version
+August 6, 2026 2:30 PM ET
+Brooklyn, USA
+Issue No.
+App Version
+Dia
+Weekly
+Unfiltered
+New features
+Every week
+Dia
+Weekly
+Unfiltered
+August 6, 2026 2:30 PM ET
+Brooklyn, USA
+Issue No.
+App Version
+New features
+Every week
+Notes from the roadmap
+Greetings from Kansas City
+For those who have been waiting, they're finally here. For those who are newer to Dia,
+context switching just got a lot simpler
+.
+Profiles keep your logins, your tools, your AI, your context, exactly where they belong. The missing piece was getting between them quickly. So we added a better way to context switch.
+To try it:
+right-click on the tab bar, create a new Profile, and swipe away.
+P.S. Curious how we landed here?
+Check out
+the roundtable discussion
+with the design minds behind the swipe.
+Past Issues
+Sep 10, '26
+No. 041
+App v1.49.0
+Dia 🤝 Tools
+Sep 3, '26
+No. 040
+App v1.47.1
+Dia 🤝 Notion
+Aug 27, '26
+No. 039
+App v1.46.0
+Dia 🤝 Linear
+View All Release Notes +

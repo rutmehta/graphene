@@ -1,0 +1,31 @@
+Dia Browser | Update 0.43.0
+v
+0.43.0
+August 20, 2025
+What’s New in Dia v0.43.0
+Built-in Skills, improved Memory, and flourishes on every surface.
+Your browser just got better with bespoke Skills, smarter reading behavior, and plenty of polish across the board.
+Fresh out of the oven
+🧩
+Skills from Team Dia
+Team Dia's been busy building Skills, and we've just shared our first batch. Your Chat has been upgraded with shortcuts for summarizing videos, improving writing, checking your code, and more. Find them by clicking
+New Tab > Skills
+. Oh, and each one is editable, so you can tailor them for your flow.
+🎒
+Skills for school
+As promised, we're sending our Dia students back to school with a Student Skills pack and a new landing page full of tips 'n' tricks for surviving the semester in Dia. Take a looksy
+here
+.
+📅
+Insights on invites
+Dia can read more from Google calendar, including attendee lists, event descriptions, and video call links. Perfect for start-of-week planning or quick pre-reads before you meet.
+💬
+Thinking you can see
+As Chat reads attachments and websites, you'll see even more details about each step. And when multiple pages are involved, you’ll get a dropdown view so you can check your sources in real time.
+Plus some powerful tweaks beneath the hood
+Memory now refreshes more frequently, which helps Dia provide up-to-date context as you browse.
+When using Reasoning, Dia can follow links from attached pages for more robust answers from deeper sources or citations.
+Fixed a bug where double window buttons (traffic lights) could appear in fullscreen. This should make fullscreen views cleaner and less confusing.
+Support for Chinese and Korean characters has been improved in the Command Bar. Thanks to all who reported any bugs.
+Hard to believe but we’re still in beta. This browser gets better every week thanks to members like you. Keep the feedback coming!
+📚 Your friends at Team Dia

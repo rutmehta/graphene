@@ -1,0 +1,4005 @@
+[
+  {
+    "url": "https://resources.arc.net/hc/en-us/sections/19211965457687-Multitask",
+    "status": 200,
+    "title": "Multitask \u2013 Arc Help Center",
+    "file": "web/27ab76f91b57.txt",
+    "chars": 306,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/sections/19211965457687-Multitask#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once"
+      },
+      {
+        "title": "Peek: Preview Sites From Pinned Tabs",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs"
+      },
+      {
+        "title": "Previews: Glance Top Sites",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites"
+      },
+      {
+        "title": "Little Arc: Quick Lookups & Instant Triaging",
+        "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging"
+      },
+      {
+        "title": "Mini Player: Watch or Listen as you Browse",
+        "url": "https://resources.arc.net/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[9] https://resources.arc.net/hc/en-us/sections/19211965457687-Multitask"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once",
+    "status": 200,
+    "title": "Split View: View Multiple Tabs at Once \u2013 Arc Help Center",
+    "file": "web/eb704d07c16f.txt",
+    "chars": 1345,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Split View",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58QVPMX0D70AJJ0NDC4QV93&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpBg%3D%3D--3c381bac1d3c4f3aafd5782ccf0ddde9266d6273"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBw%3D%3D--7f6430aa7a51060152f7c842204af414716b4f74"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfu7uF8EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJFL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4MDY0MTQ5MTQzLVNwYWNlcy1EaXN0aW5jdC1Ccm93c2luZy1BcmVhcwY7CFQ6CXJhbmtpCA%3D%3D--7c33dacb2f0422dc63e0db73e8b7a1b7796ed51f"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kJ--6dfdf5d1f9313b509f5c2ce36d3599881b8d97cf"
+      },
+      {
+        "title": "Peek: Preview Sites From Pinned Tabs",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJds3NmVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzAyOTAwODg3LVBlZWstUHJldmlldy1TaXRlcy1Gcm9tLVBpbm5lZC1UYWJzBjsIVDoJcmFua2kK--cea425c625111057f4760634f120abbfa0f0f5a1"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[10] https://resources.arc.net/hc/en-us/articles/19335393146775-Split-View-View-Multiple-Tabs-at-Once"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs",
+    "status": 200,
+    "title": "Peek: Preview Sites From Pinned Tabs \u2013 Arc Help Center",
+    "file": "web/4ad8dcd33243.txt",
+    "chars": 1122,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Peek",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58PBEJBFDPQRSZ4V6WKSABB&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Previews: Glance Top Sites",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBebwtiVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJds3NmVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJAL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1Mjg0NDMxNjM5LVByZXZpZXdzLUdsYW5jZS1Ub3AtU2l0ZXMGOwhUOglyYW5raQY%3D--d3d256cc64017b02a7e0d79aafec6c9d1982e515"
+      },
+      {
+        "title": "Little Arc: Quick Lookups & Instant Triaging",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJds3NmVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjM1Mzg3NTI0NTAzLUxpdHRsZS1BcmMtUXVpY2stTG9va3Vwcy1JbnN0YW50LVRyaWFnaW5nBjsIVDoJcmFua2kH--093edbea87387ca64d40a4ad1d15a4064993ce01"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJds3NmVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCA%3D%3D--841b88379077d4103dc2da2799ebb16f113ca633"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJds3NmVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--31c66db51578cda440f8df82ebdf029028fd1759"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJds3NmVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpCg%3D%3D--978fed991cc80ad8b07329c3e70892e32bf14d03"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[11] https://resources.arc.net/hc/en-us/articles/19335302900887-Peek-Preview-Sites-From-Pinned-Tabs"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites",
+    "status": 200,
+    "title": "Previews: Glance Top Sites \u2013 Arc Help Center",
+    "file": "web/92ce4eaf8a77.txt",
+    "chars": 1008,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Previews",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58K02513X6D3WSP5V9032B3&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Little Arc: Quick Lookups & Instant Triaging",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBebwtiVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjM1Mzg3NTI0NTAzLUxpdHRsZS1BcmMtUXVpY2stTG9va3Vwcy1JbnN0YW50LVRyaWFnaW5nBjsIVDoJcmFua2kG--b9a1b2fe9df3830a759c9918e5869be9343d82f2"
+      },
+      {
+        "title": "Peek: Preview Sites From Pinned Tabs",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJds3NmVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBebwtiVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzAyOTAwODg3LVBlZWstUHJldmlldy1TaXRlcy1Gcm9tLVBpbm5lZC1UYWJzBjsIVDoJcmFua2kH--b0cab9ed47c2244d505008496880147f0ee41723"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBebwtiVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpCA%3D%3D--03113c12a1406d17168c896b22ff1df59c59bec4"
+      },
+      {
+        "title": "Mini Player: Watch or Listen as you Browse",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcfanF%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBebwtiVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjM0NzY2MzMxNzk5LU1pbmktUGxheWVyLVdhdGNoLW9yLUxpc3Rlbi1hcy15b3UtQnJvd3NlBjsIVDoJcmFua2kJ--29c86d2aa1ffd707556ad07ca09f54bcf5cdaa19"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBebwtiVEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCg%3D%3D--2d56eb793c591e433017f914dd1fffec235bb877"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[12] https://resources.arc.net/hc/en-us/articles/19335284431639-Previews-Glance-Top-Sites"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging",
+    "status": 200,
+    "title": "Little Arc: Quick Lookups & Instant Triaging \u2013 Arc Help Center",
+    "file": "web/2401f4518ff9.txt",
+    "chars": 1522,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Little Arc",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01HVVXQ4FCH94ARYHYKX23DENM&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Mini Player: Watch or Listen as you Browse",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcfanF%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjM0NzY2MzMxNzk5LU1pbmktUGxheWVyLVdhdGNoLW9yLUxpc3Rlbi1hcy15b3UtQnJvd3NlBjsIVDoJcmFua2kG--c80acbb43e9525e933777f898097bffa0ca2ac53"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBw%3D%3D--22cc1be4ec4915329c53e71fd09358a7c6f3a5cf"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpCA%3D%3D--f9769b363afb692957cc47bb3ac6489893401aea"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCQ%3D%3D--df91bea28a21159a4dade315f21afab793b921f5"
+      },
+      {
+        "title": "Air Traffic Control: Automate Your Link Routing",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfylUbbFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfFcJZ%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJVL2hjL2VuLXVzL2FydGljbGVzLzIyOTMyMDE0NjI1NDMxLUFpci1UcmFmZmljLUNvbnRyb2wtQXV0b21hdGUtWW91ci1MaW5rLVJvdXRpbmcGOwhUOglyYW5raQo%3D--3d8383214933dfe864d4d6abab45aa87afe4dcbd"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[13] https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse",
+    "status": 200,
+    "title": "Mini Player: Watch or Listen as you Browse \u2013 Arc Help Center",
+    "file": "web/63967e0fe2a8.txt",
+    "chars": 1411,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Sidebar",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J53T9C6F02G91GGQMC0KHY58&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Mini Player",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J53TV3EFH9C5G23E7XKT0NSM&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJcfanF%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--c24cedd4e44270893044cc436881675d7fcd0ade"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJcfanF%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpBw%3D%3D--4ef3f61a15615c4ae8781bf20ec9159bef6257a8"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJcfanF%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQg%3D--eba40b0f39b29890995b1406679888a385eafa12"
+      },
+      {
+        "title": "Arc Max: Boost Your Browsing with AI",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBdJYtGVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJcfanF%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MTYwNjc4Njc5LUFyYy1NYXgtQm9vc3QtWW91ci1Ccm93c2luZy13aXRoLUFJBjsIVDoJcmFua2kJ--820fc6992368be0a6e88b4183e7c7ecc61ff8ed8"
+      },
+      {
+        "title": "Peek: Preview Sites From Pinned Tabs",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJds3NmVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJcfanF%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzAyOTAwODg3LVBlZWstUHJldmlldy1TaXRlcy1Gcm9tLVBpbm5lZC1UYWJzBjsIVDoJcmFua2kK--30cac4de971f880b551750a067b6cecc6420d0aa"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[14] https://resources.arc.net/hc/en-us/articles/19234766331799-Mini-Player-Watch-or-Listen-as-you-Browse"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/sections/19211905723543-Create",
+    "status": 200,
+    "title": "Create \u2013 Arc Help Center",
+    "file": "web/c1a219cc8b80.txt",
+    "chars": 291,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/sections/19211905723543-Create#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/articles/22557798824855-Customize-Default-Notes-App"
+      },
+      {
+        "title": "Developer Mode: Instant Dev Tools",
+        "url": "https://resources.arc.net/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools"
+      },
+      {
+        "title": "Phasing Out Arc Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231142050071-Easels-Capture-Create"
+      },
+      {
+        "title": "Share Spaces, Folders & Splits with Anyone",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone"
+      },
+      {
+        "title": "Boosts: Customize Any Website",
+        "url": "https://resources.arc.net/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[15] https://resources.arc.net/hc/en-us/sections/19211905723543-Create"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/22557798824855-Customize-Default-Notes-App",
+    "status": 200,
+    "title": "Customize Default Notes App \u2013 Arc Help Center",
+    "file": "web/35e34e500591.txt",
+    "chars": 722,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/22557798824855-Customize-Default-Notes-App#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Notes has been phased out",
+        "url": "https://resources.arc.net/hc/en-us/articles/19233788518039-Notes-Quickly-Jot-to-an-Arc-Note-or-Your-Favorite-Notes-App"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXA9HY05F1CJEJ4PKN9ND&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Phasing Out Arc Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfeITd%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJf7lSWEFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMzNzg4NTE4MDM5LVBoYXNpbmctT3V0LUFyYy1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--c61b8bdac08023ca9aca4dfd792c2da73d8edcbd"
+      },
+      {
+        "title": "Developer Mode: Instant Dev Tools",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBdN9bCdEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJf7lSWEFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIwNDY4NDg4MDMxNTExLURldmVsb3Blci1Nb2RlLUluc3RhbnQtRGV2LVRvb2xzBjsIVDoJcmFua2kH--f2dea1a08f431f140231b936af1f95dfafaf7f50"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf5Y5l9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJf7lSWEFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMTQyMDUwMDcxLUVhc2Vscy1DYXB0dXJlLUNyZWF0ZQY7CFQ6CXJhbmtpCA%3D%3D--956ec4d58906f144e85bb7434bd928a84345055a"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJf7lSWEFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCQ%3D%3D--323be46717c94ef856b3cacea794f1201774c60a"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJf7lSWEFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCg%3D%3D--608de51a764311e7c247c1ef348580c114be606a"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[16] https://resources.arc.net/hc/en-us/articles/22557798824855-Customize-Default-Notes-App"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools",
+    "status": 200,
+    "title": "Developer Mode: Instant Dev Tools \u2013 Arc Help Center",
+    "file": "web/3086a1201109.txt",
+    "chars": 1007,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Learn more about how Developer Mode was built here!",
+        "url": "https://www.youtube.com/watch?v=v2jfYYhm5kg&t=181s"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Developer Mode",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58R37Z4NR4S91X9CNMRX5FY&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Screen Capture",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J598Z4D1VJQ06BMT5J96PZ9Y&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Phasing Out Arc Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfeITd%2BEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdN9bCdEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMzNzg4NTE4MDM5LVBoYXNpbmctT3V0LUFyYy1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--a502698850cebef7a5846aa5784c7b77cdf325ce"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdN9bCdEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--177c02b96c4a791517cae22bcea2ee0b8ca9d2d7"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdN9bCdEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCA%3D%3D--e4abdd3c18042edccced5607fef7db5348232fd8"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf5Y5l9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdN9bCdEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMTQyMDUwMDcxLUVhc2Vscy1DYXB0dXJlLUNyZWF0ZQY7CFQ6CXJhbmtpCQ%3D%3D--114d48015c1cc350b339f3257e044ae1881f44fe"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBdN9bCdEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpCg%3D%3D--17f7c3989ee4d971b500fbdd117db069f8f91331"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[17] https://resources.arc.net/hc/en-us/articles/20468488031511-Developer-Mode-Instant-Dev-Tools"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes",
+    "status": 200,
+    "title": "Phasing Out Arc Notes \u2013 Arc Help Center",
+    "file": "web/b03323ab8a35.txt",
+    "chars": 2459,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Notion",
+        "url": "https://www.notion.so"
+      },
+      {
+        "title": "Confluence",
+        "url": "https://confluence.atlassian.com/doc/import-content-into-confluence-191141.html"
+      },
+      {
+        "title": "Word",
+        "url": "https://www.wikihow.com/Convert-HTML-to-Word"
+      },
+      {
+        "title": "Obsidian",
+        "url": "https://help.obsidian.md/import/html"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXA9HY05F1CJEJ4PKN9ND&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf5Y5l9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeITd%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMTQyMDUwMDcxLUVhc2Vscy1DYXB0dXJlLUNyZWF0ZQY7CFQ6CXJhbmtpBg%3D%3D--66ed597c6d5417d580e9d25b3dcff09f3f0ba01b"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeITd%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpBw%3D%3D--56f45f7ee1605f12fb87075543bed7dbebb97202"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeITd%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCA%3D%3D--661259ba3ed031ebe00ed79f2fb6c1e59bec2f5c"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeITd%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--2f4dd9316322e979a52caff1f83760f1d28c400d"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeITd%2BEToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQo%3D--10da292b8548f1e8d1cba4afe10fa4e318eeb54d"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[18] https://resources.arc.net/hc/en-us/articles/19233788518039-Phasing-Out-Arc-Notes"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19231142050071-Easels-Capture-Create",
+    "status": 200,
+    "title": "Easels: Capture & Create \u2013 Arc Help Center",
+    "file": "web/de4323013269.txt",
+    "chars": 1986,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231142050071-Easels-Capture-Create#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Library",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911"
+      },
+      {
+        "title": "Arc Search for iOS",
+        "url": "https://resources.arc.net/hc/en-us/articles/20887042551831"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Easels",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56JNHBDVXMWWCEHHYESENBM&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Screen Capture",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J598Z4D1VJQ06BMT5J96PZ9Y&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf5Y5l9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBg%3D%3D--f7614a0961daff70258cccff7366047516da5fe5"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf5Y5l9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--63218458ba029aa39f2f79f1e710959bda26e3c1"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf5Y5l9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpCA%3D%3D--834de08b70bd239c703a0ab07d601ebd4cff0aef"
+      },
+      {
+        "title": "Customize Default Notes App",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf7lSWEFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf5Y5l9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJCL2hjL2VuLXVzL2FydGljbGVzLzIyNTU3Nzk4ODI0ODU1LUN1c3RvbWl6ZS1EZWZhdWx0LU5vdGVzLUFwcAY7CFQ6CXJhbmtpCQ%3D%3D--1f58da8a6d337becb6a7ca25af4adc4115af0143"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf5Y5l9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQo%3D--d8fb27e57e367c3238e01039cd6594fd50ed2559"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[19] https://resources.arc.net/hc/en-us/articles/19231142050071-Easels-Capture-Create"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone",
+    "status": 200,
+    "title": "Share Spaces, Folders & Splits with Anyone \u2013 Arc Help Center",
+    "file": "web/acac9e734bb7.txt",
+    "chars": 2836,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "help@arc.net",
+        "url": "mailto:help@arc.net"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Spaces",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXTGYKGBDG8T0CMS5SP3S&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Split View",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58QVPMX0D70AJJ0NDC4QV93&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Folders",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J5978VQSJ0V2QNDGX8XP0F4Y&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Boosts: Customize Any Website",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBePRE95EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJeL%2Bf18EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJDL2hjL2VuLXVzL2FydGljbGVzLzE5MjEyNzE4NjA4MTUxLUJvb3N0cy1DdXN0b21pemUtQW55LVdlYnNpdGUGOwhUOglyYW5raQY%3D--2a30623832fcb4046ffb6871bcd80b94a329c365"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfu7uF8EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJeL%2Bf18EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJFL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4MDY0MTQ5MTQzLVNwYWNlcy1EaXN0aW5jdC1Ccm93c2luZy1BcmVhcwY7CFQ6CXJhbmtpBw%3D%3D--ebf7a6de409f10ace0022dbf27bfee203cd8274e"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJeL%2Bf18EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCA%3D%3D--d5c63a115a6dfa87568596e4b1e33f58ab071e0c"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJeL%2Bf18EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCQ%3D%3D--9d4720f8100104a7e49d67c6ef837cfa886928ed"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJeL%2Bf18EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kK--0066fd11767f82e532fac132cb18da2c720dd6d3"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[20] https://resources.arc.net/hc/en-us/articles/19228534606743-Share-Spaces-Folders-Splits-with-Anyone"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website",
+    "status": 200,
+    "title": "Boosts: Customize Any Website \u2013 Arc Help Center",
+    "file": "web/9cdb37bbaf90.txt",
+    "chars": 3810,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Grab the CSS for your theme colors here",
+        "url": "https://arc.net/colors.html"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Boosts",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58HKF3DPHNBV3DNBJZD1TTJ&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBePRE95EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--a6e8f172084b2ab8e49e3c4ff254e923666c4742"
+      },
+      {
+        "title": "Live Calendars",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfeIb%2F4FToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBePRE95EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI1L2hjL2VuLXVzL2FydGljbGVzLzI0MTU4MTAyNzQwNjMxLUxpdmUtQ2FsZW5kYXJzBjsIVDoJcmFua2kH--2540294af6ee9199715524431b137472f6db0d17"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBePRE95EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQg%3D--eca3b8dfda7723a9a56c68350e457d348898cbd9"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBePRE95EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--9970d509ebe3f34d4e24c10afdd4a27c54f8776d"
+      },
+      {
+        "title": "Air Traffic Control: Automate Your Link Routing",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfylUbbFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBePRE95EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJVL2hjL2VuLXVzL2FydGljbGVzLzIyOTMyMDE0NjI1NDMxLUFpci1UcmFmZmljLUNvbnRyb2wtQXV0b21hdGUtWW91ci1MaW5rLVJvdXRpbmcGOwhUOglyYW5raQo%3D--5c31ae11adf8731aab73f7bc9210fce257ef2520"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[21] https://resources.arc.net/hc/en-us/articles/19212718608151-Boosts-Customize-Any-Website"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/sections/19211839689111-Organize",
+    "status": 200,
+    "title": "Organize \u2013 Arc Help Center",
+    "file": "web/2b81648da6a9.txt",
+    "chars": 499,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/sections/19211839689111-Organize#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Live Calendars",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars"
+      },
+      {
+        "title": "Air Traffic Control: Automate Your Link Routing",
+        "url": "https://resources.arc.net/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing"
+      },
+      {
+        "title": "Automatic GitHub Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around"
+      },
+      {
+        "title": "Favorites: Top Tabs Across Every Space",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space"
+      },
+      {
+        "title": "Library: A home for your downloads, archived tabs, easels and more.",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+      },
+      {
+        "title": "Auto Archive: Clean as you go",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228855311127-Auto-Archive-Clean-as-you-go"
+      },
+      {
+        "title": "Folders: Stash Similar Tabs Together",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228419623447-Folders-Stash-Similar-Tabs-Together"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228064149143-Spaces-Distinct-Browsing-Areas"
+      },
+      {
+        "title": "Profiles: Separate Work & Personal Browsing",
+        "url": "https://resources.arc.net/hc/en-us/articles/19227964556183-Profiles-Separate-Work-Personal-Browsing"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[22] https://resources.arc.net/hc/en-us/sections/19211839689111-Organize"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars",
+    "status": 200,
+    "title": "Live Calendars \u2013 Arc Help Center",
+    "file": "web/7b691fb2a927.txt",
+    "chars": 845,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J5980DXY4T82HY5KXK1S46N7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Air Traffic Control: Automate Your Link Routing",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfylUbbFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeIb%2F4FToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJVL2hjL2VuLXVzL2FydGljbGVzLzIyOTMyMDE0NjI1NDMxLUFpci1UcmFmZmljLUNvbnRyb2wtQXV0b21hdGUtWW91ci1MaW5rLVJvdXRpbmcGOwhUOglyYW5raQY%3D--a12f5f0e27a7dd6e753ec4bcf37f5cd6e94c5f28"
+      },
+      {
+        "title": "Automatic GitHub Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBeQqZ2sFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeIb%2F4FToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJEL2hjL2VuLXVzL2FydGljbGVzLzIyNzMxNjEyMDY1ODE1LUF1dG9tYXRpYy1HaXRIdWItTGl2ZS1Gb2xkZXJzBjsIVDoJcmFua2kH--fcc547748fd5ab02019734fcf67084dc13b829e5"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeIb%2F4FToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCA%3D%3D--321ad7e33f04a7f75ce5febd917fe1f9d3407911"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeIb%2F4FToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQk%3D--e4d7ce54443454c9ee1c7c34afd92ad7e88e4d5d"
+      },
+      {
+        "title": "Favorites: Top Tabs Across Every Space",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfaX4J9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfeIb%2F4FToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MjMwNzU1OTA0MTUxLUZhdm9yaXRlcy1Ub3AtVGFicy1BY3Jvc3MtRXZlcnktU3BhY2UGOwhUOglyYW5raQo%3D--77c20a8935aef0a6047c17999ae3d25331a8c509"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[23] https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing",
+    "status": 200,
+    "title": "Air Traffic Control: Automate Your Link Routing \u2013 Arc Help Center",
+    "file": "web/d8b82e447261.txt",
+    "chars": 2167,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Little Arc",
+        "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging"
+      },
+      {
+        "title": "here",
+        "url": "https://resources.arc.net/hc/en-us/articles/19235387524503-Little-Arc-Quick-Lookups-Instant-Triaging"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Spaces",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXTGYKGBDG8T0CMS5SP3S&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Air Traffic Control",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58N6XV5RAYZPZS5ZJ2C9CT9&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Automatic GitHub Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBeQqZ2sFDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfylUbbFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJEL2hjL2VuLXVzL2FydGljbGVzLzIyNzMxNjEyMDY1ODE1LUF1dG9tYXRpYy1HaXRIdWItTGl2ZS1Gb2xkZXJzBjsIVDoJcmFua2kG--1d4d43990ea0fd8f30c5c83ab4e26f081d6b0c83"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfylUbbFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--190e83b63f743016e9917eb090be584bbeb64a05"
+      },
+      {
+        "title": "Arc Sync",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcUqyRwEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfylUbbFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSIvL2hjL2VuLXVzL2FydGljbGVzLzIwMjcyODYwODI4ODIzLUFyYy1TeW5jBjsIVDoJcmFua2kI--5aa3f5378f143d0a406234a49cfc5f280177bfb8"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfylUbbFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--f5b3392ae4643f6588d2fef3742d9e18addd6586"
+      },
+      {
+        "title": "Library: A home for your downloads, archived tabs, easels and more.",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJexIXt9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfylUbbFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJmL2hjL2VuLXVzL2FydGljbGVzLzE5MjMwNjM0Mzg5OTExLUxpYnJhcnktQS1ob21lLWZvci15b3VyLWRvd25sb2Fkcy1hcmNoaXZlZC10YWJzLWVhc2Vscy1hbmQtbW9yZQY7CFQ6CXJhbmtpCg%3D%3D--4c557e9a1f91479f8a86462d2cdcd59502a310d5"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[24] https://resources.arc.net/hc/en-us/articles/22932014625431-Air-Traffic-Control-Automate-Your-Link-Routing"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders",
+    "status": 200,
+    "title": "Automatic GitHub Live Folders \u2013 Arc Help Center",
+    "file": "web/0fddc24d20d6.txt",
+    "chars": 1790,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Live Calendar",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J5980DXY4T82HY5KXK1S46N7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBeQqZ2sFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--f2970167795e615ab99d94c5d203c5dfba379bd8"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBeQqZ2sFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQc%3D--594f6d6a15a0fce042fcb0b2fe2733fcc4b445ef"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBeQqZ2sFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCA%3D%3D--433d269a029ed2e6de0af4d1f5af8faf107e3945"
+      },
+      {
+        "title": "Arc Max: Boost Your Browsing with AI",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBdJYtGVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBeQqZ2sFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MTYwNjc4Njc5LUFyYy1NYXgtQm9vc3QtWW91ci1Ccm93c2luZy13aXRoLUFJBjsIVDoJcmFua2kJ--5e73a6999f928ef6a8cc1efac5c4524e1b5bb221"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfu7uF8EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBeQqZ2sFDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJFL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4MDY0MTQ5MTQzLVNwYWNlcy1EaXN0aW5jdC1Ccm93c2luZy1BcmVhcwY7CFQ6CXJhbmtpCg%3D%3D--935996ee3b553d7da1f9bd0a364cb8f89035b38a"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[25] https://resources.arc.net/hc/en-us/articles/22731612065815-Automatic-GitHub-Live-Folders"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around",
+    "status": 200,
+    "title": "Pinned Tabs: Tabs you want to stick around \u2013 Arc Help Center",
+    "file": "web/7ac393f88099.txt",
+    "chars": 2606,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "read about Auto Archive here",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228855311127-Auto-Archive-Clean-as-you-go"
+      },
+      {
+        "title": "here",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230755904151"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Pinned Tabs",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J4WJKX5E2TARBV4564X3JARG&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Spaces: Distinct Browsing Areas",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfu7uF8EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBfYgpR9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJFL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4MDY0MTQ5MTQzLVNwYWNlcy1EaXN0aW5jdC1Ccm93c2luZy1BcmVhcwY7CFQ6CXJhbmtpBg%3D%3D--21631bcb4ed40fd4efa19bce7feb581645016f21"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBfYgpR9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBw%3D%3D--3fdee10a7381a32d21326c73e39c32ddfd4abf2e"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBfYgpR9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQg%3D--edac2edec8e86a8031c4f7f94bc16681fb1d7b9d"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBfYgpR9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpCQ%3D%3D--8463214e8ce7456ff4fc93cca591e7e27529788b"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBfYgpR9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCg%3D%3D--1f5d9d13675916a7df1303aa6acacb8553aab8a2"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[26] https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space",
+    "status": 200,
+    "title": "Favorites: Top Tabs Across Every Space \u2013 Arc Help Center",
+    "file": "web/e0b636a9da28.txt",
+    "chars": 1158,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "here",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231060187159-Pinned-Tabs-Tabs-you-want-to-stick-around"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Favorites",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J4WJM2Z0R0FZXHCSKMPQYE4B&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfaX4J9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kG--e752b45bf4a47ae11bb1c3094354d633aeb266fd"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfaX4J9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBw%3D%3D--5b1514548d22602e1cb9f0e4a9a768cbe8213b82"
+      },
+      {
+        "title": "Split View: View Multiple Tabs at Once",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd3Pd%2BVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfaX4J9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MzkzMTQ2Nzc1LVNwbGl0LVZpZXctVmlldy1NdWx0aXBsZS1UYWJzLWF0LU9uY2UGOwhUOglyYW5raQg%3D--f3bc468de279ea4672e628b5ccc71cc588a7b88e"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfaX4J9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCQ%3D%3D--78fa1b4bf391e055e55e6715f1b7397a38f3e719"
+      },
+      {
+        "title": "Site Search: Directly Search any Website",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd%2F86%2F3EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJfaX4J9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIwODU1MDE4MTkyNzkxLVNpdGUtU2VhcmNoLURpcmVjdGx5LVNlYXJjaC1hbnktV2Vic2l0ZQY7CFQ6CXJhbmtpCg%3D%3D--b956cc6fa996125f8c99c82080e599d08131caaf"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[27] https://resources.arc.net/hc/en-us/articles/19230755904151-Favorites-Top-Tabs-Across-Every-Space"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more",
+    "status": 200,
+    "title": "Library: A home for your downloads, archived tabs, easels and more. \u2013 Arc Help Center",
+    "file": "web/f41b39115460.txt",
+    "chars": 853,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Easels",
+        "url": "https://resources.arc.net/hc/en-us/articles/19231142050071"
+      },
+      {
+        "title": "Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/19233788518039"
+      },
+      {
+        "title": "Spaces",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228064149143"
+      },
+      {
+        "title": "auto archived",
+        "url": "https://resources.arc.net/hc/en-us/articles/19228855311127"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Downloads",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J563K6M15XQ3KQXSKGAGPQ69&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Easels",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56JNHBDVXMWWCEHHYESENBM&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXA9HY05F1CJEJ4PKN9ND&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Archive",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXK60MCJM8EBQXMWQW95C&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Spaces",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56KXTGYKGBDG8T0CMS5SP3S&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Easels: Capture & Create",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf5Y5l9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJexIXt9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI8L2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMTQyMDUwMDcxLUVhc2Vscy1DYXB0dXJlLUNyZWF0ZQY7CFQ6CXJhbmtpBg%3D%3D--227bae917cf075f88a4cf55d560e9951588dc2a4"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJexIXt9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--b3dcee1bdb077727f7431d40aa15713d369b93fc"
+      },
+      {
+        "title": "Auto Archive: Clean as you go",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBcbFxF9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJexIXt9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJDL2hjL2VuLXVzL2FydGljbGVzLzE5MjI4ODU1MzExMTI3LUF1dG8tQXJjaGl2ZS1DbGVhbi1hcy15b3UtZ28GOwhUOglyYW5raQg%3D--eff0f8e5104fe6b54d72938ded3b42f823a1bed2"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJexIXt9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--12ea47edc21c8440eaa7927ac2b2f6ef29536e65"
+      },
+      {
+        "title": "Site Search: Directly Search any Website",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd%2F86%2F3EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJexIXt9EToLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIwODU1MDE4MTkyNzkxLVNpdGUtU2VhcmNoLURpcmVjdGx5LVNlYXJjaC1hbnktV2Vic2l0ZQY7CFQ6CXJhbmtpCg%3D%3D--f8b37587f19c242cad6b8a1039e73e8ae3b825a2"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[28] https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/sections/16435226323607-Rev-Up",
+    "status": 200,
+    "title": "Rev Up \u2013 Arc Help Center",
+    "file": "web/fbdd5aecc04f.txt",
+    "chars": 758,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/sections/16435226323607-Rev-Up#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "How to Open .pdf Files in Arc for Windows by Default",
+        "url": "https://resources.arc.net/hc/en-us/articles/25628042954007-How-to-Open-pdf-Files-in-Arc-for-Windows-by-Default"
+      },
+      {
+        "title": "How to Set Custom Keyboard Shortcuts on Arc for Desktop",
+        "url": "https://resources.arc.net/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop"
+      },
+      {
+        "title": "How Do You Switch Between Tabs Quickly on Arc Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop"
+      },
+      {
+        "title": "How Do You Change Your Download Location in Arc for Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop"
+      },
+      {
+        "title": "How Do You Switch Your Default Search Engine on Arc for Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop"
+      },
+      {
+        "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call?",
+        "url": "https://resources.arc.net/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call"
+      },
+      {
+        "title": "How To Access a Tab\u2019s History in Arc Search",
+        "url": "https://resources.arc.net/hc/en-us/articles/25499769098391-How-To-Access-a-Tab-s-History-in-Arc-Search"
+      },
+      {
+        "title": "How To Use Incognito Mode in Arc Search",
+        "url": "https://resources.arc.net/hc/en-us/articles/25483815030679-How-To-Use-Incognito-Mode-in-Arc-Search"
+      },
+      {
+        "title": "How To Set up an Arc Search Widget",
+        "url": "https://resources.arc.net/hc/en-us/articles/25483629594135-How-To-Set-up-an-Arc-Search-Widget"
+      },
+      {
+        "title": "How To Set a Default Search Engine in Arc Search",
+        "url": "https://resources.arc.net/hc/en-us/articles/25482594475031-How-To-Set-a-Default-Search-Engine-in-Arc-Search"
+      },
+      {
+        "title": "How To Take Full Page Screen Captures in Arc",
+        "url": "https://resources.arc.net/hc/en-us/articles/25481392111895-How-To-Take-Full-Page-Screen-Captures-in-Arc"
+      },
+      {
+        "title": "Site Search: Directly Search any Website",
+        "url": "https://resources.arc.net/hc/en-us/articles/20855018192791-Site-Search-Directly-Search-any-Website"
+      },
+      {
+        "title": "Arc Max: Boost Your Browsing with AI",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[29] https://resources.arc.net/hc/en-us/sections/16435226323607-Rev-Up"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop",
+    "status": 200,
+    "title": "How to Set Custom Keyboard Shortcuts on Arc for Desktop \u2013 Arc Help Center",
+    "file": "web/463884c33b46.txt",
+    "chars": 502,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "setting custom keyboard shortcuts from Jenamarie.",
+        "url": "https://youtu.be/zcOysbiQd2A?si=PJ0mqr_x4q4K7mUc"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56C3KKQ30YN60VFZCWV229C&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJck2MtNFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBg%3D%3D--6b37e191b49f13c0d97e36300e5fc67b243be403"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJck2MtNFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--137fb8d6a99ec3dbd1ee44e57edad9ebf5d44619"
+      },
+      {
+        "title": "How Do You Switch Between Tabs Quickly on Arc Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBcOZftMFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJck2MtNFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJcL2hjL2VuLXVzL2FydGljbGVzLzI1NjE5NDAyNjU3MzAzLUhvdy1Eby1Zb3UtU3dpdGNoLUJldHdlZW4tVGFicy1RdWlja2x5LW9uLUFyYy1EZXNrdG9wBjsIVDoJcmFua2kI--2e7c6c2ed9a196fbaa733d12ea3267c49d0f1a84"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJck2MtNFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpCQ%3D%3D--80be0566e913d87b52cbfba15cb123618009fbbc"
+      },
+      {
+        "title": "Arc Max: Boost Your Browsing with AI",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBdJYtGVEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJck2MtNFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJKL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MTYwNjc4Njc5LUFyYy1NYXgtQm9vc3QtWW91ci1Ccm93c2luZy13aXRoLUFJBjsIVDoJcmFua2kK--66f9c9322e5b5f07bed0ff83bd4b9355990f178f"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[30] https://resources.arc.net/hc/en-us/articles/25622899860631-How-to-Set-Custom-Keyboard-Shortcuts-on-Arc-for-Desktop"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop",
+    "status": 200,
+    "title": "How Do You Switch Between Tabs Quickly on Arc Desktop? \u2013 Arc Help Center",
+    "file": "web/21336edb18d8.txt",
+    "chars": 378,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56C3KKQ30YN60VFZCWV229C&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcOZftMFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBg%3D%3D--e194bc89eae2e546bf863e4ca7101658884bcb3d"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcOZftMFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--c69d961aa1f6e6278ecbecf038f6a54ae092733e"
+      },
+      {
+        "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJetQkhGFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcOZftMFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJpL2hjL2VuLXVzL2FydGljbGVzLzI1NTkwNjI3NDc4OTM1LUhvdy1DYW4tSS1RdWlja2x5LVN3aXRjaC10aGUtVGFiLUktbS1TaGFyaW5nLW9uLWEtR29vZ2xlLU1lZXQtQ2FsbAY7CFQ6CXJhbmtpCA%3D%3D--f3a8badd1a0bd31d399822196a725e798175727b"
+      },
+      {
+        "title": "How to Set Custom Keyboard Shortcuts on Arc for Desktop",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJck2MtNFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcOZftMFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJeL2hjL2VuLXVzL2FydGljbGVzLzI1NjIyODk5ODYwNjMxLUhvdy10by1TZXQtQ3VzdG9tLUtleWJvYXJkLVNob3J0Y3V0cy1vbi1BcmMtZm9yLURlc2t0b3AGOwhUOglyYW5raQk%3D--77ceb90672d6f5e44c980bd535a92a5e05b79b03"
+      },
+      {
+        "title": "How Do You Change Your Download Location in Arc for Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBcrGMZLFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcOZftMFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJiL2hjL2VuLXVzL2FydGljbGVzLzI1NjE0MjEzNDU4NzExLUhvdy1Eby1Zb3UtQ2hhbmdlLVlvdXItRG93bmxvYWQtTG9jYXRpb24taW4tQXJjLWZvci1EZXNrdG9wBjsIVDoJcmFua2kK--f9bdda9fc3382062ef9f5bbc5736760967a1b779"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[31] https://resources.arc.net/hc/en-us/articles/25619402657303-How-Do-You-Switch-Between-Tabs-Quickly-on-Arc-Desktop"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop",
+    "status": 200,
+    "title": "How Do You Change Your Download Location in Arc for Desktop? \u2013 Arc Help Center",
+    "file": "web/ac47065d5a3f.txt",
+    "chars": 481,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Downloads",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J563K6M15XQ3KQXSKGAGPQ69&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcrGMZLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBg%3D%3D--9e6cd953854005dfa150470616cad62100365252"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcrGMZLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--10a8fef9ba3c78ffa5213ad4e64bfd13db4a2b85"
+      },
+      {
+        "title": "How Do You Switch Your Default Search Engine on Arc for Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdYSrtLFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcrGMZLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJmL2hjL2VuLXVzL2FydGljbGVzLzI1NjE0MDMyMTk3NzgzLUhvdy1Eby1Zb3UtU3dpdGNoLVlvdXItRGVmYXVsdC1TZWFyY2gtRW5naW5lLW9uLUFyYy1mb3ItRGVza3RvcAY7CFQ6CXJhbmtpCA%3D%3D--48b2429f10ace1229e05608cdac8598a21029b7d"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcrGMZLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kJ--cc8c3af48bf859869d14961bf6ff95ae1219061e"
+      },
+      {
+        "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJetQkhGFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBcrGMZLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJpL2hjL2VuLXVzL2FydGljbGVzLzI1NTkwNjI3NDc4OTM1LUhvdy1DYW4tSS1RdWlja2x5LVN3aXRjaC10aGUtVGFiLUktbS1TaGFyaW5nLW9uLWEtR29vZ2xlLU1lZXQtQ2FsbAY7CFQ6CXJhbmtpCg%3D%3D--889fc08674f5ad068101a7bf5a1b57d1d034c776"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[32] https://resources.arc.net/hc/en-us/articles/25614213458711-How-Do-You-Change-Your-Download-Location-in-Arc-for-Desktop"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop",
+    "status": 200,
+    "title": "How Do You Switch Your Default Search Engine on Arc for Desktop? \u2013 Arc Help Center",
+    "file": "web/416edd58b924.txt",
+    "chars": 354,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1WBS6BEZ31RRP3TB9R2H&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Search Engine",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J56BQS9KJF367S9R227QH1S9&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdYSrtLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpBg%3D%3D--8ae5552183104f053787f7a48834356d119686bb"
+      },
+      {
+        "title": "Can You Add a New Default Search Engine Option to Arc for Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcTuepMFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdYSrtLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJoL2hjL2VuLXVzL2FydGljbGVzLzI1NjE5MTIyOTUxMDYzLUNhbi1Zb3UtQWRkLWEtTmV3LURlZmF1bHQtU2VhcmNoLUVuZ2luZS1PcHRpb24tdG8tQXJjLWZvci1EZXNrdG9wBjsIVDoJcmFua2kH--af34fa6aa4841f772daeba0c9ac31557bc72cda1"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdYSrtLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpCA%3D%3D--9a6ca842f2fece6f4001a840f50d401243c24092"
+      },
+      {
+        "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJetQkhGFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdYSrtLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJpL2hjL2VuLXVzL2FydGljbGVzLzI1NTkwNjI3NDc4OTM1LUhvdy1DYW4tSS1RdWlja2x5LVN3aXRjaC10aGUtVGFiLUktbS1TaGFyaW5nLW9uLWEtR29vZ2xlLU1lZXQtQ2FsbAY7CFQ6CXJhbmtpCQ%3D%3D--b0647c2c251406e37b4847e7b1ac3bf5b4bc8ceb"
+      },
+      {
+        "title": "Pinned Tabs: Tabs you want to stick around",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBfYgpR9EToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdYSrtLFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJQL2hjL2VuLXVzL2FydGljbGVzLzE5MjMxMDYwMTg3MTU5LVBpbm5lZC1UYWJzLVRhYnMteW91LXdhbnQtdG8tc3RpY2stYXJvdW5kBjsIVDoJcmFua2kK--5b535b221d0c1f48f6d655a993df0f81c0d2c33e"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[33] https://resources.arc.net/hc/en-us/articles/25614032197783-How-Do-You-Switch-Your-Default-Search-Engine-on-Arc-for-Desktop"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call",
+    "status": 200,
+    "title": "How Can I Quickly Switch the Tab I\u2019m Sharing on a Google Meet Call? \u2013 Arc Help Center",
+    "file": "web/1ec286583fc7.txt",
+    "chars": 294,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Google Meet",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J5993VB17FPY25NDRPM9R8DQ&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJetQkhGFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQY%3D--7dd60b2a0b2e307b4b394a8534f648b83827ec68"
+      },
+      {
+        "title": "How To Access a Tab\u2019s History in Arc Search",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfQrSAxFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJetQkhGFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJSL2hjL2VuLXVzL2FydGljbGVzLzI1NDk5NzY5MDk4MzkxLUhvdy1Uby1BY2Nlc3MtYS1UYWItcy1IaXN0b3J5LWluLUFyYy1TZWFyY2gGOwhUOglyYW5raQc%3D--a2cd0fb4f69b81283838f0c8ec4b9cc7d39618fa"
+      },
+      {
+        "title": "How Do You Switch Between Tabs Quickly on Arc Desktop?",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBcOZftMFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJetQkhGFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJcL2hjL2VuLXVzL2FydGljbGVzLzI1NjE5NDAyNjU3MzAzLUhvdy1Eby1Zb3UtU3dpdGNoLUJldHdlZW4tVGFicy1RdWlja2x5LW9uLUFyYy1EZXNrdG9wBjsIVDoJcmFua2kI--346ad4fbed5f1b4e1701261ff8a5a16165a44b31"
+      },
+      {
+        "title": "Import Bookmarks, Logins, History, & Extensions from Your Previous Browser",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJf3Jc2VEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJetQkhGFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJsL2hjL2VuLXVzL2FydGljbGVzLzE5MzM1MDg5NjE2NzkxLUltcG9ydC1Cb29rbWFya3MtTG9naW5zLUhpc3RvcnktRXh0ZW5zaW9ucy1mcm9tLVlvdXItUHJldmlvdXMtQnJvd3NlcgY7CFQ6CXJhbmtpCQ%3D%3D--29f9453e694b6442889fc26d3e71cbeea5d93db0"
+      },
+      {
+        "title": "How To Set up an Arc Search Widget",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBeGsF4tFzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJetQkhGFzoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJJL2hjL2VuLXVzL2FydGljbGVzLzI1NDgzNjI5NTk0MTM1LUhvdy1Uby1TZXQtdXAtYW4tQXJjLVNlYXJjaC1XaWRnZXQGOwhUOglyYW5raQo%3D--31da9071c09019450c1a47e632f4ee681c7b8316"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[34] https://resources.arc.net/hc/en-us/articles/25590627478935-How-Can-I-Quickly-Switch-the-Tab-I-m-Sharing-on-a-Google-Meet-Call"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/sections/20497738798231-Release-Notes",
+    "status": 200,
+    "title": "Release Notes \u2013 Arc Help Center",
+    "file": "web/d73276665529.txt",
+    "chars": 398,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/sections/20497738798231-Release-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc Search for Android - Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/27306904379031-Arc-Search-for-Android-Release-Notes"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/23528454620311-Arc-Search-for-iOS-Release-Notes"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/22513842649623-Arc-for-Windows-2023-2026-Release-Notes"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498285812375-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2023 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2022 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498417809815-Arc-for-macOS-2022-Release-Notes"
+      },
+      {
+        "title": "Arc for macOS - 2021 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498463803799-Arc-for-macOS-2021-Release-Notes"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[35] https://resources.arc.net/hc/en-us/sections/20497738798231-Release-Notes"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20498285812375-Release-Notes",
+    "status": 200,
+    "title": "Release Notes \u2013 Arc Help Center",
+    "file": "web/64203ffd345c.txt",
+    "chars": 383,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498285812375-Release-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823"
+      },
+      {
+        "title": "Arc for macOS - 2023 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498377604887"
+      },
+      {
+        "title": "Arc for macOS - 2022 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498417809815"
+      },
+      {
+        "title": "Arc for macOS - 2021 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498463803799"
+      },
+      {
+        "title": "Arc Search for iOS - 2024 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/23528454620311-Arc-Search-Release-Notes"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/22513842649623"
+      },
+      {
+        "title": "Arc Search for Android - 2024 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/articles/27306904379031-Arc-Search-for-Android-Release-Notes"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58N95MSANNDP87784DH91XX&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdaC6GkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQY%3D--3b1d85bdd16f72dd8c96e8308cac22108226fd68"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdaC6GkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--cafa6b5d11fcce0e1eb793030b761ba2cb07338c"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcELiVmFToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdaC6GkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIzNTI4NDU0NjIwMzExLUFyYy1TZWFyY2gtZm9yLWlPUy1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kI--c0f0febccb9365f9fa8389ded140e9b8a936085f"
+      },
+      {
+        "title": "Arc for macOS - 2023 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdaC6GkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mzc3NjA0ODg3LUFyYy1mb3ItbWFjT1MtMjAyMy1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kJ--f007531bfe1ccea244774027466a5f78f9ff34ce"
+      },
+      {
+        "title": "Arc for macOS - 2021 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdJp6ukEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJdaC6GkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIwNDk4NDYzODAzNzk5LUFyYy1mb3ItbWFjT1MtMjAyMS1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kK--ba7867d3746db3d0762e91c2c76c9e6b7d4a61c6"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[36] https://resources.arc.net/hc/en-us/articles/20498285812375-Release-Notes"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes",
+    "status": 200,
+    "title": "Arc for macOS - 2024 - 2026 Release Notes \u2013 Arc Help Center",
+    "file": "web/f907c97d9ef0.txt",
+    "chars": 49203,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/search?q=arc%20search&c=apps&hl=en_US"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc&pli=1"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/security/bulletins"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/blog/CVE-2024-45489-incident-response"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://podcasters.spotify.com/pod/show/the-browser-company/episodes/Focusing-on-the-only-thing-that-matters-a-leapfrog-product-e2n5ed4"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/show/512srmQyB2LQTLVQzIsFV3"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/imagining-arc-by-the-browser-company/id1758984150"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://overcast.fm/+ABJxP-HZFfg"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/episode/6ncSdy6yeYDmyk0x3JGmYp"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/three-product-decisions-and-one-big-question/id1758984150?i=1000667083348"
+      },
+      {
+        "title": "\"Focusing on the only thing that matters: our board recap.\"",
+        "url": "https://overcast.fm/+ABJxP9blJr4)"
+      },
+      {
+        "title": "Known Issues macOS Sequoia Beta",
+        "url": "https://resources.arc.net/hc/en-us/articles/24391085331735-Known-Issues-macOS-Sequoia-Beta"
+      },
+      {
+        "title": "Josh shares a little behind the scenes right here",
+        "url": "https://open.spotify.com/episode/5jPL1kHema54RCD2JGrS8E"
+      },
+      {
+        "title": "Command+Shift+C",
+        "url": "https://arc.net/l/quote/pljiwjqr"
+      },
+      {
+        "title": "Library",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+      },
+      {
+        "title": "Tidy Downloads",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI#tidydownloads"
+      },
+      {
+        "title": "GitHub Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/articles/22731612065815"
+      },
+      {
+        "title": "Live Calendar",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars"
+      },
+      {
+        "title": "Sign up today",
+        "url": "https://arc.net/earlybirds"
+      },
+      {
+        "title": "Arc Search app",
+        "url": "https://apps.apple.com/us/app/arc-search/id6472513080"
+      },
+      {
+        "title": "Head here for instructions",
+        "url": "https://browserinc.notion.site/Getting-Started-with-Arc-for-Windows-145ece36acbb40f381ce1817747cb7ca"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/311118A6-3CB8-4337-8C1D-B40BB81AA342"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/C84895A2-2651-42D8-BCDC-4AD43A3C92E9"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "https://resources.arc.net"
+      },
+      {
+        "title": "Bug Reporter",
+        "url": "https://resources.arc.net/hc/en-us/requests/new"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/6157EDF8-0F3B-45F8-A993-7EB8C5E4218A"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58N95MSANNDP87784DH91XX&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--c121455c37d7212b2faed4c39889026c835c5e84"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdaC6GkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI0L2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mjg1ODEyMzc1LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQc%3D--3f92180767c49f89fd7de6f557dd66258c1cb15a"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcEBe%2BkEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI2L2hjL2VuLXVzL2FydGljbGVzLzE5NDAwMDgyMzkyMjE1LUFyYy1mb3ItV2luZG93cwY7CFQ6CXJhbmtpCA%3D%3D--bbd3450df22d3d75820d2856945081f3793021d2"
+      },
+      {
+        "title": "Update Arc for Desktop",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdz%2BHKLEzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI9L2hjL2VuLXVzL2FydGljbGVzLzIxNDg5NjUwMjY3MDMxLVVwZGF0ZS1BcmMtZm9yLURlc2t0b3AGOwhUOglyYW5raQk%3D--a29f72e842e82fb92384399593bec54b1155060b"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcELiVmFToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIzNTI4NDU0NjIwMzExLUFyYy1TZWFyY2gtZm9yLWlPUy1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kK--92ded197e5007c9facb2785c785aefe12f9ec2b1"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[4] https://resources.arc.net/hc/en-us/articles/20498293324823-Arc-for-macOS-2024-2026-Release-Notes"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes",
+    "status": 200,
+    "title": "Arc for macOS - 2023 Release Notes \u2013 Arc Help Center",
+    "file": "web/3c48ac3d94f3.txt",
+    "chars": 42978,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/6433CE8D-2D3F-4FF2-AD51-6EF0CBAD197F"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://youtu.be/Mh7AHK7zD50?si=VApl_aret1dakIqV"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "Shared Collections",
+        "url": "https://resources.arc.net/en/articles/8513994-share-spaces-folders-splits-with-anyone"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://www.youtube.com/watch?v=vXi8L99p_D0"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://www.youtube.com/watch?v=OsMVtuuwOXc"
+      },
+      {
+        "title": "Arc Max",
+        "url": "https://resources.arc.net/en/articles/8399405-arc-max"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "We've fixed three bugs in Sonoma",
+        "url": "https://resources.arc.net/en/articles/8257976-known-issues-macos-sonoma"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "We're launching a competition for students!",
+        "url": "https://arc.net/e/B1341758-FE10-4764-A98B-A23FD47418A6"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://www.youtube.com/watch?v=V_VfRHS_K0o"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "list of known Sonoma issues",
+        "url": "https://resources.arc.net/en/articles/8257976-known-issues-macos-sonoma-beta"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://youtu.be/9x7hZmHlpto?feature=shared"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/D25B2EEA-7506-4850-A169-3B2A00802889"
+      },
+      {
+        "title": "Video release notes",
+        "url": "https://www.youtube.com/watch?v=_9db9D4um0Y"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58N95MSANNDP87784DH91XX&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for macOS - 2024 - 2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf8faGkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJML2hjL2VuLXVzL2FydGljbGVzLzIwNDk4MjkzMzI0ODIzLUFyYy1mb3ItbWFjT1MtMjAyNC0yMDI2LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQY%3D--6860a2c26e3bec3110a3e247fcff567b8e7092e4"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBw%3D%3D--753bfa941af72a163054551839d168d944dac663"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdaC6GkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI0L2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mjg1ODEyMzc1LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQg%3D--13f59d0ee9593c8071d33689ff6bec12f2091fe7"
+      },
+      {
+        "title": "Keyboard Shortcuts",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJfccjO7EjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI5L2hjL2VuLXVzL2FydGljbGVzLzIwNTk1MjMxMzQ5OTExLUtleWJvYXJkLVNob3J0Y3V0cwY7CFQ6CXJhbmtpCQ%3D%3D--3f0df31322c5d0fd38c394e04bfa80956699af00"
+      },
+      {
+        "title": "Arc for macOS - 2022 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJd56aikEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf%2Fg6akEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIwNDk4NDE3ODA5ODE1LUFyYy1mb3ItbWFjT1MtMjAyMi1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kK--5ba9386ec20763b35495faddd2b4987f7553bfc1"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[37] https://resources.arc.net/hc/en-us/articles/20498377604887-Arc-for-macOS-2023-Release-Notes"
+  },
+  {
+    "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes",
+    "status": 200,
+    "title": "Arc for macOS - 2024 - 2026 Release Notes \u2013 Arc Help Center",
+    "file": "web/96cbea3bb3b7.txt",
+    "chars": 49203,
+    "links": [
+      {
+        "title": "Skip to main content",
+        "url": "https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes#main-content"
+      },
+      {
+        "title": "",
+        "url": "https://resources.arc.net/hc/en-us"
+      },
+      {
+        "title": "Download Arc",
+        "url": "https://arc.net/"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/privacy"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/search?q=arc%20search&c=apps&hl=en_US"
+      },
+      {
+        "title": "here",
+        "url": "https://play.google.com/store/apps/details?id=company.thebrowser.arc&pli=1"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/security/bulletins"
+      },
+      {
+        "title": "here",
+        "url": "https://arc.net/blog/CVE-2024-45489-incident-response"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://podcasters.spotify.com/pod/show/the-browser-company/episodes/Focusing-on-the-only-thing-that-matters-a-leapfrog-product-e2n5ed4"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/show/512srmQyB2LQTLVQzIsFV3"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/imagining-arc-by-the-browser-company/id1758984150"
+      },
+      {
+        "title": "Overcast",
+        "url": "https://overcast.fm/+ABJxP-HZFfg"
+      },
+      {
+        "title": "Spotify",
+        "url": "https://open.spotify.com/episode/6ncSdy6yeYDmyk0x3JGmYp"
+      },
+      {
+        "title": "Apple Podcasts",
+        "url": "https://podcasts.apple.com/us/podcast/three-product-decisions-and-one-big-question/id1758984150?i=1000667083348"
+      },
+      {
+        "title": "\"Focusing on the only thing that matters: our board recap.\"",
+        "url": "https://overcast.fm/+ABJxP9blJr4)"
+      },
+      {
+        "title": "Known Issues macOS Sequoia Beta",
+        "url": "https://resources.arc.net/hc/en-us/articles/24391085331735-Known-Issues-macOS-Sequoia-Beta"
+      },
+      {
+        "title": "Josh shares a little behind the scenes right here",
+        "url": "https://open.spotify.com/episode/5jPL1kHema54RCD2JGrS8E"
+      },
+      {
+        "title": "Command+Shift+C",
+        "url": "https://arc.net/l/quote/pljiwjqr"
+      },
+      {
+        "title": "Library",
+        "url": "https://resources.arc.net/hc/en-us/articles/19230634389911-Library-A-home-for-your-downloads-archived-tabs-easels-and-more"
+      },
+      {
+        "title": "Tidy Downloads",
+        "url": "https://resources.arc.net/hc/en-us/articles/19335160678679-Arc-Max-Boost-Your-Browsing-with-AI#tidydownloads"
+      },
+      {
+        "title": "GitHub Live Folders",
+        "url": "https://resources.arc.net/hc/en-us/articles/22731612065815"
+      },
+      {
+        "title": "Live Calendar",
+        "url": "https://resources.arc.net/hc/en-us/articles/24158102740631-Live-Calendars"
+      },
+      {
+        "title": "Sign up today",
+        "url": "https://arc.net/earlybirds"
+      },
+      {
+        "title": "Arc Search app",
+        "url": "https://apps.apple.com/us/app/arc-search/id6472513080"
+      },
+      {
+        "title": "Head here for instructions",
+        "url": "https://browserinc.notion.site/Getting-Started-with-Arc-for-Windows-145ece36acbb40f381ce1817747cb7ca"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/311118A6-3CB8-4337-8C1D-B40BB81AA342"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/C84895A2-2651-42D8-BCDC-4AD43A3C92E9"
+      },
+      {
+        "title": "Arc Help Center",
+        "url": "https://resources.arc.net"
+      },
+      {
+        "title": "Bug Reporter",
+        "url": "https://resources.arc.net/hc/en-us/requests/new"
+      },
+      {
+        "title": "Easel release notes",
+        "url": "https://arc.net/e/6157EDF8-0F3B-45F8-A993-7EB8C5E4218A"
+      },
+      {
+        "title": "Arc for macOS",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J1WH1GDJ6GAV035WG2D24XW7&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/search?content_tags=01J58N95MSANNDP87784DH91XX&utf8=%E2%9C%93"
+      },
+      {
+        "title": "Arc for Windows - 2023-2026 Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBf6l%2Bl5FDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJOL2hjL2VuLXVzL2FydGljbGVzLzIyNTEzODQyNjQ5NjIzLUFyYy1mb3ItV2luZG93cy0yMDIzLTIwMjYtUmVsZWFzZS1Ob3RlcwY7CFQ6CXJhbmtpBg%3D%3D--c121455c37d7212b2faed4c39889026c835c5e84"
+      },
+      {
+        "title": "Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdaC6GkEjoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI0L2hjL2VuLXVzL2FydGljbGVzLzIwNDk4Mjg1ODEyMzc1LVJlbGVhc2UtTm90ZXMGOwhUOglyYW5raQc%3D--3f92180767c49f89fd7de6f557dd66258c1cb15a"
+      },
+      {
+        "title": "Arc for Windows",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcEBe%2BkEToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI2L2hjL2VuLXVzL2FydGljbGVzLzE5NDAwMDgyMzkyMjE1LUFyYy1mb3ItV2luZG93cwY7CFQ6CXJhbmtpCA%3D%3D--bbd3450df22d3d75820d2856945081f3793021d2"
+      },
+      {
+        "title": "Update Arc for Desktop",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJdz%2BHKLEzoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI9L2hjL2VuLXVzL2FydGljbGVzLzIxNDg5NjUwMjY3MDMxLVVwZGF0ZS1BcmMtZm9yLURlc2t0b3AGOwhUOglyYW5raQk%3D--a29f72e842e82fb92384399593bec54b1155060b"
+      },
+      {
+        "title": "Arc Search for iOS Release Notes",
+        "url": "https://resources.arc.net/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJcELiVmFToYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCBf8faGkEjoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJHL2hjL2VuLXVzL2FydGljbGVzLzIzNTI4NDU0NjIwMzExLUFyYy1TZWFyY2gtZm9yLWlPUy1SZWxlYXNlLU5vdGVzBjsIVDoJcmFua2kK--92ded197e5007c9facb2785c785aefe12f9ec2b1"
+      },
+      {
+        "title": "Contact the Team",
+        "url": "https://resources.arc.net/hc/requests/new"
+      }
+    ],
+    "citation": "[38] https://resources.arc.net/hc/en-us/articles/20498293324823-2024-Release-Notes"
+  },
+  {
+    "url": "https://diabrowser.com/",
+    "status": 200,
+    "title": "Dia | A browser you won't dread opening",
+    "file": "web/68a875e3ae0c.txt",
+    "chars": 2600,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "Better Days",
+        "url": "https://diabrowser.com/plans"
+      },
+      {
+        "title": "Learn more about privacy in Dia \u2192",
+        "url": "https://diabrowser.com/privacy"
+      }
+    ],
+    "citation": "[39] https://diabrowser.com"
+  },
+  {
+    "url": "https://diabrowser.com/download",
+    "status": 200,
+    "title": "Download Dia Browser for macOS \u2013 a smart browser where you can chat, write, learn, plan and shop with your tabs.",
+    "file": "web/6b5669fbe254.txt",
+    "chars": 112,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[40] https://diabrowser.com/download"
+  },
+  {
+    "url": "https://diabrowser.com/privacy-policy",
+    "status": 404,
+    "title": "Dia Browser | Page Not Found",
+    "file": "web/7cd03ec74bc8.txt",
+    "chars": 75,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "Go back home",
+        "url": "https://diabrowser.com/"
+      }
+    ]
+  },
+  {
+    "url": "https://diabrowser.com/students",
+    "status": 200,
+    "title": "Dia for Students",
+    "file": "web/68247eac81dc.txt",
+    "chars": 4581,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "Download Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Get started with our Student Pack!",
+        "url": "https://diabrowser.com/skills/packs/back-to-school"
+      },
+      {
+        "title": "Get started with our Student Pack!",
+        "url": "https://diabrowser.com/skills/packs/back-to-school"
+      },
+      {
+        "title": "Get started with our Student Pack!",
+        "url": "https://diabrowser.com/skills/packs/back-to-school"
+      },
+      {
+        "title": "join The /Skills Lab Discord",
+        "url": "https://discord.gg/bwufGn5gG6"
+      },
+      {
+        "title": "Download Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Dreaming of skills? Join our Discord \u2192",
+        "url": "https://discord.gg/bwufGn5gG6"
+      }
+    ],
+    "citation": "[41] https://diabrowser.com/students"
+  },
+  {
+    "url": "https://diabrowser.com/changelog",
+    "status": 200,
+    "title": "Dia Browser | Latest Release Notes",
+    "file": "web/50ae3fddc48b.txt",
+    "chars": 1186,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[42] https://diabrowser.com/changelog"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-15-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.15.0",
+    "file": "web/b4550e0407c5.txt",
+    "chars": 1633,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[43] https://diabrowser.com/changelog/1-15-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-14-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.14.0",
+    "file": "web/84fdd2646691.txt",
+    "chars": 2286,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "status.diabrowser.com",
+        "url": "https://status.diabrowser.com"
+      }
+    ],
+    "citation": "[44] https://diabrowser.com/changelog/1-14-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-9-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.9.0",
+    "file": "web/4c65b625aa87.txt",
+    "chars": 1544,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[45] https://diabrowser.com/changelog/1-9-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-16-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.16.0",
+    "file": "web/0df089edacb9.txt",
+    "chars": 2314,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[46] https://diabrowser.com/changelog/1-16-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-10-1",
+    "status": 200,
+    "title": "Dia Browser | Update 1.10.1",
+    "file": "web/af083b212b8a.txt",
+    "chars": 2146,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[47] https://diabrowser.com/changelog/1-10-1"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-6-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.6.0",
+    "file": "web/7a2b525b222b.txt",
+    "chars": 1217,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[48] https://diabrowser.com/changelog/1-6-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-8-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.8.0",
+    "file": "web/d1ce81893828.txt",
+    "chars": 1783,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[49] https://diabrowser.com/changelog/1-8-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-43-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.43.0",
+    "file": "web/4014f0e8e315.txt",
+    "chars": 1917,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "here",
+        "url": "https://diabrowser.com/changelog/diabrowser.com/students"
+      }
+    ],
+    "citation": "[50] https://diabrowser.com/changelog/0-43-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-44-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.44.0",
+    "file": "web/8446df3ba820.txt",
+    "chars": 3664,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[51] https://diabrowser.com/changelog/0-44-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-45-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.45.0",
+    "file": "web/628ec3576fd9.txt",
+    "chars": 3016,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "Browsing History Skills Pack",
+        "url": "https://www.diabrowser.com/skills/packs/make-the-most-of-your-browsing-history"
+      },
+      {
+        "title": "future-self",
+        "url": "https://www.diabrowser.com/skills/future-self"
+      },
+      {
+        "title": "daily-wrap",
+        "url": "https://www.diabrowser.com/skills/dailywrap-malay"
+      },
+      {
+        "title": "weekly",
+        "url": "https://www.diabrowser.com/skills/weekly"
+      },
+      {
+        "title": "Early Birds program",
+        "url": "https://browserco.typeform.com/to/ukTpVjIv"
+      }
+    ],
+    "citation": "[52] https://diabrowser.com/changelog/0-45-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-46-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.46.0",
+    "file": "web/6976aadaca0f.txt",
+    "chars": 2066,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "let us know",
+        "url": "https://www.diabrowser.com/help"
+      }
+    ],
+    "citation": "[53] https://diabrowser.com/changelog/0-46-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-47-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.47.0",
+    "file": "web/49cb4e17234e.txt",
+    "chars": 1773,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "We\u2019d love to hear from you.",
+        "url": "https://browserco.typeform.com/to/ukTpVjIv"
+      }
+    ],
+    "citation": "[54] https://diabrowser.com/changelog/0-47-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-48-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.48.0",
+    "file": "web/2bef0ef2bed2.txt",
+    "chars": 1127,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[55] https://diabrowser.com/changelog/0-48-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/0-49-0",
+    "status": 200,
+    "title": "Dia Browser | Update 0.49.0",
+    "file": "web/c2a62d2d0205.txt",
+    "chars": 981,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[56] https://diabrowser.com/changelog/0-49-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-0-1",
+    "status": 200,
+    "title": "Dia Browser | Update 1.0.1",
+    "file": "web/8e79cb7fef09.txt",
+    "chars": 1061,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "diabrowser.com",
+        "url": "https://diabrowser.com"
+      }
+    ],
+    "citation": "[57] https://diabrowser.com/changelog/1-0-1"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-1-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.1.0",
+    "file": "web/d7ce6aef50ca.txt",
+    "chars": 1661,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[58] https://diabrowser.com/changelog/1-1-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-2-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.2.0",
+    "file": "web/e49c2934710d.txt",
+    "chars": 923,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[59] https://diabrowser.com/changelog/1-2-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-3-1",
+    "status": 200,
+    "title": "Dia Browser | Update 1.3.1",
+    "file": "web/5fd103ed4a0d.txt",
+    "chars": 899,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[60] https://diabrowser.com/changelog/1-3-1"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-4-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.4.0",
+    "file": "web/67cafb806dfa.txt",
+    "chars": 1534,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[61] https://diabrowser.com/changelog/1-4-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-5-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.5.0",
+    "file": "web/d04753369ef9.txt",
+    "chars": 1777,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[62] https://diabrowser.com/changelog/1-5-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-7-0",
+    "status": 200,
+    "title": "Dia Browser | Update 1.7.0",
+    "file": "web/977f3803e91e.txt",
+    "chars": 1308,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[63] https://diabrowser.com/changelog/1-7-0"
+  },
+  {
+    "url": "https://diabrowser.com/changelog/1-13-1",
+    "status": 200,
+    "title": "Dia Browser | Update 1.13.1",
+    "file": "web/fe6b89a0372a.txt",
+    "chars": 1812,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      }
+    ],
+    "citation": "[64] https://diabrowser.com/changelog/1-13-1"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes",
+    "status": 200,
+    "title": "Dia Browser | Latest Release Notes",
+    "file": "web/82ae74a5923c.txt",
+    "chars": 1186,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[65] https://diabrowser.com/release-notes"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-8-0-direct-from-the-team",
+    "status": 200,
+    "title": "Dia Browser | Direct from Team Dia",
+    "file": "web/d1a8e4f2da54.txt",
+    "chars": 660,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[66] https://diabrowser.com/release-notes/1-8-0-direct-from-the-team"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-19-0-tab-groups-and-proactive-suggestions",
+    "status": 200,
+    "title": "Dia Browser | Multiplying tabs? Dia keeps them in check",
+    "file": "web/9d3a660b6276.txt",
+    "chars": 710,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[67] https://diabrowser.com/release-notes/1-19-0-tab-groups-and-proactive-suggestions"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-23-0-from-review-to-merge-to-whats-next",
+    "status": 200,
+    "title": "Dia Browser | From review to merge to what\u2019s next",
+    "file": "web/5ae50b12fbb8.txt",
+    "chars": 681,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[68] https://diabrowser.com/release-notes/1-23-0-from-review-to-merge-to-whats-next"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/Linear",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/f36a9b05351a.txt",
+    "chars": 1209,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[69] https://diabrowser.com/release-notes/Linear"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-21-0-before-you-reach-for-it",
+    "status": 200,
+    "title": "Dia Browser | Before you reach for it\u2026",
+    "file": "web/abe6d0dec182.txt",
+    "chars": 659,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[70] https://diabrowser.com/release-notes/1-21-0-before-you-reach-for-it"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-30-0-keeping-tabs-tidy",
+    "status": 200,
+    "title": "Dia Browser | Keeping Tabs Tidy",
+    "file": "web/b23c8f79dcc9.txt",
+    "chars": 637,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[71] https://diabrowser.com/release-notes/1-30-0-keeping-tabs-tidy"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-13-1-new-year-new-polish",
+    "status": 200,
+    "title": "Dia Browser | Carrying it forward in 2026",
+    "file": "web/49f47190d51d.txt",
+    "chars": 674,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[72] https://diabrowser.com/release-notes/1-13-1-new-year-new-polish"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-5-0-meet-me-in-dia",
+    "status": 200,
+    "title": "Dia Browser | Meet Me in Dia ",
+    "file": "web/6c84f3782891.txt",
+    "chars": 663,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[73] https://diabrowser.com/release-notes/1-5-0-meet-me-in-dia"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-32-0-outside-work",
+    "status": 200,
+    "title": "Dia Browser | Outside of work",
+    "file": "web/f60be04d3026.txt",
+    "chars": 637,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[74] https://diabrowser.com/release-notes/1-32-0-outside-work"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/windows-wednesdays",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/9d69734bb550.txt",
+    "chars": 1102,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Windows Wednesdays",
+        "url": "https://x.com/diabrowser/status/2082496116696732103?s=20"
+      },
+      {
+        "title": "first episode",
+        "url": "https://x.com/diabrowser/status/2082496116696732103?s=20"
+      },
+      {
+        "title": "beta waitlist",
+        "url": "https://form.typeform.com/to/mqWoiHW0?typeform-source=www.diabrowser.com"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[75] https://diabrowser.com/release-notes/windows-wednesdays"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-22-0-dont-think",
+    "status": 200,
+    "title": "Dia Browser | Don\u2019t think about the next step. Take it. ",
+    "file": "web/9425a4d93619.txt",
+    "chars": 697,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[76] https://diabrowser.com/release-notes/1-22-0-dont-think"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/granola",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/f983c85979b4.txt",
+    "chars": 1038,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[77] https://diabrowser.com/release-notes/granola"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-37-0-morning-brief",
+    "status": 200,
+    "title": "Dia Browser | What we're building, unfiltered",
+    "file": "web/c00bfae18609.txt",
+    "chars": 691,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[78] https://diabrowser.com/release-notes/1-37-0-morning-brief"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/Tools",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/7693e0cd4529.txt",
+    "chars": 1188,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[79] https://diabrowser.com/release-notes/Tools"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/Notion",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/81ffcf05acb0.txt",
+    "chars": 1158,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[80] https://diabrowser.com/release-notes/Notion"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-36-0-pip-stash",
+    "status": 200,
+    "title": "Dia Browser | Stash your PiP out of the way",
+    "file": "web/440fe5ff5508.txt",
+    "chars": 670,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[81] https://diabrowser.com/release-notes/1-36-0-pip-stash"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/context-switching",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/e5cc506af309.txt",
+    "chars": 1205,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "the roundtable discussion",
+        "url": "https://browsercompany.substack.com/p/designer-roundtable-building-swipeable?triedRedirect=true"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[82] https://diabrowser.com/release-notes/context-switching"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-38-0-closing-the-week",
+    "status": 200,
+    "title": "Dia Browser | Closing out the week with Dia",
+    "file": "web/487c96d0146a.txt",
+    "chars": 687,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[83] https://diabrowser.com/release-notes/1-38-0-closing-the-week"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-26-0-sync-is-here",
+    "status": 200,
+    "title": "Dia Browser | Pick up where you left off",
+    "file": "web/e054fa10defa.txt",
+    "chars": 663,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[84] https://diabrowser.com/release-notes/1-26-0-sync-is-here"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/questions",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/191ac83cca5b.txt",
+    "chars": 959,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[85] https://diabrowser.com/release-notes/questions"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-39-1-reports",
+    "status": 200,
+    "title": "Dia Browser | Meet Reports",
+    "file": "web/83712ac01cf6.txt",
+    "chars": 653,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[86] https://diabrowser.com/release-notes/1-39-1-reports"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-34-1-pittsburgh",
+    "status": 200,
+    "title": "Dia Browser | The week in Pittsburgh",
+    "file": "web/1311a6a025fd.txt",
+    "chars": 652,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[87] https://diabrowser.com/release-notes/1-34-1-pittsburgh"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-20-0-little-moments-big-feeling",
+    "status": 200,
+    "title": "Dia Browser | Little moments. Big feeling.",
+    "file": "web/a7edfaa72f7d.txt",
+    "chars": 684,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[88] https://diabrowser.com/release-notes/1-20-0-little-moments-big-feeling"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-10-1-year-end-release",
+    "status": 200,
+    "title": "Dia Browser | No loose ends",
+    "file": "web/3c5135fb3c85.txt",
+    "chars": 654,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[89] https://diabrowser.com/release-notes/1-10-1-year-end-release"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-25-0-details-that-delight",
+    "status": 200,
+    "title": "Dia Browser | Details that delight",
+    "file": "web/39914e036034.txt",
+    "chars": 652,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[90] https://diabrowser.com/release-notes/1-25-0-details-that-delight"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-15-1-polish-galore",
+    "status": 200,
+    "title": "Dia Browser | Better organization, better context",
+    "file": "web/bdf6dd73b195.txt",
+    "chars": 690,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[91] https://diabrowser.com/release-notes/1-15-1-polish-galore"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/security-team-question",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/7b09f842038b.txt",
+    "chars": 1283,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[92] https://diabrowser.com/release-notes/security-team-question"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-33-0-tab-performance",
+    "status": 200,
+    "title": "Dia Browser | Everything in Its Place",
+    "file": "web/d9a3aa278a74.txt",
+    "chars": 653,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[93] https://diabrowser.com/release-notes/1-33-0-tab-performance"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/linkedin-integration",
+    "status": 200,
+    "title": "Dia Browser | Notes from the roadmap",
+    "file": "web/da6e44f625d9.txt",
+    "chars": 1051,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[94] https://diabrowser.com/release-notes/linkedin-integration"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-7-0-flow-state",
+    "status": 200,
+    "title": "Dia Browser | Find Yourself in Flow State",
+    "file": "web/a44444cdef50.txt",
+    "chars": 735,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[95] https://diabrowser.com/release-notes/1-7-0-flow-state"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-24-0-dia-got-faster",
+    "status": 200,
+    "title": "Dia Browser | Dia got faster",
+    "file": "web/953a606b2a69.txt",
+    "chars": 644,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[96] https://diabrowser.com/release-notes/1-24-0-dia-got-faster"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-27-0-your-work-comes-to-you",
+    "status": 200,
+    "title": "Dia Browser | Your work comes to you",
+    "file": "web/886c7bcf6ab8.txt",
+    "chars": 655,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[97] https://diabrowser.com/release-notes/1-27-0-your-work-comes-to-you"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-16-0-organization-that-grows",
+    "status": 200,
+    "title": "Dia Browser | Onboarding without tab overload",
+    "file": "web/4917495679e8.txt",
+    "chars": 686,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[98] https://diabrowser.com/release-notes/1-16-0-organization-that-grows"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-9-0-tab-groups",
+    "status": 200,
+    "title": "Dia Browser | Organize your Tabs",
+    "file": "web/76d338e6a386.txt",
+    "chars": 718,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[99] https://diabrowser.com/release-notes/1-9-0-tab-groups"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-31-0-pr-hover",
+    "status": 200,
+    "title": "Dia Browser | Stop opening PRs blind",
+    "file": "web/16cc90cfbbd1.txt",
+    "chars": 652,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[100] https://diabrowser.com/release-notes/1-31-0-pr-hover"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-14-0-meeting-tab-groups",
+    "status": 200,
+    "title": "Dia Browser | Join the call. We\u2019ll handle the tabs.",
+    "file": "web/44a68627bf88.txt",
+    "chars": 749,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[101] https://diabrowser.com/release-notes/1-14-0-meeting-tab-groups"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-18-1-your-setup-your-way",
+    "status": 200,
+    "title": "Dia Browser | Your setup, your way",
+    "file": "web/1faea812ff14.txt",
+    "chars": 667,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[102] https://diabrowser.com/release-notes/1-18-1-your-setup-your-way"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-6-0-conversations-context-chat",
+    "status": 200,
+    "title": "Dia Browser | Conversations, Context, and Chat",
+    "file": "web/a993ff0d17cd.txt",
+    "chars": 748,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[103] https://diabrowser.com/release-notes/1-6-0-conversations-context-chat"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-17-0-github-live-tab-groups",
+    "status": 200,
+    "title": "Dia Browser | Live Tab Groups are here",
+    "file": "web/76b8d0c4ca81.txt",
+    "chars": 729,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      },
+      {
+        "title": "Aug 20, '26 No. 038 App v1.45.0 Dia Security",
+        "url": "https://diabrowser.com/release-notes/security-team-question"
+      }
+    ],
+    "citation": "[104] https://diabrowser.com/release-notes/1-17-0-github-live-tab-groups"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-28-0-look-closer",
+    "status": 200,
+    "title": "Dia Browser | A closer look",
+    "file": "web/a3c23f4fc9cf.txt",
+    "chars": 641,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[105] https://diabrowser.com/release-notes/1-28-0-look-closer"
+  },
+  {
+    "url": "https://diabrowser.com/release-notes/1-29-0-sync-unpinned-tabs",
+    "status": 200,
+    "title": "Dia Browser | Sync unpinned tabs",
+    "file": "web/aa87e361af69.txt",
+    "chars": 647,
+    "links": [
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Try Dia",
+        "url": "https://diabrowser.com/download"
+      },
+      {
+        "title": "Sep 10, '26 No. 041 App v1.49.0 Dia \ud83e\udd1d Tools",
+        "url": "https://diabrowser.com/release-notes/Tools"
+      },
+      {
+        "title": "Sep 3, '26 No. 040 App v1.47.1 Dia \ud83e\udd1d Notion",
+        "url": "https://diabrowser.com/release-notes/Notion"
+      },
+      {
+        "title": "Aug 27, '26 No. 039 App v1.46.0 Dia \ud83e\udd1d Linear",
+        "url": "https://diabrowser.com/release-notes/Linear"
+      }
+    ],
+    "citation": "[106] https://diabrowser.com/release-notes/1-29-0-sync-unpinned-tabs"
+  },
+  {
+    "url": "https://diabrowser.com/forwork",
+    "status": 200,
+    "title": "Dia Browser | Work",
+    "file": "web/4158f85a78ed.txt",
+    "chars": 2208,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "trust.diabrowser.com",
+        "url": "https://trust.diabrowser.com/"
+      },
+      {
+        "title": "Privacy",
+        "url": "https://diabrowser.com/security"
+      },
+      {
+        "title": "Chromium enterprise",
+        "url": "https://chromeenterprise.google/policies/"
+      },
+      {
+        "title": "Google Chrome Cloud Management",
+        "url": "https://chromeenterprise.google/products/chrome-enterprise-core/"
+      },
+      {
+        "title": ",",
+        "url": "https://chromeenterprise.google/products/chrome-enterprise-core/"
+      }
+    ],
+    "citation": "[107] https://diabrowser.com/forwork"
+  },
+  {
+    "url": "https://diabrowser.com/plans",
+    "status": 200,
+    "title": "Dia Browser | Plans",
+    "file": "web/9f2707298f73.txt",
+    "chars": 5276,
+    "links": [
+      {
+        "title": "",
+        "url": "https://diabrowser.com/"
+      },
+      {
+        "title": "Try it now",
+        "url": "https://diabrowser.com/plans/better-answers"
+      },
+      {
+        "title": "Try it now",
+        "url": "https://diabrowser.com/plans/better-days"
+      },
+      {
+        "title": "Get in touch",
+        "url": "mailto:teams@diabrowser.com"
+      }
+    ],
+    "citation": "[108] https://diabrowser.com/plans"
+  }
+]

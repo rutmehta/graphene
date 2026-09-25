@@ -1,0 +1,19 @@
+Dia Browser | Update 1.9.0
+v
+1.9.0
+December 10, 2025
+What's New in Dia v1.9.0
+Dia v1.9.0 brings powerful new ways to keep your work organized with tab groups.Here's what's new:
+Stay organized with Tab Groups.
+Organize your work by project, topic, or client with tab groups. Groups are color‑coded, customizable, easy to scan, and stay put so you can return to your work exactly where you left it.
+Meetings that stay in reach.
+A refreshed calendar experience helps you show up prepared: Dia will automatically create an Active Meeting tab group when you join calls, keep "relevant links" pointing to the right docs and boards, and show live badging on the Calendar icon so you always know how long you have until your next meeting. Logged‑out calendar previews now include a clearer sign‑in prompt and update as soon as you log in.
+Smarter tool calling behind the scenes.
+Dia automatically decides when to reach for tools like Gmail, Google Calendar, Slack, or Tabs based on your request, so you can just ask and let the browser handle the wiring.
+Create more with shortcuts.
+We've added support for new wiki, new jira, new form, new meeting, new gist, new Figma and more from the command bar.
+Fewer accidental voice triggers.
+After user reports of voice mode triggering at unwanted moments we've introduced tighter constraints for when it turns on and off.
+There was a bug where Resy sometimes would not load correctly.
+We've fixed that so you can get back to booking your reservations.
+Thank you for using Dia! Please keep the feedback coming.

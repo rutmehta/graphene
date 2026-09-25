@@ -1,0 +1,55 @@
+Dia Browser | Update 0.46.0
+v
+0.46.0
+September 10, 2025
+What's New in Dia v0.46.0
+Dia thinks harder when you need it most.
+For the past few weeks, we’ve been rolling out GPT‑5 to work with Skills and queries that use reasoning. And thanks to some changes under the hood, everything’s starting to feel
+just right
+.
+✨GPT‑5 in Dia✨
+When you start a query with /research or run a
+Skill
+, you’re now on GPT‑5.
+0:00
+/
+0:00
+This week has some updates to how answers powered by GPT-5 show up:
+Replies are easier to read
+with less heavy bolding, more natural paragraphs, and cleaner LaTeX formatting.
+Writing help only shows up when you need it
+with smarter logic for when text proposals are presented.
+Fast takeaways, then the details.
+Replies offer a simple answer first, then a fuller explanation if you want it.
+Chat will ask fewer clarifying questions
+when formulating an answer, speeding up response time.
+These changes help blend GPT‑5 into Chat for a consistent experience no matter what you’re doing. As always, if anything doesn't look right, please
+let us know
+.
+0:00
+/
+0:00
+Plus some small tweaks with a lasting impact:
+Images load more consistently, and the
+right‑click menu
+is simplified so you can copy or download images more often.
+If your device drops below
+300 MB free
+(the minimum required to run Dia), you’ll get a clear warning.
+We’ve increased everyone’s
+Dia invites
+. Share access to the beta with teammates, friends, or anyone else who might benefit from an AI browser. Look for the pop‑up on a new tab, or click
+Dia > Invite to Dia…
+on your Mac menu bar.
+Plus some small tweaks with a lasting impact:
+Images load more consistently, and the
+right‑click menu
+is simplified so you can copy or download images more often.
+If your device drops below
+300 MB free
+(the minimum required to run Dia), you’ll get a clear warning.
+We’ve increased everyone’s
+Dia invites
+. Share access to the beta with teammates, friends, or anyone else who might benefit from an AI browser. Look for the pop‑up on a new tab, or click
+Dia > Invite to Dia…
+on your Mac menu bar.

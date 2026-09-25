@@ -1,0 +1,14 @@
+Dia Browser | Update 1.4.0
+v
+1.4.0
+November 5, 2025
+What's New in Dia v1.4.0
+Dia v1.4.0 helps you find what you need, keep tabs tidy, and stay in flow. Here's what's new:
+Manage tabs with @Tabs. Open and close tabs right from chat. Great for quick clean-ups, closing out your day (and tabs!) and opening all the links for a topic.
+Pinned tabs glow‑up. Pinned tabs get a cleaner look and vibrant theme accents on select. Your ride‑or‑die tabs stay put—and you can return a pinned tab to its base URL with ⌘‑Return.
+Now you can just ask. With automatic Memory Search Dia searches your memories without having to @-mention the tool. It's profile-specific, so use your work persona (or Outie) as needed.
+Split view improvements. Two ways to split: use the nav bar split button or "Open as Split." Choosing Open as Split on the current tab creates a split with a new tab; selecting it on other tabs brings that tab in as a split.
+Haptic feedback for tab moves. A subtle nudge when you drag tabs in the strip or side nav—small polish that makes organizing feel right.
+iCloud Passkeys support. iCloud‑based passkeys now work in Dia. When a site requests a passkey, Dia queries your iCloud Keychain and prompts you to approve access.
+Faster, more resilient browsing. We've implemented HTTP/3 connections behind the scenes to reduce the number of network change errors you encounter with Dia.
+Thanks for being here and using Dia. If anything doesn't look right, let us know—your feedback helps us keep dialing down clutter and tuning the feel.

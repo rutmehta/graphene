@@ -1,0 +1,53 @@
+Dia Browser | Notes from the roadmap
+Reading our release notes in another browser?
+Try Dia
+Reading our release notes in another browser?
+Try Dia
+August 20, 2026 11:35 AM ET
+Brooklyn, USA
+Issue No.
+App Version
+August 20, 2026 11:35 AM ET
+Brooklyn, USA
+Issue No.
+App Version
+August 20, 2026 11:35 AM ET
+Brooklyn, USA
+Issue No.
+App Version
+Dia
+Weekly
+Unfiltered
+New features
+Every week
+Dia
+Weekly
+Unfiltered
+August 20, 2026 11:35 AM ET
+Brooklyn, USA
+Issue No.
+App Version
+New features
+Every week
+Notes from the roadmap
+A question we work on constantly on the security team: how do you get the most out of Dia's AI without giving up control of your data?
+For starters,
+your chat history lives on your machine
+(under History). By default, some chat content is sent to improve the product (stored with no link to your account and deleted after 30 days). Turn this off in Settings and none of it is sent.
+To answer AI requests, Dia sends relevant context to a model provider, all under zero data retention.
+Once processed, nothing is persisted
+. With Dia, your history isn't on a third-party cloud. It's on your computer
+Past Issues
+Sep 10, '26
+No. 041
+App v1.49.0
+Dia 🤝 Tools
+Sep 3, '26
+No. 040
+App v1.47.1
+Dia 🤝 Notion
+Aug 27, '26
+No. 039
+App v1.46.0
+Dia 🤝 Linear
+View All Release Notes +

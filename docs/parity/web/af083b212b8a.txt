@@ -1,0 +1,27 @@
+Dia Browser | Update 1.10.1
+v
+1.10.1
+December 17, 2025
+What's New in Dia v1.10.1
+Dia v1.10.0 is all about tying up loose ends—from long‑requested support, to polish on new features, to fixes that keep day‑to‑day work feeling smooth. Here's what's new:
+Chromium Side Panel support.
+Extensions that use the Chromium Side Panel can now render their side-panel UI directly in Dia.
+Tab groups get easier to scan and name.
+New tab groups derive their color from the site's favicon or URL bar theme color, and when you create a new group with tabs on top, Dia now drops you straight into renaming so you can label projects while you're in the flow.
+Google Sheets support in Chat.
+The Assistant can now see beyond the first visible slice of a sheet—reading across all sheets and rows in a document so summaries and analyses capture the full picture.
+Retry without attachments.
+If a query fails because of a problematic attachment, you can now quickly rerun it without that attachment instead of starting from scratch.
+Ask on Page now opens in new tabs.
+Links from Ask on Page results now open in a new foreground tab, preserving the original context while you jump into the answer.
+Non‑US keyboard shortcuts, fixed.
+Keyboard shortcuts like ⌘Z now behave correctly on layouts such as AZERTY and Dvorak, so undo and other core commands work the way you expect across apps.
+Fewer dark‑mode flashes.
+Notion and Slack now honor their dark backgrounds when you switch tabs, preventing distracting white flashes as you move between workspaces.
+More reliable window controls.
+A speculative fix addresses rare cases where macOS window traffic lights could appear duplicated after unlocking or moving in and out of fullscreen.
+Faster navigation from history.
+Back, forward, and reload history entries can be cmd‑ or middle‑clicked to open in a new tab, making it easier to explore alternate paths without losing your place.
+Smarter fullscreen on multi‑display setups.
+Sites using the Fullscreen API can now target another display, so full‑screen experiences land where you want them.
+Thanks for using Dia and for all the shared feedback that shapes these releases.

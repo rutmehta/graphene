@@ -1,0 +1,35 @@
+Dia Browser | Update 1.14.0
+v
+1.14.0
+January 14, 2026
+What's New in Dia 1.14.0
+Dia v1.14.0 is all about showing up and staying organized with Tab Groups for Meetings and a (big) handful of quality of life improvements across the browser. Here's what's new:
+Tab Groups for Meetings
+. Tab Groups for Meetings ship in this release, keeping your meeting tabs and related links together. Now when you join a meeting, Dia automatically creates a Meeting tab group to keep your call anchored and your meeting resources together. As you open meeting-related links, Dia drops them into the meeting's group, and the group can show how much time is left when you're close to the end. After the meeting ends, it becomes a normal tab group, with auto-cleanup behaviors so meeting groups don't turn into clutter.
+Mention Tab Groups in Chat.
+You can @-mention Tab Groups in assistant queries to attach all the tabs at once. Think of a tab group as a context container for bringing your work to Chat.
+Tab Group refinements.
+Close out tab groups in sidebar mode with a click of the X and right click to copy all URLs in a group.
+Profile-wide Tab Search.
+⌘-shift-A now searches across all windows in the current profile, not just the current window.
+Customize your tabs with emojis.
+Choose a custom emoji/icon for any tab so it's easier to spot.
+Default profile management.
+Change which profile is default and delete any non-default profile (including the initial one).
+Cleaner assistant links.
+Links in assistant responses now show favicons, cleaned-up titles, and informative hover tooltips.
+More reliable search fetching.
+Assistant Google search scraping now uses rate limits and delays to avoid triggering reCAPTCHAs.
+YouTube summaries in Chat.
+Open Chat on any YouTube video for a pre-generated summary of the video.
+New status page.
+Visit
+status.diabrowser.com
+to check the status of Dia.
+Extension search engines fixed.
+Extensions that provide custom search shortcuts work properly again.
+Duplicating pinned tabs.
+Duplicating a pinned tab now opens a normal tab instead of another pinned one.
+Popups behave more like tabs.
+Popups now support printing, Find in Page, and ⌘+shift+C copy.
+This week includes a bump to Chromium 144, which includes improvements to security, stability, and performance.

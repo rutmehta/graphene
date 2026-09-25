@@ -14,8 +14,26 @@ protocol BrowserCoordinator: AnyObject {
 /// forwards navigation into the knowledge graph via its coordinator.
 @MainActor
 final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
-    let id = UUID()
-    let engine: WebEngine
+    let id: UUID
+    let isPrivate: Bool
+    var profileID = Profile.defaultID
+    private var retainedEngine: WebEngine?
+    var loadedEngine: WebEngine? { retainedEngine }
+    var configureEngine: ((WebEngine) -> Void)?
+    @Published private(set) var isDiscarded = false
+    var engine: WebEngine { acquireEngine(restoreURL: true) }
+    private func acquireEngine(restoreURL: Bool) -> WebEngine {
+        if let retainedEngine { return retainedEngine }
+        let restored = WKWebEngine(privateMode: isPrivate, profileID: profileID)
+        retainedEngine = restored; restored.delegate = self; configureEngine?(restored)
+        isDiscarded = false
+        if restoreURL, let url { isRestoring = true; restored.load(url) }
+        return restored
+    }
+    func discard() {
+        retainedEngine?.stop(); retainedEngine?.delegate = nil; retainedEngine = nil
+        isDiscarded = true; isLoading = false
+    }
     weak var coordinator: BrowserCoordinator?
 
     @Published var title: String = "New Tab"
@@ -24,7 +42,15 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
     @Published var progress: Double = 0
     @Published var canGoBack = false
     @Published var canGoForward = false
+    @Published var articleDetected = false
+    @Published var signInBlocked = false
     @Published var isPinned = false
+    @Published var isFavorite = false
+    @Published var pinnedURL: URL?
+    @Published var customTitle: String?
+    @Published var folderID: UUID?
+    @Published var isPlayingAudio = false
+    var section: TabSection { isFavorite ? .favorites : (isPinned ? .pinned : .today) }
 
     var spaceID: UUID?
     var parentTabID: UUID?
@@ -32,19 +58,27 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
     var originQuery: String?
     /// Graph node for the page currently shown.
     var currentNodeID: UUID?
+    var currentThreadID: UUID?
+    var isRestoring = false
+    var resumeThreadID: UUID?
+    @Published var loadError: String?
     let createdAt = Date()
+    var lastActiveAt = Date()
 
-    init(engine: WebEngine) {
-        self.engine = engine
-        self.engine.delegate = self
+    init(engine: WebEngine, id: UUID = UUID(), privateMode: Bool = false) {
+        isPrivate = privateMode
+        self.id = id
+        self.retainedEngine = engine
+        engine.delegate = self
     }
 
     var displayTitle: String {
+        if let customTitle, !customTitle.isEmpty { return customTitle }
         if url == nil { return "New Tab" }
         return title.isEmpty ? (url?.host ?? "New Tab") : title
     }
 
-    func load(_ url: URL) { self.url = url; engine.load(url) }
+    func load(_ url: URL) { self.url = url; acquireEngine(restoreURL: false).load(url) }
     func goBack() { engine.goBack() }
     func goForward() { engine.goForward() }
     func reload() { engine.reload() }
@@ -52,7 +86,7 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
 
     // MARK: WebEngineDelegate
 
-    func engineDidStartNavigation(_ engine: WebEngine, url: URL?) { isLoading = true }
+    func engineDidStartNavigation(_ engine: WebEngine, url: URL?) { loadError = nil; isLoading = true }
 
     func engineDidCommit(_ engine: WebEngine, url: URL?) {
         if let url { self.url = url }
@@ -63,15 +97,23 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
         if let title, !title.isEmpty { self.title = title }
         if let url {
             self.url = url
-            coordinator?.tab(self, didNavigateTo: url, title: title ?? engine.pageTitle)
+            if isRestoring { isRestoring = false }
+            else { coordinator?.tab(self, didNavigateTo: url, title: title ?? engine.pageTitle) }
         }
     }
 
+    func engine(_ engine: WebEngine, didFail error: Error) {
+        isLoading = false
+        if (error as NSError).code != NSURLErrorCancelled { loadError = error.localizedDescription }
+    }
+
     func engineDidChangeState(_ engine: WebEngine) {
+        articleDetected = (engine as? WKWebEngine)?.articleDetected ?? false
+        signInBlocked = (engine as? WKWebEngine)?.signInBlocked ?? false
         canGoBack = engine.canGoBack
         canGoForward = engine.canGoForward
         progress = engine.estimatedProgress
-        isLoading = engine.estimatedProgress > 0 && engine.estimatedProgress < 1
+        isLoading = engine.isLoading
         if let t = engine.pageTitle, !t.isEmpty { title = t }
         if let u = engine.currentURL { url = u }
     }

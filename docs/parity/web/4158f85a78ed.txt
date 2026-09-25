@@ -1,0 +1,37 @@
+Dia Browser | Work
+Dia is built for work
+We’re getting Dia ready for companies of all sizes.
+What is Dia?
+Dia is a modern, AI-native browser that helps teams work faster, built with strong security controls and enterprise-grade management in mind.
+What makes Dia better than using my old browser with ChatGPT?
+Dia brings secure, native AI workflows into your browsing and apps, so you get productivity and compliance in one place. With Dia, there is no context switching, fewer copy-and-paste loops, and strong admin controls for data, access, and updates.
+Is Dia SOC 2 compliant?
+Yes. The Browser Company completed a SOC 2 Type II examination for Dia covering security, confidentiality, and privacy for calendar year 2025. The final report was issued in 2026. To learn more about our compliance program and to request a copy, visit
+trust.diabrowser.com
+.
+Does Dia or its AI systems train on corporate data?
+Dia has
+zero data retention (ZDR)
+agreements with all partners. Users can opt out from sharing content to improve Dia (see our
+Privacy
+page), and enterprises can disable content sharing org-wide.
+Does Dia offer AI security controls?
+Yes. Dia supports MDM controls that let you disable all AI-powered features on specific websites.
+How is my data kept private in Dia?
+Your data stays on your device and is stored encrypted. When you make an AI-powered request, we send only what’s needed to fulfill it (e.g., your prompt and relevant page context) through our servers to our AI partners.
+Does Dia support MDM controls?
+Yes.
+Dia supports standard
+Chromium enterprise
+policies, including
+Google Chrome Cloud Management
+,
+and also provides Dia-specific MDM policies such as AI controls and managed updates. Dia makes it easy for your IT team to be managed and deployed.
+Does Dia support Single Sign On (SSO)?
+Yes. Dia supports SAML-based SSO with most identity providers, including
+Google, Okta, Microsoft Entra ID
+, and more. You can also use Dia’s MDM policies to restrict sign-ins to approved
+email domains
+, ensuring only your employees can access Dia securely.
+Can I import my bookmarks, extensions, profiles, tabs, passwords, and history?
+Dia supports standard import flows from all major browsers.

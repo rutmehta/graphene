@@ -1,0 +1,29 @@
+Dia Browser | Update 1.15.0
+v
+1.15.0
+January 22, 2026
+What's New in Dia 1.15.0
+Dia v1.15.0 is a polish-heavy release focused on the small upgrades to the features you use every day. Here's what's new:
+Google Meet PiP share fix.
+Clicking Share in Picture‑in‑Picture now returns you to the Meet tab so the share dialog is accessible.
+Automatic reload after turning off ad block.
+Pages now automatically reload when ad block is disabled to avoid stale content.
+Option to delete Chats.
+You can now Delete chat conversations from Chat history with the right click context menu.
+Slack scraping improvements.
+Dia now reads more structured content for channels and threads when you attach Slack to a Chat.
+New Tab Page theming.
+The New Tab Page now uses your profile color, with a theme‑colored gradient animation under the command bar that fades in and shimmers.
+Tahoe Liquid Glass designs.
+Refined visuals for macOS Tahoe with polished corners and a new glass‑style app icon.
+F12 opens Developer Tools.
+You can now open DevTools with F12 and bind function keys (F1–F12) as shortcuts.
+Tab Handoff.
+Open tabs from your iPhone directly in Dia on Mac via macOS Handoff.
+Confirm dialog loop protection.
+Tabs stuck in repeated confirmation dialogs can now be closed without locking the entire window.
+Bookmark Bar menus auto‑size
+. Dropdown menus now auto‑size up to 600px, making long document titles easier to read.
+Select and copy dialog text.
+You can now select and copy text from dialog titles and messages for debugging and support.
+Thank you for continuing to use Dia! We're already looking forward to bringing you more updates next week.

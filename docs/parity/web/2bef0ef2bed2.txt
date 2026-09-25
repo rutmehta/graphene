@@ -1,0 +1,24 @@
+Dia Browser | Update 0.48.0
+v
+0.48.0
+September 24, 2025
+What's New in Dia v0.48.0
+We’re getting ready for a busy fall.
+Dia v0.48 has improvements you’ll feel today. It also sets the stage for big things to come.
+Here’s what’s new:
+⚡ Skills without slashes.
+You can now call on Skills without using slash commands. Just type its name and hit Return to make it happen. The power of Dia at your fingertips, faster than ever.
+🎛️ GPT-5 across the board.
+Dia now uses GPT‑5 for
+all queries
+, whether you need a quick answer or deep thinking. No matter what, you’ll have the latest and greatest models working for you
+We’ve also shipped some small but mighty updates:
+You can now
+cancel a page load
+while it’s in progress by clicking the X button next to the address bar.
+We’ve added
+more safety stopgaps
+, improving how Dia checks links and protects you from bad actors. Your clicks go to the intended page, and your conversations stay private.
+Consider v0.48 the groundwork for a steady flow of improvements and features in the weeks to come. Until then, enjoy.
+And thanks for helping us think it through,
+💭 Your friends at Team Dia

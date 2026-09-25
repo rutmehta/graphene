@@ -10,6 +10,7 @@ protocol WebEngine: AnyObject {
     var pageTitle: String? { get }
     var canGoBack: Bool { get }
     var canGoForward: Bool { get }
+    var isLoading: Bool { get }
     var estimatedProgress: Double { get }
     var delegate: WebEngineDelegate? { get set }
 
@@ -21,6 +22,20 @@ protocol WebEngine: AnyObject {
     @discardableResult
     func evaluateJavaScript(_ js: String) async -> Any?
     func captureSnapshotText() async -> String
+    func captureReadableContent() async -> ReadableContent
+    func find(_ text: String, backwards: Bool) async -> Bool
+}
+
+struct ReadableContent: Codable {
+    var title = ""
+    var text = ""
+    var selection = ""
+    var byline = ""
+    var published = ""
+    var headings: [String] = []
+}
+extension WebEngine {
+    func captureReadableContent() async -> ReadableContent { ReadableContent(title: pageTitle ?? "", text: await captureSnapshotText()) }
 }
 
 /// Events the engine emits. All calls arrive on the main thread.
@@ -29,6 +44,7 @@ protocol WebEngineDelegate: AnyObject {
     func engineDidStartNavigation(_ engine: WebEngine, url: URL?)
     func engineDidCommit(_ engine: WebEngine, url: URL?)
     func engineDidFinish(_ engine: WebEngine, url: URL?, title: String?)
+    func engine(_ engine: WebEngine, didFail error: Error)
     func engineDidChangeState(_ engine: WebEngine)
     func engine(_ engine: WebEngine, requestNewTabFor url: URL, activate: Bool)
     func engine(_ engine: WebEngine, didCaptureAnnotation annotation: CapturedAnnotation)

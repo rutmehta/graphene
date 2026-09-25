@@ -1,0 +1,16 @@
+Dia Browser | Update 1.1.0
+v
+1.1.0
+October 15, 2025
+What's New in Dia v1.1.0
+Today we're releasing three new Tools to Dia: Gmail, GCal, and Autofill. No more repetitive form filling, calendar searching, invite list scrambling, email rifling. Dia can now create calendar invites, search and draft emails, or fill a form right from Chat.
+Gmail: Search across your emails, find the right thread, summarize details directly in Chat. Just type @Gmail in any query to search, summarize, or start a reply.
+GCal: Take the mess out of scheduling by searching your calendar, finding times when your team is free, and staging the calendar invite for you. Type @Google Calendar in Chat to set it up without leaving your tab.
+And thirdly, Autofill: Get a head start filling out empty forms with things like your name, title, company description and even your bio. Type @Autofill in Chat when you hit a page full of boxes. And for extra details, call on Memory Search.
+We've also made it faster and more flexible to work with Bookmarks:
+Save sessions at once: Hold Command to select multiple tabs (or Shift for a full row), then right‑click and choose “Add tabs to bookmarks bar.”
+Name folders upfront: When you create a new folder on the Bookmarks page, you’ll be prompted to rename it immediately.
+Quick actions in place: Right‑click on a bookmark context‑specific actions exactly where you need them.
+Open everything in a folder: ⌥‑click or ⌘‑click a bookmarks folder to open all tabs at once.
+Open a single bookmark in the background with ⌘‑click and in a split tab with ⌥‑click.
+Thanks for using Dia! If anything doesn't look right, please don't hesitate to let us know.

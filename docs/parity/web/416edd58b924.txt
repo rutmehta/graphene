@@ -1,0 +1,10 @@
+To change your default search engine on Arc for desktop:
+Open Settings
+On
+macOS
+go to the Mac Menu Bar, click Arc > Settings or use the Command-Comma shortcut
+On
+Windows
+go to Arc menu > Settings or use the Control-Comma shortcut
+Go to Profiles and select a Profile to change its default search engine
+Select a new default search engine from the dropdown

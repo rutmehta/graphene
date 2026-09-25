@@ -1,475 +1,344 @@
 import SwiftUI
+import AppKit
 
 struct RootView: View {
     @EnvironmentObject var app: AppState
+    @EnvironmentObject var windowState: WindowState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var systemScheme
+    @Environment(\.openSettings) private var openSettings
+    @State private var peekTask: Task<Void, Never>?
+    @State private var askResizeStart: Double?
 
+    @State private var addressHovered = false
+    @SceneStorage("shell.windowID") private var windowID = UUID().uuidString
+    private var sidebarWidth: CGFloat { app.sidebarWidths[windowID].map { CGFloat($0) } ?? app.sidebarWidth }
     var body: some View {
-        HStack(spacing: 0) {
-            Sidebar()
-                .frame(width: app.sidebarWidth)
-            ResizeHandle(width: $app.sidebarWidth)
-            ZStack {
-                if let tab = app.activeTab {
-                    ContentArea(tab: tab)
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                if app.layout == .sidebar && !app.sidebarCollapsed {
+                    Sidebar(width: sidebarWidth).frame(width: sidebarWidth)
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                    SidebarResizeHandle(width: Binding(get: { sidebarWidth }, set: { app.resizeSidebar($0, windowID: windowID) }))
                 }
-                if app.showGraph {
-                    GraphView().transition(.opacity)
-                }
-            }
-        }
-        .animation(.easeInOut(duration: 0.18), value: app.showGraph)
-        .overlay(alignment: .trailing) {
-            if app.showAnnotations {
-                AnnotationPanel()
-                    .frame(width: 340)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.34, dampingFraction: 0.86), value: app.showAnnotations)
-        .ignoresSafeArea(.container, edges: .top)
-        .background(WindowAccessor())
-    }
-}
-
-// MARK: - resizable sidebar divider
-
-private struct ResizeHandle: View {
-    @Binding var width: CGFloat
-    @Environment(\.colorScheme) private var scheme
-    @State private var base: CGFloat?
-    @State private var hovering = false
-
-    var body: some View {
-        Rectangle()
-            .fill(hovering ? Theme.accent.opacity(0.5) : Theme.hairline(scheme))
-            .frame(width: hovering ? 2 : 1)
-            .frame(width: 10)          // wide invisible hit area, thin visible line
-            .contentShape(Rectangle())
-            .onHover { h in
-                hovering = h
-                if h { NSCursor.resizeLeftRight.set() } else { NSCursor.arrow.set() }
-            }
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { v in
-                        if base == nil { base = width }
-                        width = min(400, max(210, (base ?? width) + v.translation.width))
+                ShellContentLayout(overlayAsk: geometry.size.width - (app.sidebarCollapsed || app.layout == .topTabs ? 0 : sidebarWidth + 4) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth, showAsk: app.knowledgeSearchPresented, preferredAskWidth: app.settings.askWidth, floating: app.settings.chatPanelMode == .floating) {
+                    VStack(spacing: 0) {
+                        if app.layout == .topTabs { TopTabBar(); TopBrowserToolbar().zIndex(10) }
+                        else if app.sidebarCollapsed { WorkspaceToolbar() }
+                        if let error = app.graph.errorText ?? app.sessionError {
+                            Text(error).font(.system(size: 12)).foregroundStyle(app.pal.ink2)
+                                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        Group {
+                            switch app.activeSurface {
+                            case .web:
+                                SplitBrowserView()
+                            case .threads: LedgerView()
+                            case .vault: VaultView()
+                            case .mail: MailView()
+                            case .board: EaselView()
+                            }
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(app.pal.ground)
+                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
+                            .padding(app.layout == .topTabs && app.settings.pageGutter ? 6 : 0)
+                            .overlay {
+                                if app.layout == .topTabs && app.commandBarPresented {
+                                    app.pal.scrim.opacity(0.25).contentShape(Rectangle())
+                                        .onTapGesture { app.dismissCommandBar() }
+                                }
+                            }
                     }
-                    .onEnded { _ in base = nil }
-            )
-    }
-}
+                    .background(app.layout == .topTabs ? app.pal.chromeBg : app.pal.ground)
+                    .clipShape(RoundedRectangle(cornerRadius: app.sidebarCollapsed ? 0 : 10))
+                    .overlay(RoundedRectangle(cornerRadius: app.sidebarCollapsed ? 0 : 10).strokeBorder(app.pal.pageBorder, lineWidth: 0.5))
+                    .shadow(color: app.pal.shadow, radius: 4, y: 1)
 
-// MARK: - favicon
-
-private func faviconURL(for host: String?) -> URL? {
-    guard let host, !host.isEmpty else { return nil }
-    return URL(string: "https://www.google.com/s2/favicons?sz=64&domain=\(host)")
-}
-
-private struct Favicon: View {
-    let host: String?
-    var size: CGFloat = 16
-    var body: some View {
-        AsyncImage(url: faviconURL(for: host)) { phase in
-            switch phase {
-            case .success(let img):
-                img.resizable().interpolation(.high)
-                    .clipShape(RoundedRectangle(cornerRadius: 3.5, style: .continuous))
-            default:
-                Image(systemName: "globe").resizable().fontWeight(.light)
-                    .foregroundStyle(.tertiary).padding(1)
-            }
-        }
-        .frame(width: size, height: size)
-    }
-}
-
-// MARK: - Sidebar
-
-private struct Sidebar: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 7) {
-                Circle()
-                    .fill(LinearGradient(colors: [Theme.accent, Theme.accent.opacity(0.6)],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 15, height: 15)
-                Text("Graphene")
-                    .font(.system(size: 14, weight: .semibold))
-                    .tracking(0.2)
-                Spacer()
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 40)
-            .padding(.bottom, 16)
-
-            ScrollView {
-                VStack(spacing: 2) {
-                    ForEach(app.tabs) { tab in
-                        TabRow(tab: tab, isActive: tab.id == app.activeTabID)
+                    if app.knowledgeSearchPresented {
+                        KnowledgeSearchView(scopedNodes: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.nodes,
+                                            threadTitle: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.title, embedded: true)
+                            .id(app.knowledgeThreadID)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(app.pal.ground, in: RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(app.pal.ink.opacity(0.07)))
+                            .shadow(color: app.pal.shadow, radius: 16, x: -4, y: 6)
+                            .overlay(alignment: .leading) {
+                                Rectangle().fill(app.pal.hairline).frame(width: 4).contentShape(Rectangle())
+                                    .gesture(DragGesture().onChanged { value in
+                                        if askResizeStart == nil { askResizeStart = app.settings.askWidth }
+                                        app.settings.askWidth = (askResizeStart ?? 420) - value.translation.width
+                                    }.onEnded { _ in askResizeStart = nil; app.persist() })
+                                    .accessibilityLabel("Resize Ask panel")
+                                    .accessibilityIdentifier("chat.resize")
+                                    .accessibilityAdjustableAction { direction in
+                                        app.settings.askWidth += direction == .increment ? 10 : -10; app.persist()
+                                    }
+                            }
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(app.layout == .topTabs || app.sidebarCollapsed || !app.settings.pageGutter ? 0 : 8).padding(.top, app.layout == .sidebar && app.sidebarCollapsed ? 6 : 0)
             }
-
-            NewTabButton()
-
-            HStack(spacing: 2) {
-                SidebarTool(system: "circle.hexagongrid", label: "Graph", on: app.showGraph) { app.showGraph.toggle() }
-                SidebarTool(system: "highlighter", label: "Notes", on: app.showAnnotations) { app.showAnnotations.toggle() }
-                Spacer()
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .overlay(alignment: .top) { Rectangle().fill(Theme.hairline(scheme)).frame(height: 1) }
-        }
-        .background(.regularMaterial)
-    }
-}
-
-private struct NewTabButton: View {
-    @EnvironmentObject var app: AppState
-    @State private var hovering = false
-    var body: some View {
-        Button { app.newTab() } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
-                Text("New Tab").font(.system(size: 13, weight: .medium))
-                Spacer()
-            }
-            .foregroundStyle(hovering ? .primary : .secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(hovering ? Color.primary.opacity(0.05) : .clear))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 12)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
-        .onHover { hovering = $0 }
-    }
-}
-
-private struct TabRow: View {
-    @ObservedObject var tab: Tab
-    let isActive: Bool
-    @EnvironmentObject var app: AppState
-    @State private var hovering = false
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Group {
-                if tab.isLoading {
-                    ProgressView().controlSize(.small).scaleEffect(0.62)
-                } else if tab.url == nil {
-                    Image(systemName: "sparkle").font(.system(size: 11)).foregroundStyle(Theme.accent)
-                } else {
-                    Favicon(host: tab.url?.host, size: 16)
-                }
-            }
-            .frame(width: 16, height: 16)
-
-            Text(tab.displayTitle)
-                .font(.system(size: 13, weight: isActive ? .medium : .regular))
-                .lineLimit(1)
-                .foregroundStyle(isActive ? .primary : .secondary)
-
-            Spacer(minLength: 0)
-
-            if hovering {
-                Button { app.closeTab(tab.id) } label: {
-                    Image(systemName: "xmark").font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 17, height: 17)
-                        .background(Circle().fill(Color.primary.opacity(0.08)))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.primary.opacity(isActive ? 0.10 : (hovering ? 0.05 : 0)))
-        )
-        .contentShape(Rectangle())
-        .onHover { hovering = $0 }
-        .onTapGesture { app.activate(tab.id) }
-    }
-}
-
-private struct SidebarTool: View {
-    let system: String
-    let label: String
-    let on: Bool
-    let action: () -> Void
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: system).font(.system(size: 12, weight: .medium))
-                Text(label).font(.system(size: 12, weight: .medium))
-            }
-            .foregroundStyle(on ? Theme.accent : (hovering ? .primary : .secondary))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(on ? Theme.accentSoft : (hovering ? Color.primary.opacity(0.05) : .clear)))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-    }
-}
-
-// MARK: - Content area (toolbar + web / new tab)
-
-private struct ContentArea: View {
-    @ObservedObject var tab: Tab
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Toolbar(tab: tab)
-            Rectangle().fill(Theme.hairline(scheme)).frame(height: 1)
-            ZStack {
-                WebContainer(tab: tab)
-                if tab.url == nil {
-                    NewTabView(tab: tab)
-                }
-            }
-            .overlay(alignment: .top) { LoadBar(tab: tab) }
-        }
-        .background(Color(nsColor: .textBackgroundColor))
-    }
-}
-
-private struct LoadBar: View {
-    @ObservedObject var tab: Tab
-    var body: some View {
-        GeometryReader { geo in
-            if tab.isLoading && tab.progress > 0.01 && tab.progress < 1 {
-                Rectangle()
-                    .fill(LinearGradient(colors: [Theme.accent.opacity(0.7), Theme.accent],
-                                         startPoint: .leading, endPoint: .trailing))
-                    .frame(width: geo.size.width * tab.progress, height: 2.5)
-                    .animation(.easeOut(duration: 0.2), value: tab.progress)
-                    .shadow(color: Theme.accent.opacity(0.5), radius: 3)
-            }
-        }
-        .frame(height: 2.5)
-        .allowsHitTesting(false)
-    }
-}
-
-private struct Toolbar: View {
-    @ObservedObject var tab: Tab
-    @EnvironmentObject var app: AppState
-    @Environment(\.colorScheme) private var scheme
-    @State private var text = ""
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        HStack(spacing: 14) {
-            HStack(spacing: 2) {
-                navButton("chevron.left", enabled: tab.canGoBack) { app.goBack() }
-                navButton("chevron.right", enabled: tab.canGoForward) { app.goForward() }
-                navButton(tab.isLoading ? "xmark" : "arrow.clockwise", enabled: true) {
-                    tab.isLoading ? app.stop() : app.reload()
-                }
-            }
-
-            HStack(spacing: 9) {
-                if let url = tab.url {
-                    Image(systemName: url.scheme == "https" ? "lock.fill" : "globe")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.tertiary)
-                } else {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.tertiary)
-                }
-                TextField("Search or enter address", text: $text)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .focused($focused)
-                    .onSubmit { app.submit(text); focused = false }
-            }
-            .padding(.horizontal, 13)
-            .padding(.vertical, 7)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.primary.opacity(focused ? 0.07 : 0.05))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(focused ? Theme.accent.opacity(0.5) : Theme.hairline(scheme), lineWidth: 1)
-            )
-            .frame(maxWidth: 640)
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 16)
-        .frame(height: 52)
-        .background(.bar)
-        // tab.url only changes on an actual navigation (never mid-typing), so an
-        // unconditional sync tracks the page without clobbering what you type.
-        .onAppear { text = tab.url?.absoluteString ?? "" }
-        .onChange(of: tab.url) { _, u in text = u?.absoluteString ?? "" }
-        .onChange(of: tab.id) { _, _ in text = tab.url?.absoluteString ?? "" }
-    }
-
-    private func navButton(_ system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        NavButton(system: system, enabled: enabled, action: action)
-    }
-}
-
-private struct NavButton: View {
-    let system: String
-    let enabled: Bool
-    let action: () -> Void
-    @State private var hovering = false
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: system)
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 30, height: 28)
-                .background(RoundedRectangle(cornerRadius: 7).fill(hovering && enabled ? Color.primary.opacity(0.06) : .clear))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(enabled ? Color.primary.opacity(0.82) : Color.primary.opacity(0.22))
-        .disabled(!enabled)
-        .onHover { hovering = $0 }
-    }
-}
-
-/// The homepage: where your work lives. A prominent search, then your recent
-/// threads of thought to pick back up — not a generic search screen.
-private struct NewTabView: View {
-    @ObservedObject var tab: Tab
-    @EnvironmentObject var app: AppState
-    @State private var text = ""
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        let threads = app.graph.threads(limit: 6)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // hero
-                VStack(spacing: 16) {
-                    Text("Graphene")
-                        .font(.system(size: 34, weight: .semibold)).tracking(-0.4)
-                        .padding(.top, threads.isEmpty ? 120 : 64)
-                    HStack(spacing: 11) {
-                        Image(systemName: "magnifyingglass").font(.system(size: 14)).foregroundStyle(.secondary)
-                        TextField("Search the web, or type a URL", text: $text)
-                            .textFieldStyle(.plain).font(.system(size: 16))
-                            .focused($focused)
-                            .onSubmit { app.submit(text, on: tab) }
-                    }
-                    .padding(.horizontal, 18).padding(.vertical, 13)
-                    .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .fill(.regularMaterial)
-                        .shadow(color: .black.opacity(0.18), radius: 18, y: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(focused ? Theme.accent.opacity(0.45) : Color.primary.opacity(0.08)))
-                    .frame(maxWidth: 560)
-                }
-                .frame(maxWidth: .infinity)
-
-                if !threads.isEmpty {
-                    HStack {
-                        Text("Pick up a thread")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
-                        Spacer()
-                        Button { app.showGraph = true } label: {
-                            Text("All threads").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.accent)
-                        }.buttonStyle(.plain)
-                    }
-                    .frame(maxWidth: 720)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 48).padding(.bottom, 12)
-
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
-                        ForEach(threads) { t in
-                            HomeThreadCard(thread: t) { url in app.submit(url.absoluteString, on: tab) }
+            .background(app.pal.sidebarBg)
+            .overlay(alignment: .leading) {
+                if app.layout == .sidebar && app.sidebarCollapsed {
+                    if app.sidebarPeek {
+                        Sidebar(width: sidebarWidth).frame(width: sidebarWidth).background(app.pal.sidebarBg)
+                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
+                            .shadow(color: app.pal.shadow, radius: 14, x: 6)
+                            .onHover { inside in if !inside && !app.spaceEditorPresented { app.sidebarPeek = false } }
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+                    } else {
+                        Rectangle().fill(app.pal.ink.opacity(0.001)).frame(width: 4).onHover { inside in
+                            peekTask?.cancel()
+                            if inside { peekTask = Task { try? await Task.sleep(for: .milliseconds(200)); if !Task.isCancelled { app.sidebarPeek = true } } }
                         }
                     }
-                    .frame(maxWidth: 720)
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 60)
                 }
             }
-            .padding(.horizontal, 40)
-        }
-        .background(
-            ZStack {
-                Color(nsColor: .textBackgroundColor)
-                RadialGradient(colors: [Theme.accent.opacity(0.08), .clear],
-                               center: .init(x: 0.5, y: 0.12), startRadius: 0, endRadius: 520)
-                    .blendMode(.plusLighter).allowsHitTesting(false)
+            .overlay(alignment: .top) {
+                if app.layout == .sidebar && app.sidebarCollapsed {
+                    Button { app.focusAddress() } label: {
+                        Text(app.activeTab?.url?.host ?? "Search or enter URL").font(.system(size: 12, weight: .medium))
+                            .padding(.horizontal, 18).frame(height: 30)
+                            .background(app.pal.elev, in: Capsule()).shadow(color: app.pal.shadow, radius: 8)
+                    }.buttonStyle(.plain).help("Open location (⌘L)")
+                        .accessibilityIdentifier("page.location").accessibilityLabel("Open location").accessibilityAddTraits(.isButton)
+                        .opacity(addressHovered ? 1 : 0).onHover { addressHovered = $0 }.padding(.top, 7)
+                }
             }
-        )
-        .onAppear { focused = true }
+            .overlay {
+                if app.commandBarPresented && app.layout == .sidebar {
+                    ZStack(alignment: .top) {
+                        app.pal.scrim.opacity(app.layout == .topTabs ? 0.25 : 1)
+                            .contentShape(Rectangle()).onTapGesture { app.dismissCommandBar() }
+                        CommandBar()
+                            .frame(width: min(640, geometry.size.width - 64))
+                            .padding(.top, max(70, geometry.size.height * 0.18))
+                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: app.layout == .topTabs ? .top : .center)))
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                ToastOverlay().padding(.bottom, 24)
+            }
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.15), value: app.sidebarCollapsed)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.16), value: app.knowledgeSearchPresented)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: app.commandBarPresented)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: app.sidebarPeek)
+        }
+        .ignoresSafeArea()
+        .background(WindowAccessor(onKeyWindow: { app.focusedWindowID = windowID }, state: windowState))
+        .background(TabKeyboardMonitor(app: app))
+        .overlay { if !app.switcherIDs.isEmpty { TabSwitcher() } }
+        .overlay { if let tab = app.peekTab { PeekOverlay(tab: tab) } }
+        .onAppear {
+            app.focusedWindowID = windowID
+            if app.sidebarWidths[windowID] == nil { app.resizeSidebar(app.sidebarWidth, windowID: windowID) }
+        }
+        .onChange(of: systemScheme) { _, _ in if app.mode == .automatic { app.objectWillChange.send() } }
+        .sheet(isPresented: $app.noteComposerPresented) { NoteComposer() }
+        .sheet(isPresented: Binding(get: { app.boostHost != nil }, set: { if !$0 { app.boostHost = nil } })) {
+            if let host = app.boostHost { BoostEditor(host: host) }
+        }
+        .onChange(of: app.settingsPresented) { _, presented in
+            if presented { app.settingsPresented = false; openSettings() }
+        }
+        .sheet(isPresented: $app.onboardingPresented) { OnboardingView() }
+        .sheet(isPresented: $app.readerPresented) {
+            if let article = app.readerArticle { ReaderPage(article: article) }
+        }
+        .foregroundStyle(app.pal.ink)
+        .environment(\.colorScheme, app.pal.isDark ? .dark : .light)
+        .preferredColorScheme(app.mode == .automatic ? nil : (app.pal.isDark ? .dark : .light))
+        .tint(app.pal.accentText)
     }
 }
 
-/// A compact thread on the homepage: title, the pages as a favicon trail, meta.
-private struct HomeThreadCard: View {
-    let thread: KnowledgeGraph.Thread
-    @Environment(\.colorScheme) private var scheme
-    @State private var hovering = false
-    var onOpen: (URL) -> Void
 
+private struct WorkspaceToolbar: View {
+    @EnvironmentObject var app: AppState
     var body: some View {
-        Button {
-            if let last = thread.nodes.last, let url = URL(string: last.url) { onOpen(url) }
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 6) {
-                    if thread.query != nil {
-                        Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Theme.accent)
-                    }
-                    Text(thread.title).font(.system(size: 14, weight: .semibold)).lineLimit(1)
-                }
-                // favicon trail
-                HStack(spacing: 6) {
-                    ForEach(Array(thread.nodes.prefix(7).enumerated()), id: \.offset) { _, n in
-                        FaviconImg(host: URL(string: n.url)?.host, size: 17)
-                    }
-                    if thread.nodes.count > 7 {
-                        Text("+\(thread.nodes.count - 7)").font(.system(size: 11)).foregroundStyle(.tertiary)
-                    }
-                    Spacer(minLength: 0)
-                }
-                Text(meta).font(.system(size: 11.5)).foregroundStyle(.tertiary)
+        HStack(spacing: 6) {
+            if app.sidebarCollapsed {
+                IconButton("Show sidebar", system: "sidebar.left") { app.toggleSidebar() }.padding(.leading, 70)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(scheme == .dark ? Color.white.opacity(hovering ? 0.06 : 0.03)
-                                      : Color.black.opacity(hovering ? 0.04 : 0.02)))
-            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(hovering ? Theme.accent.opacity(0.4) : Theme.hairline(scheme)))
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+            if app.activeSurface == .web, let tab = app.activeTab { BrowserToolbar(tab: tab) }
+            else {
+                Text(app.activeSurface.rawValue.capitalized).font(.system(size: 11, weight: .medium)).foregroundStyle(app.pal.ink2).padding(.leading, 6)
+                Spacer()
+                IconButton("Open location", system: "magnifyingglass") { app.openCommandBar(newTab: true) }
+                IconButton("Ask Graphene", system: "sidebar.right") { app.toggleKnowledge() }
+            }
+        }.padding(.horizontal, 7).frame(height: ShellLayout.toolbarHeight)
+            .background(app.pal.chromeBg)
     }
+}
 
-    private var meta: String {
-        let f = DateFormatter()
-        if Calendar.current.isDateInToday(thread.end) { f.dateFormat = "'Today' h:mm a" }
-        else if Calendar.current.isDateInYesterday(thread.end) { f.dateFormat = "'Yesterday' h:mm a" }
-        else { f.dateFormat = "MMM d" }
-        var s = "\(f.string(from: thread.end)) · \(thread.nodes.count) pages"
-        if thread.noteCount > 0 { s += " · \(thread.noteCount) notes" }
-        return s
+private struct BrowserToolbar: View {
+    @ObservedObject var tab: Tab
+    @EnvironmentObject var app: AppState
+    @State private var addressHovered = false
+    var body: some View {
+        HStack(spacing: 1) {
+            IconButton("Back", system: "chevron.left") { tab.goBack() }.disabled(!tab.canGoBack)
+            IconButton("Forward", system: "chevron.right") { tab.goForward() }.disabled(!tab.canGoForward)
+            IconButton(tab.isLoading ? "Stop loading" : "Reload", system: tab.isLoading ? "xmark" : "arrow.clockwise") { tab.isLoading ? tab.stop() : tab.reload() }
+        }
+        Spacer(minLength: 4)
+        Button { app.openCommandBar(newTab: false) } label: {
+            HStack(spacing: 6) {
+                Image(systemName: tab.url?.scheme == "https" ? "lock" : "magnifyingglass").font(.system(size: 9))
+                Text(tab.url?.host?.replacingOccurrences(of: "www.", with: "") ?? "Search or enter URL")
+                    .font(.system(size: 11, weight: .medium)).lineLimit(1)
+            }.foregroundStyle(app.pal.ink2).padding(.horizontal, 12).frame(height: 26)
+                .background(addressHovered ? app.pal.hover : .clear, in: RoundedRectangle(cornerRadius: 6))
+        }.buttonStyle(.plain).onHover { addressHovered = $0 }.help(tab.url?.absoluteString ?? "Open location (⌘L)")
+            .accessibilityLabel("Open location")
+            .accessibilityIdentifier("collapsed.location").accessibilityAddTraits(.isButton)
+            .contextMenu {
+                CaptureSiteMenu(tab: tab)
+                if let url = tab.url {
+                    Button("Copy URL") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(url.absoluteString, forType: .string) }
+                }
+            }
+        Spacer(minLength: 4)
+        SiteControlsButton(tab: tab)
+        IconButton("Save page or add a note", system: "bookmark") { app.noteComposerPresented = true }.disabled(tab.url == nil || app.isPrivate)
+        IconButton("Ask Graphene", system: "sidebar.right") { app.toggleKnowledge() }
+    }
+}
+
+struct IconButton: View {
+    let title: String
+    let system: String
+    var size: CGFloat
+    var action: () -> Void
+    @EnvironmentObject var app: AppState
+    @FocusState private var focused: Bool
+    init(_ title: String, system: String, size: CGFloat = 14, action: @escaping () -> Void) { self.title = title; self.system = system; self.size = size; self.action = action }
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: system).font(.system(size: size, weight: .medium)).frame(width: 26, height: 26)
+                .contentShape(Rectangle())
+        }.buttonStyle(ShellButtonStyle()).focused($focused)
+            .overlay { RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(focused ? app.pal.accentText : .clear, lineWidth: 2).allowsHitTesting(false) }
+            .help(title).accessibilityLabel(title).accessibilityIdentifier("icon.\(system).\(title)")
+            .accessibilityAddTraits(.isButton)
+    }
+}
+struct BrowserPage: View {
+    @ObservedObject var tab: Tab
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        ZStack(alignment: .top) {
+            if tab.url == nil { NewTabView() }
+            else if let error = tab.loadError {
+                SurfaceState(symbol: "exclamationmark.shield", title: error.contains("crashed") ? "This page crashed" : "This page couldn’t load", detail: error) {
+                    Button("Try again") { tab.reload() }.buttonStyle(.bordered)
+                        .accessibilityIdentifier("page.retry").accessibilityLabel("Try again").accessibilityAddTraits(.isButton)
+                }
+            } else { WebContainer(tab: tab) }
+            if tab.signInBlocked, let url = tab.url {
+                HStack { Text("This site rejects embedded browser sign-in."); Button("Open in default browser") { app.openInSystemBrowser(url) } }
+                    .font(.system(size: 12)).padding(12).background(app.pal.elev).foregroundStyle(app.pal.ink)
+            }
+            if app.findPresented && tab.url != nil { FindBar(tab: tab).frame(maxWidth: .infinity, alignment: .trailing).padding(12) }
+            if tab.isLoading {
+                GeometryReader { geo in Rectangle().fill(app.pal.accent).frame(width: geo.size.width * max(0.05, tab.progress), height: 2) }.frame(height: 2)
+            }
+        }
+        .task(id: app.activeTabID) {
+            while !Task.isCancelled && app.activeTabID == tab.id {
+                let playing = await tab.engine.evaluateJavaScript("Array.from(document.querySelectorAll('audio,video')).some(e => !e.paused && !e.ended && !e.muted && e.volume > 0)")
+                guard !Task.isCancelled else { return }
+                tab.isPlayingAudio = playing as? Bool ?? false
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
+    }
+}
+
+private struct NewTabView: View {
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Button { app.openCommandBar(newTab: true) } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass").font(.system(size: 14))
+                            Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(.system(size: 14))
+                            Spacer()
+                            Text("⌘T").font(.system(size: 12)).padding(5).background(app.pal.hover, in: RoundedRectangle(cornerRadius: 5))
+                        }.foregroundStyle(app.pal.ink3).padding(.horizontal, 14).frame(height: 44)
+                            .background(app.pal.hover.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                    }.buttonStyle(.plain).accessibilityIdentifier("newTab.search")
+                        .accessibilityLabel("Search or enter a URL").accessibilityAddTraits(.isButton)
+
+                    if !app.currentThreads.isEmpty {
+                        HStack {
+                            Text("Recent threads").font(.system(size: 11, weight: .medium))
+                            Spacer()
+                            Button("All threads") { app.show(.threads) }.font(.system(size: 11)).buttonStyle(.plain)
+                                .accessibilityIdentifier("newTab.threads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
+                        }.foregroundStyle(app.pal.ink3).padding(.top, 32).padding(.bottom, 13)
+                        ForEach(app.currentThreads.prefix(3)) { thread in
+                            Button { app.openThread(thread) } label: {
+                                HStack(spacing: 11) {
+                                    Favicon(host: thread.hosts.first, size: 14)
+                                    Text(thread.title).font(.system(size: 13)).foregroundStyle(app.pal.ink2).lineLimit(1)
+                                    Spacer()
+                                    Text(thread.end, format: .relative(presentation: .named, unitsStyle: .abbreviated)).font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+                                }.frame(height: 32).contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                                .accessibilityIdentifier("newTab.thread.\(thread.id)").accessibilityLabel(thread.title).accessibilityAddTraits(.isButton)
+                        }
+                    }
+                }
+                .frame(maxWidth: 400).padding(.horizontal, 40)
+                .padding(.top, max(60, geometry.size.height * 0.34)).padding(.bottom, 40)
+                .frame(maxWidth: .infinity)
+            }
+        }.background(app.pal.ground)
+    }
+}
+
+
+extension Notification.Name { static let focusOmnibox = Notification.Name("graphene.focusOmnibox") }
+
+private struct FindBar: View {
+    @ObservedObject var tab: Tab
+    @EnvironmentObject var app: AppState
+    private var query: String { app.findQuery }
+    @State private var found = true
+    @State private var counter = FindCounter()
+    @State private var requestID = UUID()
+    @FocusState private var focused: Bool
+    var body: some View {
+        HStack(spacing: 8) {
+            TextField("Find in page", text: $app.findQuery).textFieldStyle(.plain).font(.system(size: 12)).focused($focused).frame(minWidth: 70, idealWidth: 180, maxWidth: 180).onSubmit { find() }
+                .accessibilityIdentifier("page.find").accessibilityLabel("Find in page")
+            if !query.isEmpty { Text(found ? "\(counter.current) of \(counter.total)" : "No matches").font(.system(size: 10)).foregroundStyle(app.pal.ink3).help("Matches in the main document; embedded frames are not searched.").accessibilityIdentifier("page.findCount") }
+            IconButton("Previous match", system: "chevron.up") { find(backwards: true) }
+            IconButton("Next match", system: "chevron.down") { find() }
+            IconButton("Close find", system: "xmark") { app.findPresented = false }
+        }.padding(8).background(app.pal.elev, in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(app.pal.hairline))
+            .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
+            .task { try? await Task.sleep(for: .milliseconds(100)); if !Task.isCancelled && !app.commandBarPresented { focused = true } }.onExitCommand { app.findPresented = false }
+            .onChange(of: query) { find() }
+            .onChange(of: app.findRequest) { _, _ in find(backwards: app.findBackwards) }
+    }
+    private func find(backwards: Bool = false) {
+        let id = UUID(), text = query; requestID = id
+        Task {
+            let result = await tab.engine.evaluateJavaScript(FindCounter.script(query: text, backwards: backwards)) as? [String: Int] ?? [:]
+            guard requestID == id else { return }
+            let count = result["total"] ?? 0
+            found = text.isEmpty || count > 0
+            counter.select(query: text, current: result["current"] ?? 0, total: count)
+        }
     }
 }

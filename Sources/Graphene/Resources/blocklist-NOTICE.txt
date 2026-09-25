@@ -1,0 +1,14 @@
+Graphene network blocking subset
+
+blocklist.json is derived from EasyList by the EasyList authors and contributors.
+Source: https://github.com/easylist/easylist/blob/master/easylist/easylist_adservers.txt
+License: GPL version 3 or later. See blocklist-COPYING.txt.
+EasyList licensing: https://easylist.to/pages/licence.html
+
+Conversion: scripts/make-blocklist.py in the Graphene source distribution.
+The generated subset keeps 2,000 source-backed domain anchors. It prioritizes
+common ad networks and samples the remaining source deterministically. Rules
+are restricted to third-party network requests. Cosmetic filters, resource-type
+conditions and site-specific exception logic are not a complete EasyList
+implementation. Disable blocking per site if a page breaks. No runtime list
+updates, request counts, or network telemetry are performed by Graphene.

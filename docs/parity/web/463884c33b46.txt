@@ -1,0 +1,14 @@
+You can edit or remap keyboard shortcuts on Arc for
+macOS
+in Settings:
+Open Settings from the Mac Menu Bar by clicking Arc > Settings or use the Command-Comma shortcut
+Click
+Shortcuts
+Select a Shortcut from the list
+Press the keys of your preferred shortcut combination.
+Tip! Use a modifier key to start your shortcut (e.g. shift, control, option, or command).
+Learn more about
+setting custom keyboard shortcuts from Jenamarie.
+Custom Keyboard shortcuts are not currently supported on Arc for
+Windows
+.

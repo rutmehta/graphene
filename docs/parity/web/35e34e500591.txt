@@ -1,0 +1,32 @@
+This article applies to Arc for
+macOS
+, but not Arc for
+Windows
+.
+Arc streamlines your note-taking process by allowing you to set a default notes application that best suits your workflow. Now that
+Arc Notes has been phased out
+, we strongly encourage you to change your default notes app, which will allow you to continue creating notes in
+Notion
+,
+Google Docs
+,
+Word
+or
+Confluence
+.
+Change Your Default Notes App
+Instead of using Arc Notes, you can use another note-taking service via the Command Bar.
+Go to
+Arc
+>
+Settings
+>
+Profiles
+and use the dropdown under "
+New Documents
+" to select another platform as your default notes app.
+Use
+Command+T
+and type “
+New Note
+” to begin taking notes on the platform you selected.

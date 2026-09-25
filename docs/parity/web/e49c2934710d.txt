@@ -1,0 +1,9 @@
+Dia Browser | Update 1.2.0
+v
+1.2.0
+October 23, 2025
+What's New in Dia v1.2.0
+Making a new Skill is as easy as writing a sentence with Dia's new Natural Language Skill Builder! You don't have to write a long, winding prompt or figure out which tool or context to call. All you have to do is ask, and let Dia do the rest.
+The Skills builder has been overhauled so that all you need to do is write a simple sentence describing what you want ("help me prioritize my day," "copyedit my Slack post," "set up a weekly check‑in"), and Dia assembles the Skill: name and icon, the right tools only when they're needed (e.g., Gmail for drafts, Google Calendar for scheduling), plus a couple quick follow‑ups to fit you. You see the steps and approve — clear, in your control, every time.
+To get started go to New Tab → Skills → New Skill and launch the Skill builder.
+Thanks for updating Dia. Look out for big small updates next week.

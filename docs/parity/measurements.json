@@ -1,0 +1,53 @@
+{
+  "Arc": {
+    "image_px_per_ax_unit": 0.7242,
+    "input": {
+      "image_window_width": 1489,
+      "ax_window_width": 2056,
+      "sidebar_px": 166,
+      "toolbar_px": 24,
+      "page_radius_px": 7,
+      "row_pitch_px": 30
+    },
+    "estimates_native_units": {
+      "sidebar_px": 229.2,
+      "toolbar_px": 33.1,
+      "page_radius_px": 9.7,
+      "row_pitch_px": 41.4
+    }
+  },
+  "Dia": {
+    "image_px_per_ax_unit": 1.2623,
+    "input": {
+      "image_window_width": 1468,
+      "ax_window_width": 1163,
+      "sidebar_px": 241,
+      "toolbar_px": 52,
+      "page_radius_px": 15,
+      "row_pitch_px": 49
+    },
+    "estimates_native_units": {
+      "sidebar_px": 190.9,
+      "toolbar_px": 41.2,
+      "page_radius_px": 11.9,
+      "row_pitch_px": 38.8
+    }
+  },
+  "Graphene": {
+    "image_px_per_ax_unit": 1.4131,
+    "input": {
+      "image_window_width": 1423,
+      "ax_window_width": 1007,
+      "sidebar_px": 325,
+      "toolbar_px": 51,
+      "page_radius_px": 17,
+      "row_pitch_px": 57
+    },
+    "estimates_native_units": {
+      "sidebar_px": 230.0,
+      "toolbar_px": 36.1,
+      "page_radius_px": 12.0,
+      "row_pitch_px": 40.3
+    }
+  }
+}

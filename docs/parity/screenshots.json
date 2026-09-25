@@ -1,0 +1,126 @@
+[
+  {
+    "file": "arc-main.png",
+    "kind": "actual window capture",
+    "source": "computer_use_e91e845a59894a119418fbeb431efb56.png",
+    "size": [
+      1568,
+      983
+    ],
+    "redactions_px": [
+      [
+        198,
+        50,
+        1501,
+        944
+      ],
+      [
+        775,
+        28,
+        1000,
+        48
+      ],
+      [
+        55,
+        160,
+        177,
+        252
+      ],
+      [
+        55,
+        299,
+        177,
+        501
+      ],
+      [
+        32,
+        135,
+        100,
+        153
+      ]
+    ],
+    "sha256": "a4f0db1332e33e0bdb449852673c1f6cbadf4108844c881e98d317369ef6a3a1"
+  },
+  {
+    "file": "arc-sidebar.png",
+    "kind": "crop, not separate interaction",
+    "parent": "arc-main.png",
+    "crop_px": [
+      24,
+      19,
+      190,
+      953
+    ],
+    "sha256": "cccd757192147b6ebcd562980ebf92d1f355dd2aaec9faade94052ee9dd27f29"
+  },
+  {
+    "file": "arc-space-bar.png",
+    "kind": "visible footer crop, not expanded space switcher",
+    "parent": "arc-main.png",
+    "crop_px": [
+      24,
+      918,
+      190,
+      953
+    ],
+    "sha256": "74002ed1330b8995ecfd650a670444d011cfd218d0a4585d083ca60f73cbc972"
+  },
+  {
+    "file": "dia-main.png",
+    "kind": "actual window capture",
+    "source": "computer_use_a2b4f40f241443dd8ec7ffcd82a718fa.png",
+    "size": [
+      1568,
+      1340
+    ],
+    "redactions_px": [],
+    "sha256": "9c3ddc62359a2022e6cf9dc103d920505c5101a3d239bfb5dc50b7c188548c52"
+  },
+  {
+    "file": "dia-sidebar.png",
+    "kind": "crop, not separate interaction",
+    "parent": "dia-main.png",
+    "crop_px": [
+      42,
+      33,
+      283,
+      1287
+    ],
+    "sha256": "089e6cc243572c862bf5a659104a37640e4cc0e503f5ad847486b440793dc753"
+  },
+  {
+    "file": "graphene-main.png",
+    "kind": "actual window capture",
+    "source": "computer_use_4a5c96f3e2f145c7803abb6b15c8c988.png",
+    "size": [
+      1568,
+      1037
+    ],
+    "redactions_px": [],
+    "sha256": "c99a02701bcc077119aa54680ea312b3f8e18266198619481c84964802f6612f"
+  },
+  {
+    "file": "graphene-sidebar.png",
+    "kind": "crop, not separate interaction",
+    "parent": "graphene-main.png",
+    "crop_px": [
+      48,
+      37,
+      373,
+      979
+    ],
+    "sha256": "7ba64454cfb668e338384ab3471d49283d93424d3995ed4ccc4c1ede95e9e08b"
+  },
+  {
+    "file": "graphene-space-bar.png",
+    "kind": "visible footer crop, not expanded space switcher",
+    "parent": "graphene-main.png",
+    "crop_px": [
+      48,
+      920,
+      373,
+      979
+    ],
+    "sha256": "4d84a07874ecb2c3c9841a6bb709bf7b9e7a385b6a8b39ee86f50e8498cb94ad"
+  }
+]

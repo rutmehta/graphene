@@ -1,0 +1,30 @@
+This article applies to Arc on
+macOS
+and
+Windows
+.
+What is Peek?
+Peek is a convenient way to quickly preview links without leaving your current Pinned Tab.
+Simply click on a new link from a Pinned or Favorited Tab, and Arc will automatically open that tab in Peek rather than as a new tab! You can then do a quick action on Peek and close it without interruption.
+Shortcuts
+To open Peek in a new tab: Hit the expand button arrows or
+Command-O
+(macOS) or
+Control-O
+(Windows).
+To open Peek in a Split View: Hit the Split View button.
+To close Peek: Click outside the Peek window, hit the X button,
+Command-W
+(macOS) or
+Control-W
+(Windows).
+Turn Off Peek in Arc
+If you want links to always open in a New Tab and never open in Peek, you can turn Peek off in Arc for macOS.
+To turn off Peek:
+Open Settings from Arc > Settings in the Mac Menu Bar or the Command-Comma shortcut
+Click
+Links
+Toggle off
+Open a Peek window when clicking on links to other sites
+Note:
+You will be able to disable Peek in a future version of Arc for Windows. Until then all links clicked in Pinned and Favorite tabs will open in a Peek tab by default.

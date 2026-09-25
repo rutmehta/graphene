@@ -1,0 +1,16 @@
+Dia Browser | Update 0.49.0
+v
+0.49.0
+October 1, 2025
+What's New in Dia v0.49.0
+You can expect some big things to start shipping next week.
+But first, a few tweaks you’ll notice right away.
+💰
+Payments are back on track.
+We fixed an issue that was affecting payment processing on some websites. You can now pay bills, book flights, and shop without interruption. Thanks to all who reported this!
+🍽️
+Tables are cleaner.
+We also addressed a bug that was causing tables and charts to flicker while loading in Chat. Everything is smoother now: columns fit the text more naturally, and scrolling feels steadier while results arrive. To try it, just ask Dia to compare two of your tabs in a chart.
+We’ve also shipped a handful of bug fixes under the hood and upgraded Dia to Chromium M141. Expect your browser to be fast, safe, and stable.
+This one’s slow and steady, but expect a whole lot of momentum right around the corner. We’ll see you back here next week.
+🎯 Your friends at Team Dia

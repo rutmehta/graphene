@@ -9,6 +9,9 @@ struct Annotation: Codable, Identifiable {
     var title: String
     var context: String
     var created: Date
+    var spaceID: UUID?
+    var provenance: String?
+    var accountScope: String?
 }
 
 /// The knowledge vault: annotations and daily digests as plain markdown on your
@@ -17,61 +20,77 @@ struct Annotation: Codable, Identifiable {
 final class Vault: ObservableObject {
     @Published private(set) var annotations: [Annotation] = []
 
-    init() { load() }
+    private var canSave = true
+    private let file: URL
+    private let directory: URL
+    @Published private(set) var errorText: String?
 
-    func add(text: String, note: String, url: URL?, title: String, context: String) {
+    init(file: URL = Paths.root.appendingPathComponent("annotations.json"), directory: URL = Paths.vault, inMemory: Bool = false) {
+        self.file = file; self.directory = directory; canSave = !inMemory
+        if !inMemory { load() }
+    }
+
+    func add(text: String, note: String, url: URL?, title: String, context: String, spaceID: UUID? = nil, provenance: String? = nil, accountScope: String? = nil) {
+        guard canSave else { return }
         let ann = Annotation(
             id: UUID(), text: text, note: note,
             url: url?.absoluteString ?? "", title: title,
-            context: context, created: Date()
+            context: context, created: Date(), spaceID: spaceID,
+            provenance: provenance ?? (url == nil ? "manual" : "web page"), accountScope: accountScope
         )
+        let previous = annotations
         annotations.insert(ann, at: 0)
-        persistJSON()
-        appendMarkdown(ann)
+        guard persistJSON() else { annotations = previous; return }
+        writeNote(ann)
     }
 
     func delete(_ ann: Annotation) {
+        guard canSave else { return }
+        let previous = annotations
         annotations.removeAll { $0.id == ann.id }
-        persistJSON()
+        guard persistJSON() else { annotations = previous; return }
+        try? FileManager.default.removeItem(at: noteFile(ann.id))
+    }
+
+    func update(_ ann: Annotation, note: String) {
+        guard canSave, let index = annotations.firstIndex(where: { $0.id == ann.id }) else { return }
+        let previous = annotations
+        annotations[index].note = note
+        guard persistJSON() else { annotations = previous; return }
+        writeNote(annotations[index])
+    }
+
+    private func noteFile(_ id: UUID) -> URL {
+        directory.appendingPathComponent("notes", isDirectory: true).appendingPathComponent("\(id.uuidString).md")
+    }
+
+    private func writeNote(_ annotation: Annotation) {
+        let destination = noteFile(annotation.id)
+        let quote = annotation.text.split(separator: "\n").map { "> \($0)" }.joined(separator: "\n")
+        let body = "# \(annotation.title)\n\n\(quote)\n\n\(annotation.note)\n\n[Source](\(annotation.url))\n\nSaved \(annotation.created.formatted(date: .long, time: .shortened))\n"
+        do {
+            try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try body.write(to: destination, atomically: true, encoding: .utf8)
+        } catch { errorText = error.localizedDescription }
     }
 
     func annotations(forURL url: String) -> [Annotation] {
-        annotations.filter { $0.url == url }
+        annotations.filter { KnowledgeGraph.canonicalURL($0.url) == KnowledgeGraph.canonicalURL(url) }
     }
 
     func forget(host: String) {
-        annotations.removeAll {
-            guard let h = URL(string: $0.url)?.host?.lowercased() else { return false }
-            let t = host.lowercased()
-            return h == t || h.hasSuffix("." + t)
+        let target = host.lowercased()
+        let removed = annotations.filter {
+            guard let host = URL(string: $0.url)?.host?.lowercased() else { return false }
+            return host == target || host.hasSuffix("." + target)
         }
-        persistJSON()
-    }
-
-    // MARK: markdown provenance file (one per day)
-
-    private func appendMarkdown(_ ann: Annotation) {
-        let day = Self.dayFormatter.string(from: ann.created)
-        let file = Paths.vault.appendingPathComponent("annotations").appendingPathComponent("\(day).md")
-        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if !FileManager.default.fileExists(atPath: file.path) {
-            try? "---\ntype: annotations\ndate: \(day)\n---\n\n# Annotations — \(day)\n".write(to: file, atomically: true, encoding: .utf8)
-        }
-        let time = Self.timeFormatter.string(from: ann.created)
-        let quoted = ann.text.split(separator: "\n").map { "> \($0)" }.joined(separator: "\n")
-        var block = "\n## \(time) — \(ann.title)\n\n\(quoted)\n"
-        if !ann.note.isEmpty { block += "\n**Note:** \(ann.note)\n" }
-        block += "\n— [source](\(ann.url))\n"
-        if let handle = try? FileHandle(forWritingTo: file) {
-            handle.seekToEndOfFile()
-            handle.write(Data(block.utf8))
-            try? handle.close()
-        }
+        for annotation in removed { delete(annotation) }
     }
 
     func writeDailyDigest(_ markdown: String, date: Date = Date()) {
+        guard canSave else { return }
         let day = Self.dayFormatter.string(from: date)
-        let dir = Paths.vault.appendingPathComponent("daily")
+        let dir = directory.appendingPathComponent("daily")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let file = dir.appendingPathComponent("\(day).md")
         let body = "---\ntype: daily\ndate: \(day)\n---\n\n# \(day) — Daily Update\n\n\(markdown)\n"
@@ -80,16 +99,20 @@ final class Vault: ObservableObject {
 
     // MARK: persistence
 
-    private func persistJSON() {
-        let file = Paths.root.appendingPathComponent("annotations.json")
-        if let data = try? JSONEncoder().encode(annotations) { try? data.write(to: file) }
+    @discardableResult
+    private func persistJSON() -> Bool {
+        do {
+            let data = try JSONEncoder().encode(annotations)
+            try data.write(to: file, options: .atomic)
+            errorText = nil
+            return true
+        } catch { errorText = error.localizedDescription; return false }
     }
 
     private func load() {
-        let file = Paths.root.appendingPathComponent("annotations.json")
-        guard let data = try? Data(contentsOf: file),
-              let list = try? JSONDecoder().decode([Annotation].self, from: data) else { return }
-        annotations = list
+        guard FileManager.default.fileExists(atPath: file.path) else { return }
+        do { annotations = try JSONDecoder().decode([Annotation].self, from: Data(contentsOf: file)) }
+        catch { canSave = false; errorText = "The note index couldn’t be read. It has been left untouched." }
     }
 
     static let dayFormatter: DateFormatter = {

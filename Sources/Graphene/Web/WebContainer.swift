@@ -6,10 +6,16 @@ import AppKit
 /// destroys or reloads the others — background tabs keep running.
 struct WebContainer: NSViewRepresentable {
     var tab: Tab
+    @EnvironmentObject var app: AppState
 
     func makeNSView(context: Context) -> NSView {
         let container = FlippedView()
         install(tab.engine.hostView, in: container)
+        let host = tab.engine.hostView
+        DispatchQueue.main.async {
+            guard !app.commandBarPresented, !app.noteComposerPresented, app.activeSplit == nil || app.activeTabID == tab.id else { return }
+            container.window?.makeFirstResponder(host)
+        }
         return container
     }
 

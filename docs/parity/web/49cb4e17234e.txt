@@ -1,0 +1,44 @@
+Dia Browser | Update 0.47.0
+v
+0.47.0
+September 17, 2025
+What's New in Dia v0.47.0
+As Dia unfolds, you stay in control.
+See more when you want, skip ahead when you don’t, and keep common actions a click or keystroke away. Every update is about staying in flow.
+⭐️ Set the pace.
+You call the shots, even while you wait. If Dia is using reasoning (you’ll see “Thinking deeply…”) you can click
+Skip >
+for a quicker answer.
+🔍 Search with your engine.
+Did you know you can choose your
+default search engine
+in
+Settings
+? Then, when you type something into the
+Command Bar
+, the suggestion dropdown now shows your default search engine. Prefer
+Bing
+? Use
+DuckDuckGo
+? You’ll see your choice in the dropdown.
+🪟 Split tabs on command.
+Option+click the New Tab (➕) button to open a New Tab Page in a Split alongside your current tab. That’s one small step to keep you organized, as easy as a simple shortcut.
+🖼️
+Take images with you.
+We continue to refine how images show up in Chat. The right‑click menu now puts familiar save and copy actions up front, so you can take your images with you without complication.
+Plus some small fixes that go a long way:
+Citations are more reliable
+after addressing a bug where they were appearing as plain text. You'll now get hyperlinks that work when you need them.
+Replies read more naturally
+thanks to a prompt update that dials back heavy formatting and unnecessary lists in favor of clean, readable paragraphs. Don’t forget: you can also control how Dia responds in the
+Personalization
+pane.
+We’re still signing folks up to be
+Dia Early Birds
+. Want to try new browser features before anyone else?
+We’d love to hear from you.
+Enjoy
+v0.47
+as it works for you, and stay tuned for more next week.
+See you on the internet!
+👓 Your friends at Dia.

@@ -1,0 +1,5 @@
+Switch between your 5 most recent tabs
+Use the Tab Switcher (Control-Tab) to switch between your five most recently visited tabs on Arc.\
+Switch between all tabs in your Sidebar
+You can switch between all open tabs in the order they're listed in your Sidebar. Use the shortcut Command-Option-Up or Down Arrow (↑ or ↓) on macOS or
+Control-Alt-Up or Down Arrow (↑ or ↓) on Windows

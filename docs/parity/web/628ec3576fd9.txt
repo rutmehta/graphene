@@ -1,0 +1,61 @@
+Dia Browser | Update 0.45.0
+v
+0.45.0
+September 7, 2025
+What’s New in Dia v0.45.0
+In Dia, every click counts.
+In v0.45.0, it's easier than ever to use your browsing history, build Memories, reflect on your day, and shape your online experience around what matters most to you.
+Memory and History, working together.
+Your browser is where you do everything. You shouldn’t have to start fresh, repeat yourself, or retrace your steps. Dia makes it easy to look back and plan ahead.
+🕰️
+Historic Skills.
+Skills now work with your history to craft bespoke results, just for you. And we’ve dropped a new Skills pack to turn yesterday’s searches into today’s reflections, recaps, and takeaways, all with the things you’ve already done.
+Get the
+Browsing History Skills Pack
+to try Skills like:
+🔮
+future-self
+to receive a thoughtful letter from your future self, based on your own browsing history and tone of voice.
+📋
+daily-wrap
+to summarize your last 24 hours of work and share it with your team.
+📆
+weekly
+for a look back at your entire work week.
+Give these Skills a try, and let us know what you think!
+🧳
+ChatGPT import.
+If you've used ChatGPT in Dia, you can now import your history as Memories to add even more context. Import once, then pick up where you left off. Just head to your Personalization page and click
+Import from ChatGPT…
+to bring your past context into the present.
+And major improvements to Memory for even more context as you browse:
+Memory excludes sensitive sites (like banks) and all incognito tabs, but you can also manually
+opt out of saving Memories from specific websites
+. When you do so, Dia automatically removes all previous Memories from that site too.
+Location details are more nuanced, providing
+sharper context for Memories
+while respecting your privacy.
+AI responses in Chat summaries are excluded so that Memory reflects
+your activity, not what an AI said
+. This keeps your history
+more personal and relevant
+.
+Activity summaries in Memory are
+formatted for quicker scanning
+, so you can
+see what matters at a glance
+.
+Plus some helpful tweaks to your daily browsing:
+🛡️ Safety with intention.
+Overzealous safety checks have been toned down. Expect fewer false alarms, so you only get notified when it really matters. Behind the scenes, we’re refining how Dia detects real risks so your alerts are always meaningful and accurate.
+🥺
+Sad tabs.
+We wouldn’t wish a crashed tab on anyone, but at least you’ll know when it happens with a new landing page to make those rare moments less confusing. Of course, fingers crossed it doesn’t happen. 🤞
+🔖
+Background bookmarks.
+If you’re using an external mouse, you can now open bookmarks in background tabs by clicking with your middle mouse button (or Command+click on a trackpad). It’s a small change to keep you in your flow.
+Are you interested in trying new versions of Dia before anyone else? Sign up for the
+Early Birds program
+to spot bugs, test new features, and leave your mark on Dia.
+Thanks for browsing with us!
+🌏 Your friends at Team Dia

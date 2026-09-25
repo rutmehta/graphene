@@ -1,0 +1,15 @@
+Dia Browser | Update 1.5.0
+v
+1.5.0
+November 12, 2025
+What's New in Dia v1.5.0
+Dia v1.5.0 has your back in a day of back-to-backs—previews to plan, reminders to join, and small touches that keep you on time and in control. Here's what's new:
+Show up on time to meetings with Live Calendar Preview and Just‑in‑Time Reminders. Hover over a Calendar tab to glimpse the rest of your day and jump straight into your next meeting from the preview. Right before a meeting, Dia surfaces a corner reminder with attendees and a direct join link so you're always on time.
+Tabs load smarter. On launch, Dia automatically reloads select recent background tabs based on your device and tab activity. Tab discarding now considers app active time, so tabs won't silently disappear while you're away.
+Split view gets smoother. Larger drop targets appear immediately so it's easier to place splits exactly where you want.
+Drag distractions away. Fully collapsing the sidebar enters Focus Mode so you can hide chrome and stay in flow.
+Find in Page, refreshed. The Find UI is restyled to match Dia's design.
+Chat clarity and speed. When attachments fail to load, Dia shows which tab failed and why, with clearer recovery steps. Memory Search now triggers more often without special phrasing—just ask.
+Core chat behavior is sharper. You'll see Read Links progress in the chain, better image reasoning, more reliable inline code, and fewer stated assumptions. UI polish includes stronger icon contrast, a fixed "Recreate" draft state, and copy tweaks for feedback.
+Better deep reasoning control. Choosing "Skip" falls back to minimal reasoning (not a quick answer) and keeps helpful follow‑up support.
+Thanks for being here and using Dia. If something looks off, tell us—we're eager for the feedback.

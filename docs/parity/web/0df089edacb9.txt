@@ -1,0 +1,22 @@
+Dia Browser | Update 1.16.0
+v
+1.16.0
+January 28, 2026
+What's New in Dia 1.16.0
+v1.16.0 deepens Dia's tab story with new ways to make your workspace feel settled, organized, and tailored to how you actually work. Pin the projects that matter most, grow into Tab Groups with a familiar click, and tune tab behavior from a dedicated home in Settings. Here's what's new:
+Pin the tab groups that anchor your day.
+You can now pin tab groups to the top of the sidebar or the leading edge of the tab strip.
+Command‑click into a tab group.
+Command‑clicking a link from a tab now opens that link in a new tab group, instead of just a standalone background tab. The original page and the new tab live together in that group, so a simple "open in new tab" gesture quietly becomes a lightweight project space.
+Shortcut to open a new tab in a group.
+Option‑Command‑T now opens a new tab inside your current tab group instead of next to it so you can keep related work together.
+A Tabs pane in Settings.
+Tab‑related preferences now live together in a dedicated Tabs pane in Settings. Switch between sidebar and top bar layouts, and adjust Tab Group behaviors like automatic meeting grouping from one place.
+Recently closed groups are easy to restore.
+When you close a tab group, it now shows up in the Recently Closed section in Tab Overflow and History menus. If you close a project group a bit too aggressively—or just want to revisit yesterday's setup—you can bring it back in a couple of clicks.
+Profile indicators and menus that feel more at home.
+The profile indicator now lives more subtly inside the pinned tabs tray and sidebar header, with refined theme colors that make windows feel cohesive without shouting for attention. Context menus for empty spaces in the sidebar and top bar have also been standardized, so common actions are easier to find no matter where you right‑click.
+Default profiles are easier to set.
+Making a profile your default is now a clear, first‑class action from the Profiles pane in Settings.
+Manifest V2 extensions are phasing out.
+Starting in v1.17, Dia will no longer supports legacy Manifest V2 extensions. With a built‑in ad blocker in place and the ecosystem moving toward Manifest V3, this keeps Dia aligned with modern extension standards and improves security and stability over time.

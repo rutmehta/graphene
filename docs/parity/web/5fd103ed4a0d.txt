@@ -1,0 +1,12 @@
+Dia Browser | Update 1.3.1
+v
+1.3.1
+October 29, 2025
+What's New in Dia v1.3.1
+Dia v1.3.0 is all about nailing the browser basics. Here's what you can expect:
+Use picture-in-picture on Google Meet. Your meeting will pop out, even when you switch tabs, so you'll never miss a beat.
+Focus Mode has landed. Just press ⌘S to hide your tabs and focus on your screen. Works with both horizontal and vertical tabs.
+Make keyboard shortcuts work for you by remapping them in Settings.
+Dia now searches memories automatically. That means you can just ask "What was that document I was editing yesterday?" or "What article was I reading last week?" and Dia will surface the relevant results.
+A bug that was affecting bulleted and numbered lists from pasting with formatting has been addressed.
+Thanks for being here and using Dia. Stay tuned for much more to come, and let us know if anything doesn't look right.

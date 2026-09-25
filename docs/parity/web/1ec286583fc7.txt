@@ -1,0 +1,6 @@
+This article only applies to Arc on
+macOS.
+During a meeting, quickly switch the current shared tab by hovering over the tab you want to share in your Sidebar and clicking the "
+Share this tab instead
+" icon that appears.
+The shared tab appears highlighted yellow so it can be easily identified.

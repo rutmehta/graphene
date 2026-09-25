@@ -1,0 +1,14 @@
+Dia Browser | Update 1.6.0
+v
+1.6.0
+November 19, 2025
+What's New in Dia v1.6.0
+Dia v1.6.0 brings Slack search, improved voice dictation and more Chat improvements. Here's what's new:
+Search Slack Tool. Search your Slack messages and files directly from Dia to pull up conversations and docs without switching apps.
+Dictate with confidence. Voice mode gets streaming transcription for better accuracy, punctuation, and capitalization.
+Meeting reminders get some polish. A redesigned reminder attaches to your source calendar tab, is movable, and stays visible when you need it. Settings are clearer, too.
+See what the Assistant did. Tool call bylines now show when Dia reads, opens, or closes tabs—always with clear controls.
+Smarter tab attachment suggestions. When attaching context, Dia prioritizes open tabs first, then history/bookmarks, then previous chats—with tie‑breaks by recency and a boost for short queries.
+Fewer false safety errors. Stronger injection detection, better LaTeX parsing, and tightened tool handling.
+Fix to show toast when actions are performed in fullscreen mode.
+Thanks for using Dia. If anything feels off, tell us—your feedback helps us keep polishing the details and reducing friction.

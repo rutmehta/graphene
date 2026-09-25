@@ -1,0 +1,42 @@
+Arc Help Center
+Features
+Features
+Multitask
+Split View: View Multiple Tabs at Once
+Peek: Preview Sites From Pinned Tabs
+Previews: Glance Top Sites
+Little Arc: Quick Lookups & Instant Triaging
+Mini Player: Watch or Listen as you Browse
+See more
+Create
+Customize Default Notes App
+Developer Mode: Instant Dev Tools
+Phasing Out Arc Notes
+Easels: Capture & Create
+Share Spaces, Folders & Splits with Anyone
+Boosts: Customize Any Website
+See more
+Organize
+Live Calendars
+Air Traffic Control: Automate Your Link Routing
+Automatic GitHub Live Folders
+Pinned Tabs: Tabs you want to stick around
+Favorites: Top Tabs Across Every Space
+Library: A home for your downloads, archived tabs, easels and more.
+See more
+Rev Up
+How to Open .pdf Files in Arc for Windows by Default
+How to Set Custom Keyboard Shortcuts on Arc for Desktop
+How Do You Switch Between Tabs Quickly on Arc Desktop?
+How Do You Change Your Download Location in Arc for Desktop?
+How Do You Switch Your Default Search Engine on Arc for Desktop?
+How Can I Quickly Switch the Tab I’m Sharing on a Google Meet Call?
+See more
+Release Notes
+Arc Search for Android - Release Notes
+Arc Search for iOS Release Notes
+Arc for Windows - 2023-2026 Release Notes
+Release Notes
+Arc for macOS - 2024 - 2026 Release Notes
+Arc for macOS - 2023 Release Notes
+See more
