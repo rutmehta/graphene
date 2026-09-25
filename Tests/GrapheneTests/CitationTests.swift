@@ -17,7 +17,7 @@ final class CitationTests: XCTestCase {
         XCTAssertEqual(citations.map(\.index), [1, 2])
         XCTAssertEqual(citations.map(\.sourceNumber), [2, 1])
         XCTAssertEqual(citations.map(\.sourceID), [sources[1].id, sources[0].id])
-        XCTAssertEqual(citations.map(\.citationID), [ChatCitation.citationID(messageID: message, index: 1), ChatCitation.citationID(messageID: message, index: 2)])
+        XCTAssertEqual(citations.map(\.citationID), [ChatCitation.citationID(messageID: message, ordinal: 1), ChatCitation.citationID(messageID: message, ordinal: 2)])
         // Stable: the same answer yields the same ids; another answer restarts at 1.
         XCTAssertEqual(ChatCitation.assign(answer: "Beta says so [2]. Alpha agrees [1].", sources: sources, messageID: message, passages: false).map(\.citationID), citations.map(\.citationID))
         let other = ChatCitation.assign(answer: "Alpha [1].", sources: sources, messageID: UUID(), passages: false)
@@ -73,19 +73,19 @@ final class CitationTests: XCTestCase {
         let message = UUID()
         let answer = "Graphene has a tensile strength of 130 GPa. It was first theorized in 1947 by Philip Wallace."
         let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: message)
-        // One citation per claim, numbered from 1, each passage its own source sentence verbatim.
+        // One citation per claim, each passage its own source sentence verbatim; one source, so both read 1.
         XCTAssertEqual(citations.count, 2)
         let citation = try XCTUnwrap(citations.first)
-        XCTAssertEqual(citations.map(\.index), [1, 2])
+        XCTAssertEqual(citations.map(\.index), [1, 1])
         XCTAssertEqual(citations.map(\.sourceNumber), [1, 1])
         XCTAssertEqual(citation.sourceID, page.id)
-        XCTAssertEqual(citation.citationID, ChatCitation.citationID(messageID: message, index: 1))
+        XCTAssertEqual(citation.citationID, ChatCitation.citationID(messageID: message, ordinal: 1))
         XCTAssertEqual(citation.passage, "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa.")
         XCTAssertEqual(citations[1].passage, "In 1947, Philip Wallace first theorized the electronic band structure of graphite.")
         for c in citations { XCTAssertTrue(page.text.contains(try XCTUnwrap(c.passage))) }
         XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa."])
         XCTAssertEqual(citations[1].anchors, ["It was first theorized in 1947 by Philip Wallace."])
-        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2]], "one sources-line entry for the one source")
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 1]], "one sources-line entry for the one source")
         // The inline chip is drawn after each matched sentence.
         let shown = ChatMarkdown.anchored(answer, citations: citations)
         XCTAssertEqual(ChatMarkdown.segments(shown), [.text("Graphene has a tensile strength of 130 GPa. "), .anchored(1), .text(" It was first theorized in 1947 by Philip Wallace. "), .anchored(2)])
@@ -154,7 +154,7 @@ final class CitationTests: XCTestCase {
         XCTAssertTrue(page.text.contains(passage))
         XCTAssertEqual(citations[1].passage, "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester.")
         XCTAssertEqual(citations.map(\.markers), [[0, 1], [2]])
-        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2]])
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 1]])
         // Each marker becomes its own citation's chip.
         let shown = ChatMarkdown.anchored(answer, citations: citations)
         XCTAssertEqual(shown, "Source ⁅1⁆: Graphene - Wikipedia\nTensile strength: 130 GPa ⁅1⁆\nFirst isolated: Andre Geim and Konstantin Novoselov in 2004. ⁅2⁆")
@@ -246,7 +246,8 @@ final class CitationTests: XCTestCase {
         XCTAssertEqual(citations.count, 4, "two claims of the page with two passages are two citations")
         let eligible = CitationLinker.eligible(citations, sources: sources, tabID: tab, url: URL(string: page.url))
         XCTAssertEqual(eligible.map(\.id), [citations[0].citationID, citations[1].citationID], "only passages whose source is the page are offered to it")
-        XCTAssertEqual(eligible.map(\.index), [1, 2])
+        XCTAssertEqual(eligible.map(\.index), [1, 1], "both marks carry the source's number")
+        XCTAssertNotEqual(eligible[0].id, eligible[1].id, "each passage keeps its own mark")
 
         let linker = CitationLinker(), recorder = PageRecorder(found: [])
         let linked = await linker.link(messageID: message, citations: citations, sources: sources, tabID: tab, url: URL(string: page.url), page: recorder.page)
@@ -377,10 +378,10 @@ final class CitationTests: XCTestCase {
         let other = source("Swift", "Swift is a general-purpose programming language developed by Apple. Swift compiles to native code with LLVM.")
         let answer = "Graphene conducts heat very efficiently [1]. Its tensile strength is 130 GPa [1]. Swift compiles with LLVM [2]. It conducts electricity along its plane [1]."
         let citations = ChatCitation.assign(answer: answer, sources: [page, other], messageID: UUID())
-        XCTAssertEqual(citations.map(\.index), [1, 2, 3])
+        XCTAssertEqual(citations.map(\.index), [1, 1, 2])
         XCTAssertEqual(citations.map(\.sourceNumber), [1, 1, 2])
         XCTAssertEqual(citations.map(\.markers), [[0, 3], [1], [2]], "claims that find the same passage share its citation")
-        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 2], [3]])
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [[1, 1], [2]])
         XCTAssertEqual(ChatMarkdown.segments(ChatMarkdown.anchored(answer, citations: citations)).filter { if case .anchored = $0 { return true }; return false },
                        [.anchored(1), .anchored(2), .anchored(3), .anchored(1)])
         // Citations stored before per-claim passages carry no markers: `[n]` stays and resolves by source.
@@ -388,20 +389,99 @@ final class CitationTests: XCTestCase {
         XCTAssertEqual(ChatMarkdown.anchored(answer, citations: legacy), answer)
     }
 
-    // MARK: G8 quoted passages
+    // MARK: per-source numbering
 
-    func testASentenceEchoingAPassageIsSetAsAQuote() {
+    func testEveryChipOfOneSourceShowsItsNumber() throws {
+        // The owner's case: five claims of one page, each with its own passage.
+        let page = source("Set up Bluetooth on your Mac", "Open System Settings on your Mac. Click Bluetooth in the sidebar. Turn Bluetooth on. "
+            + "Put the device in pairing mode. Click Connect next to the device name.")
+        let answer = "Open System Settings [1]. Click Bluetooth in the sidebar [1]. Turn Bluetooth on [1]. Put the device in pairing mode [1]. Click Connect next to the device [1]."
+        let message = UUID()
+        let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: message)
+        XCTAssertGreaterThan(citations.count, 1, "the per-claim passages are kept")
+        XCTAssertEqual(Set(citations.map(\.index)), [1], "every chip of the one source reads 1")
+        XCTAssertEqual(Set(citations.map(\.citationID)).count, citations.count, "each passage keeps its own id and mark")
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).map { $0.map(\.index) }, [Array(repeating: 1, count: citations.count)], "one entry, one number")
+        // Each chip in the text names its own citation, so hover goes to its own passage.
+        let chips = ChatMarkdown.segments(ChatMarkdown.anchored(answer, citations: citations)).compactMap { segment -> Int? in
+            if case .anchored(let position) = segment { return position }; return nil
+        }
+        XCTAssertEqual(chips.count, 5)
+        XCTAssertEqual(Set(chips).count, citations.count)
+        XCTAssertTrue(chips.allSatisfy { citations.indices.contains($0 - 1) })
+        // Two sources: numbered in order of first mention, whatever the model's own numbers.
+        let other = source("Swift", "Swift compiles to native code with LLVM.")
+        let mixed = ChatCitation.assign(answer: "Swift compiles with LLVM [2]. Open System Settings [1]. Turn Bluetooth on [1].", sources: [page, other], messageID: message)
+        XCTAssertEqual(mixed.map(\.index), [1, 2, 2])
+        // Answers stored with per-passage numbers are renumbered by source when shown.
+        var stored = mixed; stored[2].index = 3
+        let old = ChatMessage(role: .assistant, content: "Swift compiles with LLVM [2]. Open System Settings [1]. Turn Bluetooth on [1].", sources: [page, other])
+        var session = ChatSession(spaceID: UUID(), profileID: UUID(), messages: [old])
+        session.citations = [old.id.uuidString: stored]
+        XCTAssertEqual(session.citations(for: old).map(\.index), [1, 2, 2])
+    }
+
+    // MARK: quoted excerpts
+
+    func testOnlyExplicitExcerptsAreQuotes() {
         let passage = "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester."
-        let echo = "In 2004 the material was isolated and characterized by Andre Geim ⁅1⁆"
-        XCTAssertTrue(ChatMarkdown.echoes(echo, passages: [passage]), "eight words in a row, punctuation and chips aside")
-        XCTAssertFalse(ChatMarkdown.echoes("The material was isolated in 2004 by Geim and Novoselov.", passages: [passage]), "a paraphrase is prose")
-        XCTAssertFalse(ChatMarkdown.echoes("was isolated and characterized by Andre Geim", passages: [passage]), "seven words are not enough")
+        // A whole sentence found word for word in the passage, chips and punctuation aside.
+        XCTAssertTrue(ChatMarkdown.excerpt("In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov. ⁅1⁆", passages: [passage]))
+        // Sharing a run of eight words is no longer enough: the sentence adds its own words.
+        XCTAssertFalse(ChatMarkdown.excerpt("In 2004 the material was isolated and characterized by Andre Geim, a physicist who later won the Nobel Prize.", passages: [passage]))
+        XCTAssertFalse(ChatMarkdown.excerpt("The material was isolated in 2004 by Geim and Novoselov.", passages: [passage]), "a paraphrase is prose")
+        XCTAssertFalse(ChatMarkdown.excerpt("was isolated and characterized by Andre Geim", passages: [passage]), "seven words are too short to be an excerpt")
+        // Text wholly in quotation marks that the passage holds is an excerpt at any length.
+        XCTAssertTrue(ChatMarkdown.excerpt("“isolated and characterized by Andre Geim”. [1]", passages: [passage]))
+        XCTAssertFalse(ChatMarkdown.excerpt("“isolated by nobody”", passages: [passage]))
         XCTAssertEqual(ChatMarkdown.echoWords, 8)
-        let line = "It was a milestone. In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov. ⁅1⁆ Later work followed."
-        XCTAssertEqual(ChatMarkdown.pieces(line, passages: [passage]).map(\.quote), [false, true, false])
-        XCTAssertEqual(ChatMarkdown.pieces(line, passages: [passage])[1].text.trimmingCharacters(in: .whitespaces),
-                       "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov. ⁅1⁆", "a chip after the full stop stays with its quote")
-        XCTAssertEqual(ChatMarkdown.pieces("Plain prose here. More prose.", passages: [passage]), [ChatMarkdown.Piece(text: "Plain prose here. More prose.", quote: false)])
+        XCTAssertEqual(ChatMarkdown.quoteShare, 0.4)
+    }
+
+    func testAQuoteNeedsProseAroundItAndNeverTakesTheWholeAnswer() {
+        let passage = "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester."
+        let quote = "In 2004, the material was isolated and characterized by Andre Geim and Konstantin Novoselov at the University of Manchester. ⁅1⁆"
+        // Alone, the excerpt would be the entire answer: prose.
+        XCTAssertEqual(ChatMarkdown.quotePlan(quote, passages: [passage], sources: []), ChatMarkdown.QuotePlan())
+        // With enough prose around it (the quote is under 40% of the words), it is a quote.
+        let answer = "Graphene was first made in a lab with ordinary sticky tape, which surprised many researchers at the time. " + quote
+            + " Since then, researchers have studied its strength, conductivity and many possible uses in electronics and in batteries."
+        let plan = ChatMarkdown.quotePlan(answer, passages: [passage], sources: [])
+        XCTAssertEqual(plan.sentences, [ChatMarkdown.sentenceKey(quote)])
+        XCTAssertEqual(ChatMarkdown.pieces(answer, quoted: plan.sentences).map(\.quote), [false, true, false])
+        XCTAssertEqual(ChatMarkdown.pieces(answer, quoted: plan.sentences)[1].text.trimmingCharacters(in: .whitespaces), quote, "the chip stays with its quote")
+        // Every sentence verbatim from the page: none may take more than 40%, so most stay prose.
+        let first = "Graphene is an allotrope of carbon consisting of a single layer of atoms arranged in a honeycomb lattice."
+        let second = "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa."
+        let third = "Graphene conducts heat and electricity very efficiently along its plane of atoms."
+        let all = [first, second, third].joined(separator: " ")
+        let copied = ChatMarkdown.quotePlan(all, passages: [first, second, third], sources: [])
+        let quotedWords = ChatMarkdown.pieces(all, quoted: copied.sentences).filter(\.quote).map { ChatMarkdown.comparable($0.text).count }.reduce(0, +)
+        XCTAssertLessThanOrEqual(Double(quotedWords), 0.4 * Double(ChatMarkdown.comparable(all).count))
+        XCTAssertTrue(ChatMarkdown.pieces(all, quoted: copied.sentences).contains { !$0.quote })
+        // A block quote that is the whole answer is shown as prose too.
+        XCTAssertTrue(ChatMarkdown.quotePlan("> In 2004, the material was isolated.", passages: [], sources: []).blocks.isEmpty)
+        XCTAssertEqual(ChatMarkdown.unquoted("> In 2004, the material\n> was isolated."), "In 2004, the material\nwas isolated.")
+        XCTAssertEqual(ChatMarkdown.pieces("Plain prose here. More prose.", quoted: []), [ChatMarkdown.Piece(text: "Plain prose here. More prose.", quote: false)])
+    }
+
+    func testATrailingChipStaysOnItsSentencesLine() {
+        // A chip alone on the last line, after a blank line or not, joins the line before it.
+        XCTAssertEqual(ChatMarkdown.attachingOrphanChips("It conducts heat well.\n\n⁅5⁆"), "It conducts heat well. ⁅5⁆")
+        XCTAssertEqual(ChatMarkdown.attachingOrphanChips("It conducts heat well.\n[1] [2]"), "It conducts heat well. [1] [2]")
+        XCTAssertEqual(ChatMarkdown.attachingOrphanChips("```\n[1]\n```"), "```\n[1]\n```", "code is left alone")
+        XCTAssertEqual(ChatMarkdown.attachingOrphanChips("First.\n\nSecond."), "First.\n\nSecond.")
+        // In the flow, a chip (and a space after it) is one wrap unit with the word before it.
+        let groups = ChatMarkdown.flowGroups("Strong material. ⁅1⁆ Light ⁅2⁆")
+        func text(_ group: [ChatMarkdown.FlowToken]) -> String {
+            group.map { token -> String in
+                switch token {
+                case .word(let word): return String(word.characters)
+                case .chip(let segment): if case .anchored(let n) = segment { return "<\(n)>" }; return "<?>"
+                }
+            }.joined()
+        }
+        XCTAssertEqual(groups.map(text), ["Strong ", "material. <1> ", "Light <2>"])
     }
 
     // MARK: G8 the panel over the page

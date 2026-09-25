@@ -30,14 +30,17 @@ enum ChatMarkdown {
     }
 
     /// A run of answer text, a `[n]` citation marker (the model's source number), or the chip of
-    /// a citation matched to a sentence the model left uncited (its per-answer index).
+    /// one of the answer's citations (its 1-based position among them, not its shown number:
+    /// several citations of one source share a number but each leads to its own passage).
     enum Segment: Equatable {
         case text(String)
         case marker(Int)
         case anchored(Int)
     }
-    /// Private brackets around an anchored chip's index; a model does not write them.
+    /// Private brackets around an anchored chip's position; a model does not write them.
     static let anchorOpen = "⁅", anchorClose = "⁆"
+    /// A `[n]` marker (with any `(url)` the model appended) or an anchored chip.
+    static let chipPattern = #"\[\d+\](?:\([^)]*\))?|⁅\d+⁆"#
     /// Splits a line at its `[n]` markers (and any `(url)` the model appended to one) and anchored chips.
     static func segments(_ line: String) -> [Segment] {
         guard let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?|⁅(\d+)⁆"#) else { return [.text(line)] }
@@ -60,69 +63,166 @@ enum ChatMarkdown {
     /// `text` with each citation's chip in place: the `[n]` markers of per-claim citations
     /// become their chips by position among the answer's markers (older citations keep their
     /// `[n]`, resolved by source number), and each fallback citation's chip follows the
-    /// sentences it was matched to.
+    /// sentences it was matched to. A chip names its citation by position (`Segment.anchored`).
     static func anchored(_ text: String, citations: [ChatCitation]) -> String {
         var result = text
         var byMarker: [Int: Int] = [:]
-        for citation in citations { for marker in citation.markers ?? [] { byMarker[marker] = citation.index } }
+        for (offset, citation) in citations.enumerated() { for marker in citation.markers ?? [] { byMarker[marker] = offset + 1 } }
         if !byMarker.isEmpty, let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?"#) {
             for (ordinal, match) in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).enumerated().reversed() {
-                guard let index = byMarker[ordinal], let range = Range(match.range, in: result) else { continue }
-                result.replaceSubrange(range, with: anchorOpen + "\(index)" + anchorClose)
+                guard let position = byMarker[ordinal], let range = Range(match.range, in: result) else { continue }
+                result.replaceSubrange(range, with: anchorOpen + "\(position)" + anchorClose)
             }
         }
-        for citation in citations {
+        for (offset, citation) in citations.enumerated() {
             for anchor in citation.anchors ?? [] {
                 guard !anchor.isEmpty, let range = result.range(of: anchor) else { continue }
-                result.insert(contentsOf: " " + anchorOpen + "\(citation.index)" + anchorClose, at: range.upperBound)
+                result.insert(contentsOf: " " + anchorOpen + "\(offset + 1)" + anchorClose, at: range.upperBound)
             }
         }
         return result
     }
+    /// A line holding only chips ("[5]" after a blank line, "⁅2⁆" alone) joins the last line of
+    /// text before it, so a trailing chip never sits alone on its own line.
+    static func attachingOrphanChips(_ text: String) -> String {
+        var lines: [String] = []
+        var code = false
+        for line in text.components(separatedBy: "\n") {
+            if line.hasPrefix("```") { code.toggle(); lines.append(line); continue }
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            let chipsOnly = !code && !trimmed.isEmpty
+                && trimmed.replacingOccurrences(of: chipPattern, with: "", options: .regularExpression).trimmingCharacters(in: .whitespaces).isEmpty
+            if chipsOnly, let last = lines.lastIndex(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }), !lines[last].hasPrefix("```") {
+                lines.removeSubrange((last + 1)...)
+                lines[last] = lines[last].replacingOccurrences(of: #"\s+$"#, with: "", options: .regularExpression) + " " + trimmed
+                continue
+            }
+            lines.append(line)
+        }
+        return lines.joined(separator: "\n")
+    }
+    /// One item of a flowed line: a word, or a chip.
+    enum FlowToken: Equatable {
+        case word(AttributedString)
+        case chip(Segment)
+    }
+    /// A line's words and chips in wrap units: each chip, and any bare space after it, stays
+    /// with the word before it, so a trailing chip wraps with its sentence's last word.
+    static func flowGroups(_ line: String) -> [[FlowToken]] {
+        var groups: [[FlowToken]] = []
+        for segment in segments(line) {
+            if case .text(let run) = segment {
+                for word in words(run) {
+                    let blank = String(word.characters).allSatisfy(\.isWhitespace)
+                    if blank, !groups.isEmpty { groups[groups.count - 1].append(.word(word)) } else { groups.append([.word(word)]) }
+                }
+            } else if groups.isEmpty { groups.append([.chip(segment)]) }
+            else { groups[groups.count - 1].append(.chip(segment)) }
+        }
+        return groups
+    }
 
-    // MARK: echoed passages
+    // MARK: quoted excerpts
 
-    /// Fewest consecutive words an answer sentence must share with a cited passage to be set
-    /// as a quote rather than prose.
+    /// Fewest words a sentence must have to be set as a verbatim excerpt of a passage.
     static let echoWords = 8
-    /// A run of a line: prose, or sentences that echo a cited passage verbatim.
+    /// Largest share of an answer's words that may be set as quotes: never the whole answer.
+    static let quoteShare = 0.4
+    /// A run of a line: prose, or sentences set as quoted excerpts.
     struct Piece: Equatable {
         var text: String
         var quote: Bool
     }
-    /// The words of `text` compared for an echo: markers and chips dropped, case folded,
+    /// The words of `text` compared for an excerpt: markers and chips dropped, case folded,
     /// punctuation ignored.
     static func comparable(_ text: String) -> [String] {
         text.replacingOccurrences(of: #"\[\d+\]|⁅\d+⁆"#, with: " ", options: .regularExpression)
             .lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
     }
-    /// Whether `sentence` repeats at least `echoWords` consecutive words of one of `passages`.
-    static func echoes(_ sentence: String, passages: [String]) -> Bool {
-        let words = comparable(sentence)
-        guard words.count >= echoWords else { return false }
-        let runs = Set(words.indices.dropLast(echoWords - 1).map { words[$0..<$0 + echoWords].joined(separator: " ") })
-        return passages.contains { passage in
-            let source = comparable(passage)
-            return source.count >= echoWords && source.indices.dropLast(echoWords - 1).contains { runs.contains(source[$0..<$0 + echoWords].joined(separator: " ")) }
-        }
-    }
-    /// `line` split into prose and echoed sentences, neighbours of a kind joined; a sentence
-    /// of markers alone ("… 130 GPa. [1]") stays with the one before it.
-    static func pieces(_ line: String, passages: [String]) -> [Piece] {
-        var result: [Piece] = []
+    /// A sentence's identity across the quote plan and the rendering.
+    static func sentenceKey(_ sentence: String) -> String { comparable(sentence).joined(separator: " ") }
+    /// The sentences of `line`, exactly covering it; chips a sentence break left at the start of
+    /// a sentence ("… 130 GPa. [1]") stay with the one before it.
+    static func sentences(_ line: String) -> [String] {
+        var result: [String] = []
         for range in PageContext.sentenceRanges(line) {
             var sentence = String(line[range])
-            // Chips the sentence break left at the start of this sentence belong to the one before.
             if let last = result.indices.last, let lead = sentence.range(of: #"^\s*((\[\d+\]|⁅\d+⁆)\s*)+"#, options: .regularExpression) {
-                result[last].text += sentence[lead]
+                result[last] += sentence[lead]
                 sentence = String(sentence[lead.upperBound...])
                 if sentence.isEmpty { continue }
             }
-            let quote = echoes(sentence, passages: passages)
-            if let last = result.indices.last, comparable(sentence).isEmpty || result[last].quote == quote { result[last].text += sentence }
+            result.append(sentence)
+        }
+        return result
+    }
+    /// Whether `sentence` is an explicit excerpt: wholly in quotation marks with its words
+    /// verbatim in a cited passage or a source, or a whole sentence of at least `echoWords`
+    /// words that appears word for word in a cited passage. A paraphrase, or a sentence that
+    /// only shares a run of words with a passage, is prose.
+    static func excerpt(_ sentence: String, passages: [String], sources: [KnowledgeSource] = []) -> Bool {
+        var bare = sentence.replacingOccurrences(of: chipPattern, with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
+        while let last = bare.last, ".,;:".contains(last), let before = bare.dropLast().last, "\"”".contains(before) { bare.removeLast() }
+        if let first = bare.first, let last = bare.last, bare.count > 2, "\"“".contains(first), "\"”".contains(last) {
+            let wanted = normalized(String(bare.dropFirst().dropLast()).trimmingCharacters(in: .whitespaces))
+            return !wanted.isEmpty && (passages + sources.map(\.text)).contains { normalized($0).contains(wanted) }
+        }
+        let words = comparable(bare)
+        guard words.count >= echoWords else { return false }
+        let run = " " + words.joined(separator: " ") + " "
+        return passages.contains { (" " + comparable($0).joined(separator: " ") + " ").contains(run) }
+    }
+    /// Which blocks and sentences of an answer are set as quotes.
+    struct QuotePlan: Equatable {
+        /// Ids of whole blocks (`>` quotes, blocks wholly in quotation marks) set as quotes.
+        var blocks: Set<Int> = []
+        /// `sentenceKey`s of sentences set as quotes.
+        var sentences: Set<String> = []
+    }
+    /// The quotes of `text` (as shown, chips anchored): explicit excerpts, in reading order,
+    /// while together they stay within `quoteShare` of the answer's words, so an answer always
+    /// keeps prose around its quotes and is never one quote block.
+    static func quotePlan(_ text: String, passages: [String], sources: [KnowledgeSource]) -> QuotePlan {
+        var total = 0
+        var candidates: [(block: Int?, key: String, words: Int)] = []
+        for block in blocks(text) where !block.code {
+            if block.text.hasPrefix("#") { total += comparable(block.text).count; continue }
+            if quote(block.text, sources: sources) != nil {
+                let count = comparable(block.text).count
+                total += count; candidates.append((block.id, "", count)); continue
+            }
+            for line in block.text.components(separatedBy: "\n") {
+                for sentence in sentences(line) {
+                    let count = comparable(sentence).count
+                    total += count
+                    if count > 0, excerpt(sentence, passages: passages, sources: sources) { candidates.append((nil, sentenceKey(sentence), count)) }
+                }
+            }
+        }
+        var plan = QuotePlan(), used = 0
+        for candidate in candidates where Double(used + candidate.words) <= quoteShare * Double(total) {
+            used += candidate.words
+            if let block = candidate.block { plan.blocks.insert(block) } else { plan.sentences.insert(candidate.key) }
+        }
+        return plan
+    }
+    /// `line` split into prose and the sentences `quoted` names (`sentenceKey`s), neighbours of
+    /// a kind joined; a sentence of chips alone stays with the one before it.
+    static func pieces(_ line: String, quoted: Set<String>) -> [Piece] {
+        var result: [Piece] = []
+        for sentence in sentences(line) {
+            let key = sentenceKey(sentence)
+            let quote = !key.isEmpty && quoted.contains(key)
+            if let last = result.indices.last, key.isEmpty || result[last].quote == quote { result[last].text += sentence }
             else { result.append(Piece(text: sentence, quote: quote)) }
         }
         return result
+    }
+    /// A `>` block's text without its markers, for a block shown as prose.
+    static func unquoted(_ block: String) -> String {
+        let lines = block.components(separatedBy: "\n")
+        guard lines.allSatisfy({ $0.hasPrefix(">") }) else { return block }
+        return lines.map { String($0.dropFirst()).trimmingCharacters(in: .whitespaces) }.joined(separator: "\n")
     }
 
     /// The text of a block that quotes a page: a `>` block quote, or a block wholly in quotation
@@ -199,29 +299,34 @@ struct ChatFlow: Layout {
 }
 
 /// An answer in `row` `ink` at 1.45, with `[n]` markers drawn as the answer's numbered chips
-/// and quoted page text in the serif `quote` face beside a `quoteRule`.
+/// and explicit excerpts of the page (`ChatMarkdown.quotePlan`) in the serif `quote` face
+/// beside a `quoteRule`.
 struct ChatMarkdownView<Chip: View>: View {
     @EnvironmentObject var app: AppState
     let text: String
     let sources: [KnowledgeSource]
     var citations: [ChatCitation] = []
     let chip: (ChatCitation) -> Chip
+    /// The answer as shown: chips anchored, none left alone on a line.
+    private var shown: String { ChatMarkdown.attachingOrphanChips(ChatMarkdown.anchored(text, citations: citations)) }
     var body: some View {
+        let answer = shown
+        let plan = ChatMarkdown.quotePlan(answer, passages: passages, sources: sources)
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(ChatMarkdown.blocks(ChatMarkdown.anchored(text, citations: citations))) { block in
+            ForEach(ChatMarkdown.blocks(answer)) { block in
                 if block.code {
                     ScrollView(.horizontal) { Text(block.text).font(ShellType.code).textSelection(.enabled).padding(10) }
                         .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-                } else if let quote = ChatMarkdown.quote(block.text, sources: sources) {
+                } else if plan.blocks.contains(block.id), let quote = ChatMarkdown.quote(block.text, sources: sources) {
                     quoteRow {
                         Text(quote).font(ShellType.quote).lineSpacing(ShellType.rowLineSpacing).textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } else {
                     let heading = block.text.hasPrefix("#")
-                    let value = heading ? block.text.drop(while: { $0 == "#" || $0 == " " }).description : block.text
+                    let value = heading ? block.text.drop(while: { $0 == "#" || $0 == " " }).description : ChatMarkdown.unquoted(block.text)
                     let font = heading ? ShellType.title : ShellType.row
-                    let pieces = heading ? [] : value.components(separatedBy: "\n").flatMap { ChatMarkdown.pieces($0, passages: passages) }
+                    let pieces = heading ? [] : value.components(separatedBy: "\n").flatMap { ChatMarkdown.pieces($0, quoted: plan.sentences) }
                     if pieces.contains(where: \.quote) {
                         VStack(alignment: .leading, spacing: ShellType.rowLineSpacing) {
                             ForEach(Array(pieces.enumerated()), id: \.offset) { _, piece in
@@ -246,7 +351,7 @@ struct ChatMarkdownView<Chip: View>: View {
                 return .discarded
             })
     }
-    /// The passages this answer cites: a sentence echoing one is set as a quote.
+    /// The passages this answer cites: a sentence quoting one verbatim may be set as a quote.
     private var passages: [String] { citations.compactMap(\.passage) }
     /// Page text in the answer: `content` beside the `quoteRule`.
     private func quoteRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -257,17 +362,28 @@ struct ChatMarkdownView<Chip: View>: View {
     }
     private func flow(_ line: String, font: Font) -> some View {
         ChatFlow(lineSpacing: ShellType.rowLineSpacing) {
-            ForEach(Array(ChatMarkdown.segments(line).enumerated()), id: \.offset) { _, segment in
-                switch segment {
-                case .text(let run):
-                    ForEach(Array(ChatMarkdown.words(run).enumerated()), id: \.offset) { _, word in Text(word).font(font) }
-                case .marker(let number):
-                    if let citation = citations.first(where: { $0.sourceNumber == number }) { chip(citation) }
-                    else { Text("[unverified source] ").font(ShellType.caption).foregroundStyle(app.pal.ink3) }
-                case .anchored(let index):
-                    if let citation = citations.first(where: { $0.index == index }) { chip(citation) }
-                }
+            // Each wrap unit is one subview: a chip wraps with the word before it.
+            ForEach(Array(ChatMarkdown.flowGroups(line).enumerated()), id: \.offset) { _, group in
+                HStack(spacing: 0) {
+                    ForEach(Array(group.enumerated()), id: \.offset) { _, token in
+                        switch token {
+                        case .word(let word): Text(word).font(font)
+                        case .chip(let segment): chipView(segment)
+                        }
+                    }
+                }.fixedSize()
             }
+        }
+    }
+    @ViewBuilder private func chipView(_ segment: ChatMarkdown.Segment) -> some View {
+        switch segment {
+        case .marker(let number):
+            if let citation = citations.first(where: { $0.sourceNumber == number }) { chip(citation) }
+            else { Text("[unverified source] ").font(ShellType.caption).foregroundStyle(app.pal.ink3) }
+        case .anchored(let position):
+            if citations.indices.contains(position - 1) { chip(citations[position - 1]) }
+        case .text(let run):
+            Text(run).font(ShellType.row)
         }
     }
 }

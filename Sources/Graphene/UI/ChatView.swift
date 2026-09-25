@@ -20,6 +20,8 @@ struct ChatView: View {
     @State private var contextDetails = false
     @State private var captureToken = UUID()
     @State private var scopeToken = UUID()
+    /// The chat, its store and the first grounding are in place: an Ask request can be sent.
+    @State private var ready = false
     @FocusState private var focused: Bool
     private var registry: ProviderRegistry { app.providerRegistry }
     private var limit: Int { registry.settings.provider == .onDevice ? 6000 : 24_000 }
@@ -85,14 +87,10 @@ struct ChatView: View {
                     controller.select(latest); attachments = latest.messages.last?.sources?.filter { app.aiSourceAllowed($0) } ?? []
                 } else { await reset() }
                 focused = true
+                // A request that arrived before the panel was mounted is taken now, once.
+                ready = true; await receive()
             }
-            .task(id: app.askRequest?.id) {
-                guard let request = app.askRequest else { return }
-                query = request.query
-                for id in request.tabIDs { if let tab = app.tabs.first(where: { $0.id == id }) { await attach(tab) } }
-                attachments += app.attachedSources.filter { app.aiSourceAllowed($0) && !attachments.contains($0) }
-                app.askRequest = nil; app.attachedSources = []
-            }
+            .task(id: app.askRequest?.id) { await receive() }
             .onChange(of: app.activeSpaceID) { _, _ in controller.stop(); Task { await reset() } }
             .onChange(of: app.settings.ai) { _, _ in controller.stop() }
             .onChange(of: controller.arrived) { _, id in
@@ -289,8 +287,9 @@ struct ChatView: View {
             if choosingSkill || (query.hasPrefix("/") && !query.contains(" ")) {
                 ForEach(skills.filter { choosingSkill || $0.trigger.hasPrefix(query.lowercased()) }) { skill in
                     Button {
-                        query = skill.trigger + " " + (choosingSkill ? query : "")
-                        choosingSkill = false; contexts = Set(skill.contexts); Task { await collect() }
+                        // A typed "/ex" is only the start of the trigger; a draft chosen into is kept.
+                        let draft = choosingSkill ? query : ""
+                        choosingSkill = false; run(ChatSkill.invocation(skill, draft: draft))
                     } label: {
                         HStack { Text(skill.trigger); Spacer(); Text(skill.contexts.map(\.rawValue).joined(separator: ", ")).foregroundStyle(app.pal.ink3) }
                     }.buttonStyle(.plain).font(ShellType.caption)
@@ -302,9 +301,7 @@ struct ChatView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 4) {
                         ForEach(skills) { skill in
-                            Button {
-                                query = skill.trigger + " "; contexts = Set(skill.contexts); focused = true; Task { await collect() }
-                            } label: {
+                            Button { run(ChatSkill.invocation(skill, draft: query)) } label: {
                                 Text(skill.trigger).font(ShellType.label).foregroundStyle(app.pal.ink2)
                                     .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
                                     .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
@@ -356,8 +353,14 @@ struct ChatView: View {
     }
     private func removeMention() { if let range = query.range(of: "@", options: .backwards) { query = String(query[..<range.lowerBound]) } }
     private func send() {
-        guard !capturing, registry.unavailableReason == nil, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let store else { return }
-        let text = query
+        guard !capturing else { return }
+        run(query)
+    }
+    /// Sends `text` as the next turn: a skill invocation first gathers its contexts. With no
+    /// model the text stays in the composer and the reason is said in the transcript.
+    private func run(_ text: String) {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let store else { return }
+        if let reason = registry.unavailableReason { query = text; controller.error = reason; focused = true; return }
         query = ""
         Task {
             if let invocation = ChatSkill.parse(text, skills: skills) {
@@ -365,6 +368,21 @@ struct ChatView: View {
             }
             controller.send(text, sources: attachments, app: app, store: store)
         }
+    }
+    /// Takes the app's pending Ask request (the command bar's Ask, Ask on Page, Summarize page)
+    /// once the panel is ready: grounds on its tabs and attached sources, then sends its question.
+    /// A request with no question only grounds the panel and focuses the composer.
+    private func receive() async {
+        guard let request = controller.claim(from: app, ready: ready) else { return }
+        let requested = request.tabIDs.compactMap { id in app.tabs.first { $0.id == id } }
+        let extra = app.attachedSources.filter { app.aiSourceAllowed($0) }
+        app.attachedSources = []
+        if !requested.isEmpty || !extra.isEmpty {
+            scopeToken = UUID(); captureToken = UUID(); capturing = false; attachments = []
+            for tab in requested { await attach(tab) }
+            for source in extra where !attachments.contains(source) { attachments.append(source) }
+        }
+        if request.sends { run(request.query) } else { focused = true }
     }
     private func reset() async {
         app.citations.clear()
@@ -465,8 +483,8 @@ struct NoteQuoteCard: View {
     }
 }
 
-/// A citation chip, inline in the answer (the index alone) or in the sources line under it
-/// (the source's indices, favicon and title: one entry per source, `siblings` its citations).
+/// A citation chip, inline in the answer (the source's number alone) or in the sources line
+/// under it (the number, favicon and title: one entry per source, `siblings` its citations).
 /// Linked chips drive the page's marks; other-tab chips preview and switch; note chips show
 /// their quote; the rest open their source.
 struct CitationChip: View {
@@ -493,9 +511,8 @@ struct CitationChip: View {
         Button { click(link) } label: {
             if full {
                 HStack(spacing: 4) {
-                    HStack(spacing: 0) {
-                        ForEach(siblings) { sibling in CitationIndexLabel(index: sibling.index, active: active(sibling), linked: self.link(sibling) != .unlinkedPage) }
-                    }
+                    // One number per source, however many of its passages the answer cites.
+                    CitationIndexLabel(index: citation.index, active: siblings.contains(where: active), linked: siblings.contains { self.link($0) != .unlinkedPage })
                     if source?.isNote == true { NoteGlyph() }
                     else { Favicon(host: source.flatMap { URL(string: $0.url)?.host }, size: ShellLayout.iconSize) }
                     Text(source?.title ?? "Source").lineLimit(1).frame(maxWidth: 160, alignment: .leading)
@@ -513,8 +530,8 @@ struct CitationChip: View {
                 else if let source, source.isNote { NoteQuoteCard(title: source.title, quote: citation.passage ?? source.text).environmentObject(app) }
             }
             .help(help(link))
-            .accessibilityIdentifier("chat.citation.\(message.id).\(citation.index)\(full ? ".source" : "")")
-            .accessibilityLabel(full ? "Source \(siblings.map { String($0.index) }.joined(separator: ", ")): \(source?.title ?? "unknown")" : "Source \(citation.index): \(source?.title ?? "unknown")")
+            .accessibilityIdentifier("chat.citation.\(citation.citationID)\(full ? ".source" : "")")
+            .accessibilityLabel("Source \(citation.index): \(source?.title ?? "unknown")")
             .accessibilityAddTraits(.isButton)
     }
     private func help(_ link: CitationChipLink) -> String {

@@ -18,6 +18,12 @@ struct ChatSkill: Codable, Identifiable, Equatable {
         guard let first = parts.first, let skill = skills.first(where: { $0.trigger.lowercased() == first.lowercased() }) else { return nil }
         return (skill, parts.count > 1 ? String(parts[1]) : "")
     }
+    /// The composer text a skill chip sends: the trigger alone on an empty draft, else the
+    /// trigger before the draft.
+    static func invocation(_ skill: ChatSkill, draft: String) -> String {
+        let rest = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return rest.isEmpty ? skill.trigger : skill.trigger + " " + rest
+    }
     var valid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty && trigger.range(of: #"^/[a-z][a-z0-9-]*$"#, options: .regularExpression) != nil && !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 @MainActor

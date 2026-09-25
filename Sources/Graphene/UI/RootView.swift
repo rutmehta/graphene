@@ -45,8 +45,8 @@ struct RootView: View {
                             if app.activeSurface == .web {
                                 SplitBrowserView(reservesTrafficLights: app.sidebarCollapsed && sidebarLayout, cardOriginX: cardGap)
                             } else if sidebarLayout {
-                                librarySurface.pageCard()
-                            } else { librarySurface }
+                                librarySurface.pageCard().background(LibraryEscapeMonitor(app: app))
+                            } else { librarySurface.background(LibraryEscapeMonitor(app: app)) }
                         }.frame(maxWidth: .infinity, maxHeight: .infinity)
                             .modifier(TopTabsPageSurface(active: !sidebarLayout))
                             .overlay {
@@ -163,6 +163,47 @@ struct RootView: View {
         case .board: EaselView()
         case .web: EmptyView()
         }
+    }
+}
+
+/// Escape on a library surface goes back to the web (arc-look.md §3.7), unless the key
+/// belongs to a text field, the command bar, a sheet or an overlay (tab switcher, peek). Pure, so tests read the rule.
+enum LibraryEscape {
+    static let keyCode: UInt16 = 53
+    static func returnsToWeb(keyCode: UInt16, modifiers: NSEvent.ModifierFlags, surface: Surface,
+                             editingText: Bool, commandBar: Bool, sheet: Bool, overlay: Bool = false) -> Bool {
+        keyCode == Self.keyCode && modifiers.intersection([.command, .control, .option, .shift]).isEmpty
+            && surface != .web && !editingText && !commandBar && !sheet && !overlay
+    }
+    /// Text input has the keyboard: a field editor, a text view or a text field.
+    static func editingText(_ responder: NSResponder?) -> Bool { responder is NSText || responder is NSTextField }
+}
+
+/// Watches the library surface's window for Escape (`LibraryEscape`).
+private struct LibraryEscapeMonitor: NSViewRepresentable {
+    let app: AppState
+    func makeNSView(context: Context) -> MonitorView { MonitorView(app: app) }
+    func updateNSView(_ nsView: MonitorView, context: Context) {}
+    final class MonitorView: NSView {
+        let app: AppState
+        private var monitor: Any?
+        init(app: AppState) {
+            self.app = app
+            super.init(frame: .zero)
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self, let window = self.window, event.window === window, window.isKeyWindow,
+                      LibraryEscape.returnsToWeb(keyCode: event.keyCode, modifiers: event.modifierFlags, surface: self.app.activeSurface,
+                                                 editingText: LibraryEscape.editingText(window.firstResponder),
+                                                 commandBar: self.app.commandBarPresented, sheet: window.attachedSheet != nil,
+                                                 overlay: !self.app.switcherIDs.isEmpty || self.app.peekTab != nil) else { return event }
+                self.app.show(.web)
+                return nil
+            }
+        }
+        required init?(coder: NSCoder) { nil }
+        /// Only a monitor: never the target of clicks, hovers, drags or scroll-wheel events.
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        deinit { if let monitor { NSEvent.removeMonitor(monitor) } }
     }
 }
 

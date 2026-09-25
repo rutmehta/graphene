@@ -232,7 +232,7 @@ private struct ProvenanceRows: View, Equatable {
         let pal = app.pal
         var tabs: [UUID: Tab] = [:], states: [UUID: SidebarRowState] = [:]
         for tab in app.visibleTabs where tabs[tab.id] == nil { tabs[tab.id] = tab; states[tab.id] = app.sidebarRowState(tab, pal: pal) }
-        self.tabs = tabs; self.states = states; activeID = app.activeTabID
+        self.tabs = tabs; self.states = states; activeID = app.activeSurface == .web ? app.activeTabID : nil
     }
     static func == (lhs: ProvenanceRows, rhs: ProvenanceRows) -> Bool {
         lhs.layout == rhs.layout && lhs.app === rhs.app && lhs.activeID == rhs.activeID && lhs.states == rhs.states

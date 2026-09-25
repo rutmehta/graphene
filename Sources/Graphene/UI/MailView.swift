@@ -10,7 +10,7 @@ struct MailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            LibraryBar(title: "Mail", detail: unread > 0 ? "\(unread) unread" : nil) {
+            LibraryBar(title: "Mail", detail: unread > 0 ? "\(unread) unread" : nil, surface: .mail) {
                 if mail.isConnected {
                     if mail.isBusy { ProgressView().controlSize(.small).frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize) }
                     LibraryBarButton("Refresh inbox", system: "arrow.clockwise") { mail.reload() }.disabled(mail.isBusy)

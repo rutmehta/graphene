@@ -87,7 +87,7 @@ struct VaultView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            LibraryBar(title: "Vault", detail: app.vault.annotations.isEmpty ? nil : "\(app.vault.annotations.count)") {
+            LibraryBar(title: "Vault", detail: app.vault.annotations.isEmpty ? nil : "\(app.vault.annotations.count)", surface: .vault) {
                 if !app.vault.annotations.isEmpty {
                     FilterField(placeholder: "Filter notes", text: $filter).frame(width: ShellLayout.sidebarDefault)
                     if let selected {

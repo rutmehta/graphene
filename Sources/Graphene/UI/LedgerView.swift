@@ -14,7 +14,7 @@ struct LedgerView: View {
     private var selected: KnowledgeGraph.Thread? { threads.first { $0.id == app.selectedThreadID } }
     var body: some View {
         VStack(spacing: 0) {
-            LibraryBar(title: "Threads", detail: app.currentThreads.isEmpty ? nil : "\(app.currentThreads.count)") {
+            LibraryBar(title: "Threads", detail: app.currentThreads.isEmpty ? nil : "\(app.currentThreads.count)", surface: .threads) {
                 if !app.currentThreads.isEmpty {
                     LibraryBarButton("List", system: "list.bullet.indent", selected: !map, showsTitle: true) { map = false }
                     LibraryBarButton("Map", system: "point.3.connected.trianglepath.dotted", selected: map, showsTitle: true) { map = true }
@@ -616,20 +616,37 @@ struct FilterField: View {
 /// toolbar: `pageToolbarHeight` tall on `pageBg` with a bottom hairline, the view title in
 /// `title` at the left and the view's own actions as `controlSize` glyphs in `ink3` at the
 /// right. With the sidebar collapsed it keeps the traffic lights' reservation clear.
+/// A bar that names its `surface` also carries the way around the library: a Back to web
+/// chevron before the title and the Threads · Vault · Board · Mail switcher after it.
 struct LibraryBar<Actions: View>: View {
     @EnvironmentObject var app: AppState
     let title: String
     var detail: String? = nil
+    /// The library surface this bar heads; `nil` (the archive) shows no switcher.
+    var surface: Surface? = nil
     /// Library views in the page card paint `pageBg`; the archive sits on the chrome plane.
     var onCard = true
     @ViewBuilder var actions: () -> Actions
     private var leading: CGFloat {
-        onCard && app.layout == .sidebar && app.sidebarCollapsed ? ShellLayout.trafficReserve : ShellLayout.windowGap + ShellLayout.rowInsetLeading
+        let base = onCard && app.layout == .sidebar && app.sidebarCollapsed ? ShellLayout.trafficReserve : ShellLayout.windowGap + ShellLayout.rowInsetLeading
+        // The back chevron's own target supplies the inset the title would have had.
+        return surface == nil ? base : max(0, base - ShellLayout.rowInsetLeading)
     }
     var body: some View {
         HStack(spacing: 2) {
+            if surface != nil {
+                LibraryBarButton(LibrarySwitcher.backTitle, system: LibrarySwitcher.backGlyph,
+                                 help: LibrarySwitcher.help(LibrarySwitcher.backTitle, command: "web", app: app)) { app.show(.web) }
+            }
             Text(title).font(ShellType.title).foregroundStyle(app.pal.ink).lineLimit(1)
             if let detail { Text(detail).font(ShellType.caption).monospacedDigit().foregroundStyle(app.pal.ink3).padding(.leading, 6) }
+            if let surface {
+                // Titles while they fit; the glyphs alone in a narrow card.
+                ViewThatFits(in: .horizontal) {
+                    LibrarySwitcherView(current: surface, showsTitles: true)
+                    LibrarySwitcherView(current: surface, showsTitles: false)
+                }.padding(.leading, ShellLayout.windowGap)
+            }
             Spacer(minLength: ShellLayout.windowGap)
             actions()
         }
@@ -638,6 +655,47 @@ struct LibraryBar<Actions: View>: View {
         .background(onCard ? app.pal.pageBg : .clear)
         .overlay(alignment: .bottom) { Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline) }
         .accessibilityElement(children: .contain).accessibilityLabel(title)
+    }
+}
+
+/// The library bar's way between surfaces (arc-look.md §3.7): the four Graphene surfaces in
+/// the Resume page's order and glyphs, and the chevron back to the web. Pure, so tests read it.
+enum LibrarySwitcher {
+    struct Item: Equatable, Identifiable {
+        let surface: Surface
+        let title: String
+        let glyph: String
+        /// The command whose shortcut the help text quotes (⌥⌘2 and on).
+        let command: String
+        var id: Surface { surface }
+    }
+    static let items = [
+        Item(surface: .threads, title: "Threads", glyph: "point.3.connected.trianglepath.dotted", command: "threads"),
+        Item(surface: .vault, title: "Vault", glyph: "tray.full", command: "vault"),
+        Item(surface: .board, title: "Board", glyph: "rectangle.3.group", command: "board"),
+        Item(surface: .mail, title: "Mail", glyph: "envelope", command: "mail")
+    ]
+    static let backTitle = "Back to web"
+    static let backGlyph = "chevron.left"
+    /// "Threads (⌥⌘2)": the title and the command's current shortcut, if it has one.
+    static func help(_ title: String, hint: String) -> String { hint.isEmpty ? title : "\(title) (\(hint))" }
+    @MainActor static func help(_ title: String, command: String, app: AppState) -> String {
+        help(title, hint: app.commandRegistry.byID[command]?.hint ?? "")
+    }
+}
+
+/// The four surface buttons, the current one selected (`ink` on `rowHover`).
+struct LibrarySwitcherView: View {
+    @EnvironmentObject var app: AppState
+    let current: Surface
+    var showsTitles = true
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(LibrarySwitcher.items) { item in
+                LibraryBarButton(item.title, system: item.glyph, selected: item.surface == current, showsTitle: showsTitles,
+                                 help: LibrarySwitcher.help(item.title, command: item.command, app: app)) { app.show(item.surface) }
+            }
+        }.fixedSize().accessibilityElement(children: .contain).accessibilityLabel("Library views")
     }
 }
 
@@ -650,9 +708,11 @@ struct LibraryBarButton: View {
     var selected = false
     /// Shows the title in `label` after the glyph (Threads' List and Map), not only as help.
     var showsTitle = false
+    /// Help text when it says more than the title (a shortcut); the title otherwise.
+    var help: String? = nil
     let action: () -> Void
-    init(_ title: String, system: String, selected: Bool = false, showsTitle: Bool = false, action: @escaping () -> Void) {
-        self.title = title; self.system = system; self.selected = selected; self.showsTitle = showsTitle; self.action = action
+    init(_ title: String, system: String, selected: Bool = false, showsTitle: Bool = false, help: String? = nil, action: @escaping () -> Void) {
+        self.title = title; self.system = system; self.selected = selected; self.showsTitle = showsTitle; self.help = help; self.action = action
     }
     var body: some View {
         Button(action: action) {
@@ -661,7 +721,7 @@ struct LibraryBarButton: View {
                 if showsTitle { Text(title).font(ShellType.label).lineLimit(1).fixedSize().padding(.trailing, ShellLayout.rowInsetLeading) }
             }.contentShape(Rectangle())
         }.buttonStyle(LibraryGlyphStyle(selected: selected)).keyboardFocusRing()
-            .help(title).accessibilityLabel(title).accessibilityIdentifier("library.\(system).\(title)").accessibilityAddTraits(selected ? [.isButton, .isSelected] : [.isButton])
+            .help(help ?? title).accessibilityLabel(title).accessibilityIdentifier("library.\(system).\(title)").accessibilityAddTraits(selected ? [.isButton, .isSelected] : [.isButton])
     }
 }
 

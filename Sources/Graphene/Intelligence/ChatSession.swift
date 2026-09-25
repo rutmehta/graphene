@@ -15,18 +15,22 @@ struct ChatSession: Codable, Identifiable {
     /// The stored citations of `message`, else the ones its text implies (older chats and
     /// answers still streaming carry no passages, so they never link to a page).
     func citations(for message: ChatMessage) -> [ChatCitation] {
-        citations?[message.id.uuidString] ?? ChatCitation.assign(answer: message.content, sources: message.sources ?? [], messageID: message.id, passages: false)
+        // Stored answers from before per-source numbering are renumbered as they are shown.
+        citations?[message.id.uuidString].map(ChatCitation.numberedBySource)
+            ?? ChatCitation.assign(answer: message.content, sources: message.sources ?? [], messageID: message.id, passages: false)
     }
 }
 
 /// One passage an answer cites: a source and the excerpt of it that supports one or more
-/// claims, numbered per answer in order of first mention (D6 §3.4). Two claims citing the same
-/// source with different passages are two citations with two indices; the sources line under
-/// the answer still lists each source once.
+/// claims (graphene-identity.md §3.4). Numbering is per source: every citation of one source
+/// shows that source's number, in order of the source's first mention, while each distinct
+/// passage stays its own citation (its own id and page mark), so a chip still leads to its
+/// own passage. The sources line under the answer lists each source once, with its number.
 struct ChatCitation: Codable, Equatable, Identifiable {
-    /// Stable across reloads: derived from the answer's id and the index. Also the page mark's id.
+    /// Stable across reloads: derived from the answer's id and the citation's 1-based position
+    /// among the answer's citations (its passage ordinal). Also the page mark's id.
     var citationID: String
-    /// The number shown on the chip, 1-based within the answer.
+    /// The number shown on the chip: the source's, 1-based within the answer.
     var index: Int
     /// The `[n]` the model wrote, 1-based into the answer's sources.
     var sourceNumber: Int
@@ -42,7 +46,7 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     var markers: [Int]? = nil
     var id: String { citationID }
 
-    static func citationID(messageID: UUID, index: Int) -> String { "cite-\(messageID.uuidString.lowercased())-\(index)" }
+    static func citationID(messageID: UUID, ordinal: Int) -> String { "cite-\(messageID.uuidString.lowercased())-\(ordinal)" }
     /// `[n]` markers the answer uses, as source numbers in the model's own numbering.
     static let marker = #"\[(\d+)\]"#
 
@@ -52,7 +56,7 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     /// restated source label, "Source [1]: Graphene - Wikipedia") joins its source's first
     /// citation that has one. With `passages` (a finished answer), sentences the model left
     /// uncited are matched to the sources by `fallbackMatch`; explicit markers always win.
-    /// Indices follow first mention.
+    /// Citations are ordered by first mention; their indices are their sources' numbers.
     static func assign(answer: String, sources: [KnowledgeSource], messageID: UUID, passages: Bool = true) -> [ChatCitation] {
         guard let regex = try? NSRegularExpression(pattern: marker) else { return [] }
         var uses: [Use] = []
@@ -80,9 +84,20 @@ struct ChatCitation: Codable, Equatable, Identifiable {
         }
         if let waiting = pending { fallback(waiting, sources: sources, into: &uses) }
         if passages { resolvePassages(&uses, sources: sources) }
-        return group(uses).enumerated().map { offset, group in
-            ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: group.n, sourceID: sources[group.n - 1].id,
+        return numberedBySource(group(uses).enumerated().map { offset, group in
+            ChatCitation(citationID: citationID(messageID: messageID, ordinal: offset + 1), index: offset + 1, sourceNumber: group.n, sourceID: sources[group.n - 1].id,
                          passage: group.passage, anchors: group.anchors.isEmpty ? nil : group.anchors, markers: group.markers.isEmpty ? nil : group.markers)
+        })
+    }
+    /// `citations` (in order of first mention) with each index set to its source's number:
+    /// 1 for the first source mentioned, 2 for the next, the same number for every passage of
+    /// one source. Ids, passages and order are kept.
+    static func numberedBySource(_ citations: [ChatCitation]) -> [ChatCitation] {
+        var numbers: [Int: Int] = [:]
+        return citations.map { citation in
+            var numbered = citation
+            numbered.index = numbers[citation.sourceNumber] ?? { let next = numbers.count + 1; numbers[citation.sourceNumber] = next; return next }()
+            return numbered
         }
     }
     /// One mention of a source: a `[n]` marker on `claim`, or an uncited sentence the fallback
@@ -171,11 +186,11 @@ struct ChatCitation: Codable, Equatable, Identifiable {
 }
 
 extension ChatCitation {
-    /// The sources line under an answer: one entry per source, in order of its first index,
-    /// each holding that source's citations (one per distinct passage).
+    /// The sources line under an answer: one entry per source, in order of its number, each
+    /// holding that source's citations (one per distinct passage) under the one number.
     static func sourcesLine(_ citations: [ChatCitation]) -> [[ChatCitation]] {
         var entries: [[ChatCitation]] = []
-        for citation in citations.sorted(by: { $0.index < $1.index }) {
+        for citation in citations.enumerated().sorted(by: { ($0.element.index, $0.offset) < ($1.element.index, $1.offset) }).map(\.element) {
             if let existing = entries.firstIndex(where: { $0.first?.sourceNumber == citation.sourceNumber }) { entries[existing].append(citation) }
             else { entries.append([citation]) }
         }
@@ -459,7 +474,17 @@ final class ChatController: ObservableObject {
     @Published private(set) var arrived: UUID?
     private var generation = UUID()
     private var task: Task<Void, Never>?
+    /// Ask requests this panel has taken: each is sent once, however often the view asks.
+    private var claimed: Set<UUID> = []
     func stop() { task?.cancel(); generation = UUID(); working = false }
+    /// The app's pending Ask request, taken off the app, once the panel is `ready` (its chat,
+    /// store and first grounding in place). `nil` before then, so a request that arrives
+    /// before the panel is mounted waits on the app, and `nil` for a request already taken.
+    func claim(from app: AppState, ready: Bool) -> AskRequest? {
+        guard ready, let request = app.askRequest else { return nil }
+        app.askRequest = nil
+        return claimed.insert(request.id).inserted ? request : nil
+    }
     func select(_ chat: ChatSession) { stop(); self.chat = chat; error = nil }
     func send(_ question: String, sources: [KnowledgeSource], app: AppState, store: ChatStore, regenerate: Bool = false, providerOverride: (any LanguageModelProvider)? = nil) {
         stop(); error = nil
