@@ -197,11 +197,11 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     }
     /// Chrome saturation for the preset. The swatch colours are muted (s ≈ 0.13–0.5), which
     /// left the flooded gradient nearly flat; presets drive the chrome at s ≥ 0.6, like the
-    /// Arc calibration capture (arc-look.md §2.3). Custom themes keep their own saturation.
+    /// Arc calibration capture (arc-look.md §2.3); Slate stays at 0 as the neutral grey preset. Custom themes keep their own saturation.
     var presetSaturation: Double {
         switch self {
         case .clay: return 0.68; case .moss: return 0.62; case .tide: return 0.66
-        case .iris: return 0.64; case .slate: return 0.60
+        case .iris: return 0.64; case .slate: return 0
         }
     }
     /// The preset as a hue and saturation: the swatch's hue with `presetSaturation`.

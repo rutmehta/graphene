@@ -26,7 +26,8 @@ final class VisualPaletteTests: XCTestCase {
 
     @MainActor
     func testPresetsDriveTheChromeAtSixtyPercentSaturation() throws {
-        for space in SpaceColor.allCases {
+        XCTAssertEqual(SpaceColor.slate.theme.saturation, 0, "Slate is the neutral preset: grey chrome, no hue")
+        for space in SpaceColor.allCases where space != .slate {
             XCTAssertGreaterThanOrEqual(space.theme.saturation, 0.6, space.rawValue)
             XCTAssertGreaterThanOrEqual(Palette(mode: .dark, space: space).chromeSaturation, 0.8, space.rawValue)
             let swatch = try XCTUnwrap(NSColor(space.c1).usingColorSpace(.sRGB))
@@ -112,7 +113,7 @@ final class VisualPaletteTests: XCTestCase {
             let neutral = Palette(mode: mode, space: .tide, neutralChrome: true)
             for space in SpaceColor.allCases {
                 let palette = Palette(mode: mode, space: space)
-                XCTAssertNotEqual(NSColor(palette.sidebarBg), NSColor(neutral.sidebarBg))
+                if space != .slate { XCTAssertNotEqual(NSColor(palette.sidebarBg), NSColor(neutral.sidebarBg)) }
                 XCTAssertGreaterThan(palette.inkContrast, 4.5)
             }
         }
