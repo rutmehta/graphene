@@ -35,7 +35,12 @@ extension Annotation {
 /// disk, each carrying the source it came from. Notes never lose their origin.
 @MainActor
 final class Vault: ObservableObject {
-    @Published private(set) var annotations: [Annotation] = []
+    @Published private(set) var annotations: [Annotation] = [] { didSet { byURL = nil; bySpace = [:] } }
+    /// Notes by canonical page URL and by space (newest first), rebuilt after a change. Every
+    /// page load looked its notes up by canonicalising every note's URL, and the sidebar's
+    /// shelf filtered and sorted all notes twice per redraw.
+    private var byURL: [String: [Annotation]]?
+    private var bySpace: [UUID: [Annotation]] = [:]
 
     private var canSave = true
     private let file: URL
@@ -102,13 +107,22 @@ final class Vault: ObservableObject {
 
     /// Notes saved in `space`, newest first, at most `limit` when given.
     func notes(inSpace space: UUID, limit: Int? = nil) -> [Annotation] {
-        let notes = annotations.filter { $0.spaceID == space }.sorted { $0.created > $1.created }
+        let notes: [Annotation]
+        if let cached = bySpace[space] { notes = cached } else {
+            notes = annotations.filter { $0.spaceID == space }.sorted { $0.created > $1.created }
+            bySpace[space] = notes
+        }
         guard let limit else { return notes }
         return Array(notes.prefix(max(0, limit)))
     }
 
     func annotations(forURL url: String) -> [Annotation] {
-        annotations.filter { KnowledgeGraph.canonicalURL($0.url) == KnowledgeGraph.canonicalURL(url) }
+        let index: [String: [Annotation]]
+        if let byURL { index = byURL } else {
+            index = Dictionary(grouping: annotations) { KnowledgeGraph.canonicalURL($0.url) }
+            byURL = index
+        }
+        return index[KnowledgeGraph.canonicalURL(url)] ?? []
     }
 
     /// The notes saved from the page at `url` that carry a quote, newest first: the page's saved marks.

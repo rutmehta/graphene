@@ -334,7 +334,7 @@ struct CommandBar: View {
             app.commandBarPresented = false
             // Chosen from the bar itself, New Tab opens the Resume page rather than the bar again.
             if id == "new-tab" { app.openResumeTab(); return }
-            app.commandActions.first { $0.id == id }?.run()
+            app.commandAction(id)?.run()
         case .ask: app.sendToAsk(query)
         case .attach(let id):
             app.commandContextIDs.append(id)
@@ -357,7 +357,7 @@ struct CommandBar: View {
         switch result.destination {
         case .tab: return "Switch to Tab"
         case .action(let id):
-            let hint = app.commandActions.first { $0.id == id }?.hint ?? ""
+            let hint = app.commandAction(id)?.hint ?? ""
             return hint.isEmpty && selected ? "↩" : hint
         default: return selected ? "↩" : ""
         }

@@ -24,6 +24,7 @@ struct RootView: View {
             || width - (showsSidebar ? sidebarWidth : 0) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth
     }
     var body: some View {
+        let _ = StartupTrace.once("RootView.body")
         GeometryReader { geometry in
             HStack(spacing: 0) {
                 if showsSidebar {
@@ -127,6 +128,12 @@ struct RootView: View {
         .overlay { TabSwitcherOverlay(switcher: app.switcher) }
         .overlay { WindowOutline() }
         .onAppear {
+            if StartupTrace.enabled && !StartupTrace.firstFrameMarked {
+                StartupTrace.firstFrameMarked = true
+                StartupTrace.mark("RootView appeared")
+                // The next main-queue turn runs after the first frame is committed.
+                DispatchQueue.main.async { StartupTrace.mark("first frame committed") }
+            }
             app.focusedWindowID = windowID
             if app.sidebarWidths[windowID] == nil { app.resizeSidebar(app.sidebarWidth, windowID: windowID) }
         }

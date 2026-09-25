@@ -8,7 +8,7 @@ struct SiteControlsButton: View {
     var body: some View {
         HStack(spacing: PageToolbarGeometry.controlGap) {
             if tab.articleDetected {
-                ToolbarGlyphButton(title: "Reader", system: "doc.plaintext", identifier: "toolbar.reader") { app.commandActions.first { $0.id == "reader" }?.run() }
+                ToolbarGlyphButton(title: "Reader", system: "doc.plaintext", identifier: "toolbar.reader") { app.commandAction("reader")?.run() }
             }
             // The page's favicon is the site-controls button (arc-look.md §3.2).
             Button { app.siteControlsTabID = tab.id } label: {

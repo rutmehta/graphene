@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CommandShortcut: Codable, Equatable {
+struct CommandShortcut: Codable, Hashable {
     var key: String
     var command = true
     var option = false

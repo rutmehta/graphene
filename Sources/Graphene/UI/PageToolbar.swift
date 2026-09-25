@@ -280,7 +280,7 @@ struct WebPageToolbar: View {
                 app.toggleKnowledge()
             }.disabled(app.isPrivate)
             ToolbarGlyphButton(title: "Split view", system: "rectangle.split.2x1", identifier: "toolbar.split") {
-                app.activate(tab.id); app.commandActions.first { $0.id == "split" }?.run()
+                app.activate(tab.id); app.commandAction("split")?.run()
             }.disabled(tab.url == nil || !canSplit)
             if paneCount > 1 {
                 ToolbarGlyphButton(title: "Close pane: \(tab.displayTitle)", system: "xmark", identifier: "split.close.\(tab.id)") {

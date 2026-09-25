@@ -58,6 +58,7 @@ struct Sidebar: View {
     private var showsAddress: Bool { app.settings.addressPlacement == .sidebar && app.activeTab != nil }
 
     var body: some View {
+        let _ = StartupTrace.once("Sidebar.body")
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
                 SidebarGlyphButton("Hide sidebar (⌘S)", system: "sidebar.left", identifier: "sidebar.toggle") { app.toggleSidebar() }
@@ -86,10 +87,7 @@ struct Sidebar: View {
                             SpaceLabel()
                             rows(.pinned)
                             TodayDivider()
-                            VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
-                                NewTabRow()
-                                rows(.today)
-                            }
+                            todayRows
                         }.padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.sectionGap)
                             .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: app.visibleTabs.map(\.id))
                     }.scrollIndicators(.hidden)
@@ -129,8 +127,9 @@ struct Sidebar: View {
     private var favorites: some View {
         let tiles = app.visibleTabs.filter { $0.section == .favorites }
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ShellLayout.favoriteGap), count: ShellLayout.favoriteColumns(width: ShellLayout.sidebarContentWidth(width))), spacing: ShellLayout.favoriteGap) {
+            let pal = app.pal
             ForEach(tiles) { tab in
-                SidebarTab(tab: tab, tile: true)
+                SidebarTab(tab: tab, app: app, state: app.sidebarRowState(tab, pal: pal), tile: true).equatable()
             }
         }.frame(maxWidth: .infinity, minHeight: ShellLayout.favoriteHeight)
             .background {
@@ -146,44 +145,112 @@ struct Sidebar: View {
         app.visibleTabs.contains { $0.section == section } || app.folders.contains { $0.spaceID == app.activeSpaceID && $0.section == section }
     }
 
-    private func rows(_ section: TabSection) -> some View {
-        // Only a space whose Today list has a child tab pays for provenance rows.
-        let branches = section == .today ? app.todayProvenance() : nil
+    private func rows(_ section: TabSection, branches: ProvenanceLayout? = nil) -> some View {
+        let pal = app.pal
         return VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
             ForEach(app.folders.filter { $0.spaceID == app.activeSpaceID && $0.section == section }) { folder in
                 FolderRow(folder: folder)
             }
             if let branches, branches.hasBranches {
-                ProvenanceRows(layout: branches)
+                ProvenanceRows(layout: branches, app: app).equatable()
             } else {
                 ForEach(app.visibleTabs.filter { $0.section == section && $0.folderID == nil }) { tab in
-                    SidebarTab(tab: tab).id(tab.id)
+                    SidebarTab(tab: tab, app: app, state: app.sidebarRowState(tab, pal: pal)).equatable().id(tab.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
     }
+
+    /// A Today list longer than this many rows is built lazily (only rows on screen).
+    static let lazyTodayThreshold = 40
+    /// Whether Today's rows go straight into the scroll view's `LazyVStack`. Branches keep one
+    /// stack: their connectors are drawn in its coordinate space.
+    static func lazyToday(rows: Int, hasBranches: Bool) -> Bool { !hasBranches && rows > lazyTodayThreshold }
+
+    /// The New Tab row and Today's rows. A long flat Today puts each row directly in the scroll
+    /// view's `LazyVStack` (spaced by padding, as the stack spaced them), so opening or
+    /// scrolling a space with hundreds of tabs builds only the rows on screen.
+    @ViewBuilder private var todayRows: some View {
+        let gap = ShellLayout.rowPitch - ShellLayout.rowHeight
+        // Only a space whose Today list has a child tab pays for provenance rows.
+        let branches = app.todayProvenance()
+        let loose = app.visibleTabs.filter { $0.section == .today && $0.folderID == nil }
+        if Self.lazyToday(rows: loose.count, hasBranches: branches.hasBranches) {
+            let pal = app.pal
+            let folders = app.folders.filter { $0.spaceID == app.activeSpaceID && $0.section == .today }
+            NewTabRow()
+            if !folders.isEmpty {
+                VStack(spacing: gap) { ForEach(folders) { folder in FolderRow(folder: folder) } }.padding(.top, gap)
+            }
+            ForEach(loose) { tab in
+                SidebarTab(tab: tab, app: app, state: app.sidebarRowState(tab, pal: pal)).equatable()
+                    .padding(.top, gap).id(tab.id)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        } else {
+            VStack(spacing: gap) {
+                NewTabRow()
+                rows(.today, branches: branches)
+            }
+        }
+    }
+}
+
+/// What a sidebar row shows from AppState. Rows compare it (with their tab and position) to
+/// skip redrawing when an AppState change does not touch them: a page load publishes the
+/// graph three times, and every row used to re-evaluate each time.
+struct SidebarRowState: Equatable {
+    var selected = false
+    var highlighted = false
+    var branchCollapsed = false
+    var pal: Palette
+    /// `pal.isDark` follows the system appearance in Automatic mode, which `pal` alone does not capture.
+    var dark: Bool
+}
+
+extension AppState {
+    func sidebarRowState(_ tab: Tab, pal: Palette) -> SidebarRowState {
+        let selected = activeTabID == tab.id && activeSurface == .web
+        return SidebarRowState(selected: selected, highlighted: selected || (selectedTabIDs.contains(tab.id) && selectedTabIDs.count > 1),
+                               branchCollapsed: collapsedBranchIDs.contains(tab.id), pal: pal, dark: pal.isDark)
+    }
 }
 
 /// Today rows as branches (graphene-identity.md §3.1): children indent `threadIndent` per
 /// depth under their parent, joined by one hairline path per parent drawn behind the rows.
-private struct ProvenanceRows: View {
+private struct ProvenanceRows: View, Equatable {
     let layout: ProvenanceLayout
-    @EnvironmentObject var app: AppState
+    /// For actions and the key monitor; the rows' state comes from `tabs` and `states`.
+    let app: AppState
+    let tabs: [UUID: Tab]
+    let states: [UUID: SidebarRowState]
+    let activeID: UUID?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    init(layout: ProvenanceLayout, app: AppState) {
+        self.layout = layout; self.app = app
+        let pal = app.pal
+        var tabs: [UUID: Tab] = [:], states: [UUID: SidebarRowState] = [:]
+        for tab in app.visibleTabs where tabs[tab.id] == nil { tabs[tab.id] = tab; states[tab.id] = app.sidebarRowState(tab, pal: pal) }
+        self.tabs = tabs; self.states = states; activeID = app.activeTabID
+    }
+    static func == (lhs: ProvenanceRows, rhs: ProvenanceRows) -> Bool {
+        lhs.layout == rhs.layout && lhs.app === rhs.app && lhs.activeID == rhs.activeID && lhs.states == rhs.states
+            && lhs.tabs.count == rhs.tabs.count && lhs.tabs.allSatisfy { rhs.tabs[$0.key] === $0.value }
+    }
     var body: some View {
-        let tabs = Dictionary(app.visibleTabs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
             ForEach(layout.rows) { row in
-                if let tab = tabs[row.id] {
-                    SidebarTab(tab: tab, hiddenDescendants: row.collapsed ? row.descendants : nil, isBranchParent: layout.parentIDs.contains(tab.id))
+                if let tab = tabs[row.id], let state = states[row.id] {
+                    SidebarTab(tab: tab, app: app, state: state, hiddenDescendants: row.collapsed ? row.descendants : nil, isBranchParent: layout.parentIDs.contains(tab.id))
+                        .equatable()
                         .padding(.leading, CGFloat(row.indent) * ShellLayout.threadIndent)
                         .id(tab.id)
                         .transition(row.depth > 0 ? SidebarMotion.branchTransition(reduceMotion: reduceMotion) : .opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
-        .background(alignment: .topLeading) { ThreadLines(connectors: layout.connectors(activeID: app.activeTabID)) }
+        .background(alignment: .topLeading) { ThreadLines(connectors: layout.connectors(activeID: activeID)) }
         .background(BranchKeyMonitor(app: app))
     }
 }
@@ -525,9 +592,13 @@ struct SidebarRowModel: Equatable {
     var showsClose: Bool { closable && (hovered || selected) }
 }
 
-private struct SidebarTab: View {
+private struct SidebarTab: View, Equatable {
     @ObservedObject var tab: Tab
-    @EnvironmentObject var app: AppState
+    /// For actions only. The row does not observe AppState: what it shows from it arrives in
+    /// `state`, so an AppState change that leaves this row's state alone skips its body
+    /// (`.equatable()` at the call sites). The tab's own changes still redraw it.
+    let app: AppState
+    let state: SidebarRowState
     var tile = false
     /// Set on a collapsed branch's parent: the count shown at the trailing edge.
     var hiddenDescendants: Int? = nil
@@ -542,8 +613,13 @@ private struct SidebarTab: View {
     @State private var groupTask: Task<Void, Never>?
     @State private var previewTask: Task<Void, Never>?
     @State private var previewShown = false
-    private var selected: Bool { app.activeTabID == tab.id && app.activeSurface == .web }
-    private var highlighted: Bool { selected || (app.selectedTabIDs.contains(tab.id) && app.selectedTabIDs.count > 1) }
+    private var selected: Bool { state.selected }
+    private var highlighted: Bool { state.highlighted }
+    private var pal: Palette { state.pal }
+    static func == (lhs: SidebarTab, rhs: SidebarTab) -> Bool {
+        lhs.tab === rhs.tab && lhs.app === rhs.app && lhs.state == rhs.state && lhs.tile == rhs.tile
+            && lhs.hiddenDescendants == rhs.hiddenDescendants && lhs.isBranchParent == rhs.isBranchParent
+    }
     private var model: SidebarRowModel { SidebarRowModel(section: tab.section, hovered: hovered, selected: selected, tile: tile) }
     /// A pinned tab that has navigated away from its base URL; clicking its favicon resets it.
     private var offBase: Bool { tab.isPinned && tab.pinnedURL != nil && tab.pinnedURL != tab.url }
@@ -551,7 +627,7 @@ private struct SidebarTab: View {
 
     var body: some View {
         Group { if tile { tileContent } else { rowContent } }
-            .overlay(shape.strokeBorder(grouping ? app.pal.accent : .clear).allowsHitTesting(false))
+            .overlay(shape.strokeBorder(grouping ? pal.accent : .clear).allowsHitTesting(false))
             .animation(SidebarMotion.hover, value: hovered)
             .animation(SidebarMotion.hover, value: highlighted)
             // The row is a tap target, not a Button: a Button tracks the mouse itself, so a drag
@@ -610,16 +686,17 @@ private struct SidebarTab: View {
     private var tileContent: some View {
         icon(size: ShellLayout.favoriteIconSize)
             .frame(maxWidth: .infinity).frame(height: ShellLayout.favoriteHeight).contentShape(Rectangle())
-            .background(highlighted ? app.pal.fillSelected : (hovered ? app.pal.fillHover : app.pal.fill), in: shape)
-            .overlay(shape.strokeBorder(highlighted ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline).allowsHitTesting(false))
+            .background(highlighted ? pal.fillSelected : (hovered ? pal.fillHover : pal.fill), in: shape)
+            .overlay(shape.strokeBorder(highlighted ? pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline).allowsHitTesting(false))
     }
 
     /// Pinned and Today row: 20pt icon slot, title, audio glyph; Today rows add a close glyph.
     /// A Today row with children: hovering it swaps the favicon for the branch chevron.
     private var branchParent: Bool { isBranchParent && tab.section == .today && tab.folderID == nil }
-    private var branchCollapsed: Bool { app.collapsedBranchIDs.contains(tab.id) }
+    private var branchCollapsed: Bool { state.branchCollapsed }
     private func toggleBranch() {
-        withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { app.setBranch(tab.id, collapsed: !branchCollapsed) }
+        let collapsed = app.collapsedBranchIDs.contains(tab.id)
+        withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { app.setBranch(tab.id, collapsed: !collapsed) }
     }
     private func iconTap(chevron: Bool) {
         if chevron { toggleBranch() } else { app.sidebarClick(tab, reset: offBase) }
@@ -631,14 +708,14 @@ private struct SidebarTab: View {
             Group {
                 if chevron {
                     // Like a folder row's: down while open, turned to point right when collapsed.
-                    Image(systemName: "chevron.down").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
+                    Image(systemName: "chevron.down").font(ShellType.glyphMini).foregroundStyle(pal.ink3)
                         .rotationEffect(.degrees(branchCollapsed ? -90 : 0))
                         .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
                 } else {
                     icon(size: ShellLayout.iconSize)
                         .overlay(alignment: .bottomTrailing) {
                             if offBase {
-                                Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                                Circle().fill(pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
                                     .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
                             }
                         }
@@ -657,16 +734,16 @@ private struct SidebarTab: View {
             if renaming { InlineName(text: $name) { app.renameTab(tab, name: name); renaming = false } }
             else {
                 Text(tab.displayTitle).font(selected ? ShellType.rowSelected : ShellType.row).lineLimit(1)
-                    .foregroundStyle(selected ? app.pal.ink : app.pal.ink2)
+                    .foregroundStyle(selected ? pal.ink : pal.ink2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .onTapGesture(count: 2) { beginRename() }
                     .onTapGesture { app.sidebarClick(tab) }
             }
             if tab.isPlayingAudio {
-                Image(systemName: "speaker.wave.2.fill").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3).help("Playing audio")
+                Image(systemName: "speaker.wave.2.fill").font(ShellType.glyphMini).foregroundStyle(pal.ink3).help("Playing audio")
             }
             if let hiddenDescendants {
-                Text("\(hiddenDescendants)").font(ShellType.label).monospacedDigit().foregroundStyle(app.pal.ink3)
+                Text("\(hiddenDescendants)").font(ShellType.label).monospacedDigit().foregroundStyle(pal.ink3)
                     .help("\(hiddenDescendants) hidden tabs; ⌥→ expands")
                     .accessibilityLabel("\(hiddenDescendants) collapsed tabs")
             }
@@ -676,7 +753,7 @@ private struct SidebarTab: View {
                 }
             }
         }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight)
-            .background(highlighted ? app.pal.rowSelected : (hovered ? app.pal.rowHover : .clear), in: shape)
+            .background(highlighted ? pal.rowSelected : (hovered ? pal.rowHover : .clear), in: shape)
     }
 
     private func beginRename() { name = tab.displayTitle; renaming = true }
@@ -743,9 +820,12 @@ private struct FolderRow: View {
                 }, accept: { payload, _ in app.sidebarDrop(payload, on: .folder(folder.id)) }))
             // A Today folder keeps its tabs' branches and their connectors (landing-and-tidy.md §4).
             if !folder.collapsed, let branches = todayBranches {
-                ProvenanceRows(layout: branches).padding(.leading, ShellLayout.folderIndent)
+                ProvenanceRows(layout: branches, app: app).equatable().padding(.leading, ShellLayout.folderIndent)
             } else if !folder.collapsed {
-                ForEach(app.visibleTabs.filter { $0.folderID == folder.id }) { tab in SidebarTab(tab: tab).padding(.leading, ShellLayout.folderIndent) }
+                let pal = app.pal
+                ForEach(app.visibleTabs.filter { $0.folderID == folder.id }) { tab in
+                    SidebarTab(tab: tab, app: app, state: app.sidebarRowState(tab, pal: pal)).equatable().padding(.leading, ShellLayout.folderIndent)
+                }
             }
         }
     }

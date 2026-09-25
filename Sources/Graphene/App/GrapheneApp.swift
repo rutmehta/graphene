@@ -7,7 +7,10 @@ struct GrapheneApp: App {
     @StateObject private var app = AppState.shared
     @StateObject private var mail = MailStore()
 
+    init() { StartupTrace.mark("GrapheneApp.init") }
+
     var body: some Scene {
+        let _ = StartupTrace.once("App.body")
         WindowGroup {
             BrowserWindowRoot(state: WindowState.initial())
                 .environmentObject(mail)
@@ -31,6 +34,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for url in urls { app.openExternalURL(url) }
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
+        StartupTrace.mark("applicationDidFinishLaunching")
+        // The content blocker loads while the first window draws, not when the first page asks.
+        MainActor.assumeIsolated { ContentBlocker.prewarm() }
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
         NSApp.windows.first?.makeKeyAndOrderFront(nil)
@@ -38,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationWillTerminate(_ notification: Notification) {
         (BrowserFocus.shared.app.flatMap { $0.isPrivate ? nil : $0 } ?? AppState.shared).persist()
+        SessionWriter.shared.flush()
         AppState.shared.graph.save()
     }
 }
@@ -50,6 +57,7 @@ struct GrapheneCommands: Commands {
     private var app: AppState { focus.app ?? focusedApp ?? defaultApp }
 
     var body: some Commands {
+        let _ = StartupTrace.once("menu commands body")
         // One action table per menu update: the body re-runs on every AppState change, and
         // building the table per menu item (~90 lookups) made each change pay ~90 full builds.
         let actions = CommandMenuTable(app.allCommandActions)

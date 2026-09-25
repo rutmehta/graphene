@@ -67,7 +67,7 @@ final class ShellPolishTests: XCTestCase {
         try XCTUnwrap(app.commandActions.first { $0.id == "archive-stale" }).run()
         XCTAssertFalse(app.tabs.contains { $0.id == stale.id })
         for tab in [pin, other, playing, selected, fresh] { XCTAssertTrue(app.tabs.contains { $0.id == tab.id }) }
-        app.persist()
+        app.persist(); app.flushSaves()
         let archive = try JSONDecoder().decode([AppState.SessionTab].self, from: Data(contentsOf: directory.appendingPathComponent("archive.json")))
         XCTAssertTrue(archive.contains { $0.id == stale.id })
         app.archiveHours = 0

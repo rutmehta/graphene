@@ -118,9 +118,9 @@ final class FaviconStore: ObservableObject {
     private let loader: ((URL) async -> Data?)?
     /// Network requests started, for tests.
     private(set) var downloads = 0
-    private static let maxBytes = 524288
+    nonisolated private static let maxBytes = 524288
     /// A cached icon is reused without asking the network for this long.
-    static let diskFreshness: TimeInterval = 604800
+    nonisolated static let diskFreshness: TimeInterval = 604800
 
     init(directory: URL = Paths.root.appendingPathComponent("Favicons", isDirectory: true), loader: ((URL) async -> Data?)? = nil) {
         self.directory = directory; self.loader = loader
@@ -165,29 +165,40 @@ final class FaviconStore: ObservableObject {
         if inFlight[key]?.id == id { inFlight[key] = nil }
     }
 
+    /// A decoded icon and its contrast class, prepared off the main thread.
+    private struct Decoded: @unchecked Sendable { let image: NSImage; let tone: FaviconTone }
+    nonisolated private static func prepare(_ data: Data) -> Decoded? {
+        guard let image = decode(data) else { return nil }
+        return Decoded(image: image, tone: tone(of: image))
+    }
+
     private func load(key: String, declared: [URL], fallback: URL) async {
         let filename = SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
         let file = directory.appendingPathComponent(filename + ".icon")
         let sourceFile = directory.appendingPathComponent(filename + ".source")
-        if let attributes = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
-           let date = attributes.contentModificationDate, Date().timeIntervalSince(date) < Self.diskFreshness {
+        // The disk read, image decode and tone sampling run off the main thread: a space of
+        // twenty sites asked for twenty icons as its rows first appeared.
+        let wanted = declared.first, anySource = declared.isEmpty
+        let cached = await Task.detached(priority: .userInitiated) { () -> (Decoded, URL?)? in
+            guard let attributes = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
+                  let date = attributes.contentModificationDate, Date().timeIntervalSince(date) < FaviconStore.diskFreshness else { return nil }
             // The source sidecar says which candidate the cached bytes came from; a page that
             // still declares it is served from disk (before, a disk hit had no source, so every
             // page load re-downloaded its declared icon).
             let source = (try? String(contentsOf: sourceFile, encoding: .utf8)).flatMap(URL.init(string:))
-            if declared.isEmpty || source == declared.first, let data = try? Data(contentsOf: file), let image = Self.decode(data) {
-                store(image, key: key, source: source); return
-            }
-        }
+            guard anySource || source == wanted, let data = try? Data(contentsOf: file), let decoded = FaviconStore.prepare(data) else { return nil }
+            return (decoded, source)
+        }.value
+        if let (decoded, source) = cached { store(decoded, key: key, source: source); return }
         for url in declared + [fallback] {
             if let date = attempts[url], Date().timeIntervalSince(date) < 60 { continue }
             attempts[url] = Date()
             downloads += 1
             let data: Data?
             if let loader { data = await loader(url) } else { data = await download(url) }
-            guard let data, let image = Self.decode(data) else { continue }
+            guard let data, let decoded = await Task.detached(priority: .userInitiated, operation: { FaviconStore.prepare(data) }).value else { continue }
             if icons.count >= 128, let oldest = icons.keys.sorted().first { icons.removeValue(forKey: oldest); tones.removeValue(forKey: oldest) }
-            store(image, key: key, source: url)
+            store(decoded, key: key, source: url)
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try? data.write(to: file, options: .atomic)
             try? url.absoluteString.write(to: sourceFile, atomically: true, encoding: .utf8)
@@ -197,10 +208,10 @@ final class FaviconStore: ObservableObject {
         if attempts.count > 256 { attempts = attempts.filter { Date().timeIntervalSince($0.value) < 60 } }
     }
 
-    private func store(_ image: NSImage, key: String, source: URL?) {
-        tones[key] = Self.tone(of: image)
+    private func store(_ decoded: Decoded, key: String, source: URL?) {
+        tones[key] = decoded.tone
         sources[key] = source
-        icons[key] = image
+        icons[key] = decoded.image
     }
 
     /// The icon's bytes, or `nil` for a non-200, an off-origin redirect, a non-image or an oversize body.
@@ -218,7 +229,7 @@ final class FaviconStore: ObservableObject {
     }
 
     /// PNG, ICO, GIF, JPEG and WebP through ImageIO; SVG through AppKit's vector image rep.
-    static func decode(_ data: Data) -> NSImage? {
+    nonisolated static func decode(_ data: Data) -> NSImage? {
         guard data.count <= maxBytes else { return nil }
         if let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) > 0 {
             guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
@@ -233,7 +244,7 @@ final class FaviconStore: ObservableObject {
     }
 
     /// Classifies an icon from its alpha-weighted mean luminance and chroma at 16×16.
-    static func tone(of image: NSImage) -> FaviconTone {
+    nonisolated static func tone(of image: NSImage) -> FaviconTone {
         let side = 16
         var pixels = [UInt8](repeating: 0, count: side * side * 4)
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),

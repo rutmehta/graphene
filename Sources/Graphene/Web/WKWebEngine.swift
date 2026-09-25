@@ -33,25 +33,78 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         return (try? String(contentsOf: url, encoding: .utf8)) ?? ""
     }()
 
+    // MARK: shared configuration (docs/parity/perf-audit.md, second pass §4)
+
+    /// User scripts are built once per process and added to every engine's controller: the
+    /// sources are read from the bundle once and no engine creates its own `WKUserScript`s.
+    /// Each engine keeps its own `WKUserContentController`, because content rule lists (per-site
+    /// blocking) and the `graphene` message handler belong to one page.
+    private static let pipUserScript = WKUserScript(source: pipScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+    private static let navHookUserScript = WKUserScript(source: navHookScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+    private static let iconUserScript = WKUserScript(source: iconScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+    private static let annotateUserScript: WKUserScript? = annotateScript.isEmpty ? nil : WKUserScript(source: annotateScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+    private static var fontUserScripts: [PageFont: WKUserScript] = [:]
+    private static var boostUserScripts: [String: WKUserScript] = [:]
+    private static func fontUserScript(_ font: PageFont) -> WKUserScript {
+        if let script = fontUserScripts[font] { return script }
+        let script = WKUserScript(source: font.script, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        fontUserScripts[font] = script
+        return script
+    }
+    private static func boostUserScript(_ source: String, injectionTime: WKUserScriptInjectionTime) -> WKUserScript {
+        let key = "\(injectionTime.rawValue)|\(source)"
+        if let script = boostUserScripts[key] { return script }
+        if boostUserScripts.count > 256 { boostUserScripts.removeAll() }
+        let script = WKUserScript(source: source, injectionTime: injectionTime, forMainFrameOnly: true)
+        boostUserScripts[key] = script
+        return script
+    }
+    /// The scripts a new engine starts with, before `refreshBoosts` knows its settings.
+    private static func baseUserScripts(privateMode: Bool) -> [WKUserScript] {
+        [pipUserScript, navHookUserScript, iconUserScript] + (privateMode ? [] : annotateUserScript.map { [$0] } ?? [])
+    }
+    /// One persistent data store per profile, shared by that profile's engines.
+    private static var dataStores: [UUID: WKWebsiteDataStore] = [:]
+    static func dataStore(profileID: UUID) -> WKWebsiteDataStore {
+        let id = Profile.storeID(profileID, namespace: ProcessInfo.processInfo.environment["GRAPHENE_DATA_DIR"])
+        if let store = dataStores[id] { return store }
+        let store = WKWebsiteDataStore(forIdentifier: id)
+        dataStores[id] = store
+        return store
+    }
+    /// Drops the shared store before its profile's data is removed (a store in use cannot be).
+    static func forgetDataStore(storeID: UUID) { dataStores[storeID] = nil }
+    private static let zapScript: String? = {
+        guard let url = Bundle.main.url(forResource: "zap", withExtension: "js") ?? Bundle.module.url(forResource: "zap", withExtension: "js") else { return nil }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }()
+
+    /// The user scripts this engine's pages get, in injection order.
+    var desiredUserScripts: [WKUserScript] {
+        var scripts = [Self.fontUserScript(aiOwner?.settings.pageFont ?? .website)] + Self.baseUserScripts(privateMode: isPrivate)
+        for boost in boosts?.items ?? [] {
+            scripts.append(Self.boostUserScript(boost.styleScript, injectionTime: .atDocumentStart))
+            if !boost.codeScript.isEmpty { scripts.append(Self.boostUserScript(boost.codeScript, injectionTime: .atDocumentEnd)) }
+        }
+        return scripts
+    }
+
     func refreshBoosts() {
         let controller = webView.configuration.userContentController
-        controller.removeAllUserScripts()
-        let font = aiOwner?.settings.pageFont ?? .website
-        controller.addUserScript(WKUserScript(source: font.script, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        webView.evaluateJavaScript(font.script, completionHandler: nil)
-        controller.addUserScript(WKUserScript(source: Self.pipScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
-        controller.addUserScript(WKUserScript(source: Self.navHookScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        controller.addUserScript(WKUserScript(source: Self.iconScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
-        if !isPrivate { controller.addUserScript(WKUserScript(source: Self.annotateScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)) }
-        for boost in boosts?.items ?? [] {
-            controller.addUserScript(WKUserScript(source: boost.styleScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-            if !boost.codeScript.isEmpty { controller.addUserScript(WKUserScript(source: boost.codeScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)) }
+        let scripts = desiredUserScripts
+        let installed = controller.userScripts
+        if installed.count != scripts.count || zip(installed, scripts).contains(where: { $0 !== $1 }) {
+            controller.removeAllUserScripts()
+            for script in scripts { controller.addUserScript(script) }
         }
+        // A blank web view has no document to restyle; evaluating script in it only started its
+        // web content process early, on every new tab.
+        guard webView.url != nil else { return }
+        webView.evaluateJavaScript((aiOwner?.settings.pageFont ?? .website).script, completionHandler: nil)
         if let host = currentURL?.host, let boost = boosts?.boost(host) { webView.evaluateJavaScript(boost.styleScript, completionHandler: nil) }
     }
     func startZap() {
-        guard let host = currentURL?.host, let url = Bundle.main.url(forResource: "zap", withExtension: "js") ?? Bundle.module.url(forResource: "zap", withExtension: "js"),
-              let script = try? String(contentsOf: url, encoding: .utf8) else { return }
+        guard let host = currentURL?.host, let script = Self.zapScript else { return }
         zapHost = host
         webView.evaluateJavaScript(script, completionHandler: nil)
     }
@@ -64,14 +117,14 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     private var blockingGeneration = 0
 
     /// The compiled rule list, shared by every engine so only the first navigation in the process compiles.
-    private static var sharedBlocker: WKContentRuleList?
+    private static var sharedBlocker: WKContentRuleList? { ContentBlocker.compiled }
 
     func applyBlocking(host: String) async {
         if applyBlockingIfReady(host: host) { return }
         blockingGeneration += 1; let generation = blockingGeneration
         do {
             let compiled = try await ContentBlocker.compile()
-            Self.sharedBlocker = compiled; blocker = compiled
+            blocker = compiled
             guard generation == blockingGeneration else { return }
             webView.configuration.userContentController.removeAllContentRuleLists()
             webView.configuration.userContentController.add(compiled); installedBlocker = compiled; blockingActive = true
@@ -130,16 +183,11 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         let config = configuration ?? WKWebViewConfiguration()
         if configuration == nil {
             config.defaultWebpagePreferences.allowsContentJavaScript = true
-            config.websiteDataStore = privateMode ? .nonPersistent() : WKWebsiteDataStore(forIdentifier: Profile.storeID(profileID, namespace: ProcessInfo.processInfo.environment["GRAPHENE_DATA_DIR"]))
+            config.websiteDataStore = privateMode ? .nonPersistent() : Self.dataStore(profileID: profileID)
             // Present as Safari so sites (and sign-in flows) don't gate an unknown UA.
             config.applicationNameForUserAgent = "Version/26.0 Safari/605.1.15"
             let controller = WKUserContentController()
-            controller.addUserScript(WKUserScript(source: Self.pipScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
-            controller.addUserScript(WKUserScript(source: Self.navHookScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-            controller.addUserScript(WKUserScript(source: Self.iconScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
-            if !privateMode && !Self.annotateScript.isEmpty {
-                controller.addUserScript(WKUserScript(source: Self.annotateScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
-            }
+            for script in Self.baseUserScripts(privateMode: privateMode) { controller.addUserScript(script) }
             config.userContentController = controller
         }
 
@@ -361,14 +409,32 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         ]
     }
 
-    func captureSnapshotText() async -> String {
+    func captureSnapshotText() async -> String { await captureSnapshotText(idle: false) }
+    func captureReadableContent() async -> ReadableContent { await captureReadableContent(idle: false) }
+    func captureSnapshotText(idle: Bool) async -> String {
         guard !isPrivate, capturePermitted() else { return "" }
-        return await captureReadableContent().text
+        return await captureReadableContent(idle: idle).text
     }
-    func captureReadableContent() async -> ReadableContent {
+    /// The page read after every load waits for an idle moment in the page
+    /// (`requestIdleCallback`, or 300 ms where WebKit has none), so it never competes with the
+    /// page's own work. Ask reads a page at once (`idle: false`).
+    static let idleReadable = """
+    await new Promise(resolve => window.requestIdleCallback ? requestIdleCallback(() => resolve(), {timeout: 1000}) : setTimeout(resolve, 300));
+    return window.__grapheneReadable ? window.__grapheneReadable() : null;
+    """
+    func captureReadableContent(idle: Bool) async -> ReadableContent {
         guard !isPrivate, capturePermitted() else { return ReadableContent() }
         let url = currentURL
-        let value = await evaluateJavaScript("window.__grapheneReadable ? window.__grapheneReadable() : null")
+        let value: Any?
+        if idle {
+            value = await withCheckedContinuation { continuation in
+                webView.callAsyncJavaScript(Self.idleReadable, arguments: [:], in: nil, in: .page) { result in
+                    continuation.resume(returning: try? result.get())
+                }
+            }
+        } else {
+            value = await evaluateJavaScript("window.__grapheneReadable ? window.__grapheneReadable() : null")
+        }
         guard !isPrivate, capturePermitted(), currentURL == url else { return ReadableContent() }
         if let value, JSONSerialization.isValidJSONObject(value), let data = try? JSONSerialization.data(withJSONObject: value), let content = try? JSONDecoder().decode(ReadableContent.self, from: data) { return content }
         let text = (await evaluateJavaScript(ReaderMode.extractor)) as? String ?? ""
@@ -400,12 +466,18 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         let url = webView.url
         Task { await markSavedNotesAfterLoad(url) }
         Task {
-            let detected = await evaluateJavaScript("!!document.querySelector('article, main') && (document.querySelector('article, main').innerText || '').length > 600") as? Bool ?? false
-            let rejected = await evaluateJavaScript("(document.body.innerText || '').includes('This browser or app may not be secure')") as? Bool ?? false
+            // `innerText` lays the page out; asked once, after first paint, not twice at finish.
+            try? await Task.sleep(for: Self.pageCheckDelay)
             guard currentURL == url else { return }
-            articleDetected = detected; signInBlocked = rejected; notifyState()
+            let checks = await evaluateJavaScript(Self.pageChecks) as? [Bool] ?? []
+            guard currentURL == url, checks.count == 2 else { return }
+            articleDetected = checks[0]; signInBlocked = checks[1]; notifyState()
         }
     }
+
+    /// Whether the page has an article (Reader) and whether Google refused this browser's sign-in.
+    static let pageChecks = "(() => { const a = document.querySelector('article, main'); return [!!a && (a.innerText || '').length > 600, (document.body?.innerText || '').includes('This browser or app may not be secure')]; })()"
+    static let pageCheckDelay: Duration = .milliseconds(300)
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         delegate?.engine(self, didFail: NSError(domain: "Graphene", code: 1, userInfo: [NSLocalizedDescriptionKey: "This page crashed — Reload to continue."]))

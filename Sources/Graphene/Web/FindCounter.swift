@@ -1,8 +1,13 @@
 import Foundation
 
 struct FindCounter {
+    /// Read from the bundle once, not on every find keystroke.
+    private static let source: String? = {
+        guard let url = Bundle.module.url(forResource: "find", withExtension: "js") else { return nil }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }()
     static func script(query: String, backwards: Bool) -> String {
-        guard let url = Bundle.module.url(forResource: "find", withExtension: "js"), let script = try? String(contentsOf: url, encoding: .utf8) else { return "null" }
+        guard let script = source else { return "null" }
         return script.replacingOccurrences(of: "BACKWARDS_VALUE", with: backwards ? "true" : "false").replacingOccurrences(of: "QUERY_VALUE", with: jsLiteral(query))
     }
     mutating func select(query: String, current: Int, total: Int) {

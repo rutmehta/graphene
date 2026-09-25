@@ -58,21 +58,47 @@
 
   const baseFont = '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif';
 
+  // The page's readable text, for the graph snippet and Ask. Read from the live document with
+  // a walker that stops at `READABLE_LIMIT` characters: cloning the whole body and spacing
+  // every block element cost as much as the page was large, after every load.
+  const READABLE_LIMIT = 40000;
+  const READABLE_SKIP = 'nav,footer,header,aside,script,style,noscript,form,input,textarea,[contenteditable],[hidden],[aria-hidden="true"],[data-graphene]';
+  // textContent runs blocks together ("…material.Graphene…"); space them as the page shows them.
+  const READABLE_BLOCKS = new Set('ADDRESS ARTICLE ASIDE BLOCKQUOTE BR DD DIV DL DT FIGCAPTION FIGURE H1 H2 H3 H4 H5 H6 HR LI OL P PRE SECTION TABLE TD TH TR UL'.split(' '));
+  const readableText = (main) => {
+    const walker = document.createTreeWalker(main, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode: node => node.nodeType === 1 && node !== main && node.matches(READABLE_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    });
+    const blockOf = node => { let e = node.parentElement; while (e && e !== main && !READABLE_BLOCKS.has(e.tagName)) e = e.parentElement; return e; };
+    const parts = [];
+    let length = 0, lastBlock = null, crossed = false;
+    for (let node = walker.nextNode(); node && length <= READABLE_LIMIT; node = walker.nextNode()) {
+      if (node.nodeType === 1) { if (READABLE_BLOCKS.has(node.tagName)) crossed = true; continue; }
+      const text = node.nodeValue;
+      if (!text) continue;
+      const block = blockOf(node);
+      if (crossed || block !== lastBlock) { parts.push(' '); length += 1; }
+      crossed = false; lastBlock = block;
+      const piece = text.replace(/\s+/g, ' ');
+      parts.push(piece); length += piece.length;
+    }
+    return parts.join('').replace(/\s+/g, ' ').trim().slice(0, READABLE_LIMIT);
+  };
   window.__grapheneReadable = () => {
-    const clone = document.body?.cloneNode(true);
-    if (!clone) return { title: document.title, text: '', selection: '', byline: '', published: '', headings: [] };
-    clone.querySelectorAll('nav,footer,header,aside,script,style,noscript,form,input,textarea,[contenteditable],[hidden],[aria-hidden="true"],[data-graphene]').forEach(e => e.remove());
-    // textContent runs blocks together ("…material.Graphene…"); space them as the page shows them.
-    clone.querySelectorAll('address,article,aside,blockquote,br,dd,div,dl,dt,figcaption,figure,h1,h2,h3,h4,h5,h6,hr,li,ol,p,pre,section,table,td,th,tr,ul').forEach(e => { e.before(' '); e.after(' '); });
-    const candidates = [...clone.querySelectorAll('article,main,[role="main"],section')];
+    const body = document.body;
+    if (!body) return { title: document.title, text: '', selection: '', byline: '', published: '', headings: [] };
+    const readable = e => !e.closest(READABLE_SKIP);
+    // At most 60 candidates are scored: nested sections made scoring grow with depth × size.
+    const candidates = [...body.querySelectorAll('article,main,[role="main"],section')].filter(readable).slice(0, 60);
     const score = e => (e.textContent || '').length - [...e.querySelectorAll('a')].reduce((n, a) => n + a.textContent.length, 0) * 2;
-    const main = candidates.sort((a, b) => score(b) - score(a))[0] || clone;
-    return { title: document.title, text: (main.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40000),
+    const main = candidates.map(e => [e, score(e)]).sort((a, b) => b[1] - a[1])[0]?.[0] || body;
+    return { title: document.title, text: readableText(main),
       selection: String(getSelection() || '').slice(0, 8000),
       byline: document.querySelector('meta[name="author"]')?.content || '',
       published: document.querySelector('meta[property="article:published_time"]')?.content || document.querySelector('time[datetime]')?.dateTime || '',
-      headings: [...main.querySelectorAll('h1,h2,h3')].map(e => e.textContent.trim()).slice(0, 40) };
+      headings: [...main.querySelectorAll('h1,h2,h3')].filter(readable).map(e => e.textContent.trim()).slice(0, 40) };
   };
+  window.__grapheneReadableLimit = READABLE_LIMIT;
 
   // Drafts are never sent merely because an editor gained focus.
   const writingButton = makeEl('button', { position: 'fixed', display: 'none', borderRadius: '8px', padding: '4px 8px', font: `500 13px ${baseFont}`, color: 'ButtonText', background: 'ButtonFace', border: '1px solid GrayText', cursor: 'pointer' }, '✦');

@@ -188,7 +188,7 @@ final class ProvenanceTests: XCTestCase {
         XCTAssertNil(app.tabs.first { $0.id == orphan }?.parentTabID)
 
         // Round trip: the link is persisted.
-        app.persist()
+        app.persist(); app.flushSaves()
         let saved = try JSONDecoder().decode(AppState.SessionData.self, from: Data(contentsOf: directory.appendingPathComponent("session.json")))
         XCTAssertEqual(saved.tabs.first { $0.id == child }?.parentTabID, parent)
 
