@@ -141,7 +141,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
     var excludedHosts: Set<String> { get { library.excludedHosts } set { library.excludedHosts = newValue } }
     var pausedSpaces: Set<UUID> { get { library.pausedSpaces } set { library.pausedSpaces = newValue } }
     @Published var knowledgeThreadID: UUID?
-    @Published var knowledgeSearchPresented = false
+    @Published var knowledgeSearchPresented = false { didSet { if !knowledgeSearchPresented { citations.clear() } } }
+    /// Links the latest Ask answer to marks in a page (D6 G4); cleared on close and navigation.
+    let citations = CitationLinker()
     @Published var noteDrafts: [UUID: String] = [:]
     @Published var noteComposerPresented = false
     @Published var findPresented = false
@@ -666,6 +668,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
     // MARK: BrowserCoordinator
 
     func tab(_ tab: Tab, didNavigateTo url: URL, title: String?) {
+        citations.pageNavigated(tabID: tab.id)
         guard captureAllowed(tab, url: url) else { tab.currentNodeID = nil; tab.currentThreadID = nil; return }
         let node = graph.recordVisit(
             url: url, title: title,
@@ -686,6 +689,10 @@ final class AppState: ObservableObject, BrowserCoordinator {
             if let t = tab.engine.pageTitle, !t.isEmpty { self?.graph.setTitle(nodeID: node, title: t) }
         }
     }
+
+    /// A citation mark in `tabID`'s page was hovered (`id`) or left (`nil`); raises its chip in the Ask panel.
+    /// Called from the tab's `engine(_:didHoverHighlight:)`.
+    func citationMarkHovered(_ id: String?, tabID: UUID) { citations.markHovered(id, tabID: tabID) }
 
     func tab(_ tab: Tab, didCapture annotation: CapturedAnnotation) {
         guard captureAllowed(tab, url: annotation.url) else { return }

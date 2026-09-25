@@ -95,6 +95,7 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
         if let url { self.url = url }
     }
 
+    func engine(_ engine: WebEngine, didHoverHighlight id: String?) { (coordinator as? AppState)?.citationMarkHovered(id, tabID: self.id) }
     func engineDidFinish(_ engine: WebEngine, url: URL?, title: String?) {
         isLoading = false
         if let title, !title.isEmpty { self.title = title }
