@@ -80,9 +80,9 @@ enum Motion: CaseIterable {
 
     // MARK: transitions
 
-    /// Command bar: fade plus a slight scale; a plain fade under Reduce Motion.
+    /// Command bar: fade plus a slight scale about its fixed top edge; a plain fade under Reduce Motion.
     static func commandBar(reduced: Bool) -> AnyTransition {
-        reduced ? .opacity : .opacity.combined(with: .scale(scale: commandScale))
+        reduced ? .opacity : .opacity.combined(with: .scale(scale: commandScale, anchor: .top))
     }
 
     /// Chat panel: slides in from the trailing edge with a fade.

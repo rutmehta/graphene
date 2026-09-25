@@ -112,8 +112,7 @@ struct RootView: View {
                     // The scrim dims only the page card; this catches clicks on the rest of the window.
                     app.pal.hitTarget.contentShape(Rectangle()).onTapGesture { app.dismissCommandBar() }
                     CommandBar()
-                        .frame(width: CommandBarLayout.width(window: geometry.size.width))
-                        .padding(.top, CommandBarLayout.top(window: geometry.size.height))
+                        .commandBarPlacement(window: geometry.size)
                         .transition(Motion.commandBar(reduced: reduceMotion))
                 }
             }

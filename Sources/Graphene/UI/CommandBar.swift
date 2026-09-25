@@ -1,6 +1,18 @@
 import SwiftUI
 import AppKit
 
+extension View {
+    /// Pins the floating command bar's top edge at `commandTop × window height` (arc-look.md §3.4).
+    /// The overlay that hosts the bar also holds a full-window click catcher, so the implicit
+    /// stack around them is window-sized; without the top-aligned frame the card would be centred
+    /// in the space below the padding and move whenever its height changes.
+    func commandBarPlacement(window: CGSize) -> some View {
+        frame(width: CommandBarLayout.width(window: window.width))
+            .padding(.top, CommandBarLayout.top(window: window.height))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
 /// The same navigation surface opens a page, switches tabs, or brings back a source.
 struct CommandBar: View {
     @EnvironmentObject var app: AppState

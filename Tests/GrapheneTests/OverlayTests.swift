@@ -33,6 +33,45 @@ final class OverlayTests: XCTestCase {
         XCTAssertEqual(ShellLayout.commandMaxRows, 8)
     }
 
+    func testCommandBarTopIsIndependentOfItsHeight() {
+        // The top edge is a function of the window height only; nothing about the card's content feeds it.
+        for height in [600.0, 820.0, 1200.0] as [CGFloat] {
+            XCTAssertEqual(CommandBarLayout.top(window: height), height * ShellLayout.commandTop, accuracy: 0.001)
+        }
+        XCTAssertEqual(ShellLayout.commandTop, 0.18)
+    }
+
+    /// Lays a stand-in card of each height out the way RootView mounts the command bar (an overlay
+    /// that also holds a full-window click catcher) and checks the card's top never moves.
+    @MainActor
+    func testMountedCommandBarTopDoesNotMoveWithRowCount() {
+        let window = CGSize(width: 1200, height: 800)
+        var tops: [CGFloat] = []
+        for rows in [0, 1, 4, 8] {
+            let box = FrameBox()
+            let card = Color.clear
+                .frame(height: ShellLayout.commandInputHeight + CGFloat(rows) * ShellLayout.commandRowHeight)
+                .background(GeometryReader { proxy in
+                    Color.clear.preference(key: CardTopKey.self, value: proxy.frame(in: .global).minY)
+                })
+            let root = Color.clear
+                .overlay(alignment: .top) {
+                    Color.clear.contentShape(Rectangle())
+                    card.commandBarPlacement(window: window)
+                }
+                .onPreferenceChange(CardTopKey.self) { box.top = $0 }
+                .frame(width: window.width, height: window.height)
+            let host = NSHostingView(rootView: root)
+            host.frame = CGRect(origin: .zero, size: window)
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+            tops.append(box.top)
+        }
+        for top in tops {
+            XCTAssertEqual(top, window.height * ShellLayout.commandTop, accuracy: 0.5, "tops: \(tops)")
+        }
+    }
+
     @MainActor
     func testPresentCommandBarSeedsTheURLSelectedInPlace() {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -130,5 +169,15 @@ final class OverlayTests: XCTestCase {
         // Chips and bubbles stay visible on the white light-mode card.
         XCTAssertGreaterThan(alpha(light.elevFill), 0)
         XCTAssertNotEqual(NSColor(light.elevFill).usingColorSpace(.sRGB)?.redComponent, 1)
+    }
+}
+
+private final class FrameBox { var top: CGFloat = .nan }
+
+private struct CardTopKey: PreferenceKey {
+    static let defaultValue: CGFloat = .nan
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if !next.isNaN { value = next }
     }
 }
