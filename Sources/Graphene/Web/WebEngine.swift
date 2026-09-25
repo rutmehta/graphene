@@ -24,6 +24,49 @@ protocol WebEngine: AnyObject {
     func captureSnapshotText() async -> String
     func captureReadableContent() async -> ReadableContent
     func find(_ text: String, backwards: Bool) async -> Bool
+
+    // MARK: in-page citations (Resources/cite.js)
+
+    /// Marks each passage's first exact (normalised) match in the page and returns the ids
+    /// found. Marks with the same ids are replaced; other marks stay. Never marks an
+    /// approximate match; private windows and `contenteditable` bodies return `[]`.
+    func highlight(passages: [CitedPassage]) async -> [String]
+    /// Raises the marks with `id` to `highlightActive`; `nil` clears the active state.
+    func setActiveHighlight(_ id: String?) async
+    /// Scrolls the first mark with `id` smoothly to the centre of the page.
+    func scrollToHighlight(_ id: String) async
+    /// Removes every citation mark from the page.
+    func clearHighlights() async
+}
+
+/// A passage to mark in the page: `id` is the mark's `data-graphene-cite`; `index`, when
+/// set, is drawn as the accent superscript before the mark (`data-graphene-index`).
+struct CitedPassage: Equatable, Sendable {
+    let id: String
+    let text: String
+    var index: Int? = nil
+
+    /// The text `cite.js` searches for: whitespace runs collapsed to one space, trimmed,
+    /// lowercased. Mirrors `normalize` in cite.js.
+    var normalized: String { Self.normalized(text) }
+
+    static func normalized(_ text: String) -> String {
+        var out = ""
+        var space = false
+        for character in text {
+            if character.isWhitespace { space = !out.isEmpty; continue }
+            if space { out.append(" "); space = false }
+            out.append(contentsOf: String(character).lowercased())
+        }
+        return out
+    }
+
+    /// Whether `cite.js` would mark this passage in a page whose text is `pageText`:
+    /// a non-empty exact match after normalisation, nothing approximate.
+    func matches(in pageText: String) -> Bool {
+        let needle = normalized
+        return !needle.isEmpty && Self.normalized(pageText).contains(needle)
+    }
 }
 
 struct ReadableContent: Codable {
@@ -51,6 +94,12 @@ protocol WebEngineDelegate: AnyObject {
     func engine(_ engine: WebEngine, didCopyText text: String, url: URL?)
     /// The page's background turned dark or light (`Palette.pageIsDark`).
     func engine(_ engine: WebEngine, didChangePageDarkness dark: Bool)
+    /// The pointer entered a citation mark (`id`) or left the last one (`nil`).
+    func engine(_ engine: WebEngine, didHoverHighlight id: String?)
+}
+
+extension WebEngineDelegate {
+    func engine(_ engine: WebEngine, didHoverHighlight id: String?) {}
 }
 
 /// Raw annotation payload coming up from the injected page script.

@@ -128,6 +128,15 @@ enum ShellLayout {
     static let toastInset: CGFloat = 24
     static let thumbnailSize = CGSize(width: 96, height: 60)
     static let siteControlsWidth: CGFloat = 320
+    // Resume page and lattice (graphene-identity.md §2, graphene-language.md §4)
+    /// Content column of the new-tab (Resume) page.
+    static let newTabColumnWidth: CGFloat = 560
+    /// Vertical gap between Resume page sections.
+    static let newTabGap: CGFloat = 24
+    /// Width of one hex cell of the empty-state lattice.
+    static let latticeCell: CGFloat = 28
+    /// Padding of the in-page citation mark, in CSS px.
+    static let markInset: CGFloat = 1
     static func clampedSidebarWidth(_ width: CGFloat) -> CGFloat {
         min(sidebarRange.upperBound, max(sidebarRange.lowerBound, width))
     }
@@ -159,6 +168,18 @@ enum ShellType {
     /// Point sizes for AppKit text fields that take an `NSFont` (the command bar input).
     static let rowSize: CGFloat = 13
     static let inputSize: CGFloat = 18
+    /// Text quoted from a page, anywhere in chrome: the system serif (New York) at 13/1.45.
+    static let quote = Font.system(size: quoteSize, weight: .regular, design: .serif)
+    /// Snippets and chips quoting a page: the system serif at 12.
+    static let quoteSmall = Font.system(size: quoteSmallSize, weight: .regular, design: .serif)
+    static let quoteSize: CGFloat = 13
+    static let quoteSmallSize: CGFloat = 12
+    /// `quote` line height as a multiple of the font size.
+    static let quoteLineHeight: CGFloat = 1.45
+    /// Extra leading that turns `quote` into `quoteLineHeight`.
+    static var quoteLineSpacing: CGFloat { lineSpacing(size: quoteSize, lineHeight: quoteLineHeight) }
+    /// The `lineSpacing` that sets text of `size` at `lineHeight` × size.
+    static func lineSpacing(size: CGFloat, lineHeight: CGFloat) -> CGFloat { size * (lineHeight - 1) }
 }
 
 /// A grounded space color: two gradient stops + a readable accent. Not neon.
@@ -306,6 +327,16 @@ struct Palette {
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
     /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
     var elevFill: Color { isDark ? fill : rowHover }
+    /// The provenance connector hairline (graphene-identity.md §2).
+    var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.14) }
+    /// The 1pt rule beside a quote block: the thread, drawn vertically.
+    var quoteRule: Color { threadLine }
+    /// Empty-state hex lattice strokes.
+    var lattice: Color { ink.opacity(0.04) }
+    /// In-page citation highlight (injected as CSS).
+    var highlight: Color { accent.opacity(0.22) }
+    /// Hovered or selected in-page citation.
+    var highlightActive: Color { accent.opacity(0.38) }
     /// A practically invisible fill that still receives hover and drops.
     var hitTarget: Color { Color.black.opacity(0.001) }
 
