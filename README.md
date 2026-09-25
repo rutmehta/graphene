@@ -6,7 +6,7 @@ Version 0.3.0 is a local development build, not a completed release-readiness si
 
 WP10 shell polish and evidence: [glance-test report](docs/parity/shots/wp10/diff-notes.md). Idle CPU and the main visual changes are verified; benign-page AI refusals and unconfigured Gmail OAuth still prevent full acceptance.
 
-![Graphene sidebar, WP10 isolated profile](docs/parity/shots/wp10/main-light.png)
+Verification screenshots are not kept in the repository; each run's report under `docs/parity/shots/` describes what was observed.
 
 ## Run
 
