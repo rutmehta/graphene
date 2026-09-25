@@ -57,6 +57,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     private(set) var blockingActive = false
     private(set) var blockerError: String?
     private var blocker: WKContentRuleList?
+    /// The rule list currently added to the content controller, if any.
+    private var installedBlocker: WKContentRuleList?
     private var blockingGeneration = 0
 
     /// The compiled rule list, shared by every engine so only the first navigation in the process compiles.
@@ -69,7 +71,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             let compiled = try await ContentBlocker.compile()
             Self.sharedBlocker = compiled; blocker = compiled
             guard generation == blockingGeneration else { return }
-            webView.configuration.userContentController.add(compiled); blockingActive = true
+            webView.configuration.userContentController.removeAllContentRuleLists()
+            webView.configuration.userContentController.add(compiled); installedBlocker = compiled; blockingActive = true
             blockerError = nil
         } catch { blockerError = "Content blocker unavailable: \(error.localizedDescription)" }
         notifyState()
@@ -79,15 +82,29 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     /// list already compiled). Returns false when the caller must await `applyBlocking`. Deciding a
     /// navigation synchronously matters: an awaited policy decision that WebKit supersedes (a redirect,
     /// a second load) is logged as an ignored policy listener with a full backtrace.
+    ///
+    /// The rule list is swapped only when the host's policy differs from what is installed:
+    /// every main-frame navigation decides twice (action and response), and removing and
+    /// re-adding the list each time made WebKit resend it to the page's process.
     @discardableResult
     func applyBlockingIfReady(host: String) -> Bool {
         let controller = webView.configuration.userContentController
-        controller.removeAllContentRuleLists(); blockingActive = false
-        guard sites?.site(host).blocking ?? globalBlocking() else { blockingGeneration += 1; notifyState(); return true }
+        guard sites?.site(host).blocking ?? globalBlocking() else {
+            blockingGeneration += 1
+            if blockingActive || installedBlocker != nil {
+                controller.removeAllContentRuleLists(); blockingActive = false; installedBlocker = nil; notifyState()
+            }
+            return true
+        }
         if blocker == nil { blocker = Self.sharedBlocker }
-        guard let blocker else { return false }
+        guard let blocker else {
+            if blockingActive || installedBlocker != nil { controller.removeAllContentRuleLists(); blockingActive = false; installedBlocker = nil }
+            return false
+        }
         blockingGeneration += 1
-        controller.add(blocker); blockingActive = true; blockerError = nil
+        guard installedBlocker !== blocker || !blockingActive else { return true }
+        controller.removeAllContentRuleLists()
+        controller.add(blocker); installedBlocker = blocker; blockingActive = true; blockerError = nil
         notifyState(); return true
     }
 
@@ -277,6 +294,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     /// Late-rendering pages get a few more tries before a saved quote counts as missing.
     static let noteMarkAttempts = 3
     static let noteMarkRetry: Duration = .milliseconds(700)
+    /// Whether this document has been sent notes (so an empty list must still clear them).
+    private var marksNotes = false
 
     /// Sends annotate.js the page-scheme tokens and the page's saved notes, then marks each
     /// note's quote with cite.js as `note:<uuid>`, kind "note". Returns the mark ids found.
@@ -285,6 +304,9 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         guard !isPrivate, let url = currentURL else { return [] }
         let notes = savedNotes(url)
         await applyAnnotationTheme()
+        // A freshly loaded page has no marks to clear, so a page without notes needs only the theme.
+        if notes.isEmpty && !marksNotes { return [] }
+        marksNotes = !notes.isEmpty
         let list: [[String: Any]] = notes.map { ["id": $0.markID, "quote": $0.text, "note": $0.note] }
         await callAnnotate("if (window.__grapheneAnnotateNotes) window.__grapheneAnnotateNotes(notes);", arguments: ["notes": list])
         guard currentURL == url else { return [] }
@@ -358,6 +380,7 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         zapHost = nil
+        marksNotes = false
         articleDetected = false; signInBlocked = false
         formDirty = false
         delegate?.engineDidStartNavigation(self, url: webView.url)
@@ -591,11 +614,14 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     private static let navHookScript = """
     (() => {
       const post = () => { try { window.webkit.messageHandlers.graphene.postMessage({kind:'navigate', url: location.href}); } catch(e){} };
-      const dirty = () => window.webkit.messageHandlers.graphene.postMessage({kind:'dirty'});
+      // Reported once per document: the flag only ever turns on, so repeating it on every
+      // keystroke and every second (per open tab) only woke the browser process.
+      let reported = false, poll = null;
+      const dirty = () => { if (reported) return; reported = true; if (poll) clearInterval(poll); window.webkit.messageHandlers.graphene.postMessage({kind:'dirty'}); };
       document.addEventListener('input', dirty, true);
       const add = window.addEventListener;
       window.addEventListener = function(type, ...args) { if (type === 'beforeunload') dirty(); return add.call(this, type, ...args); };
-      setInterval(() => { if (window.onbeforeunload) dirty(); }, 1000);
+      poll = setInterval(() => { if (window.onbeforeunload) dirty(); }, 1000);
       const wrap = (name) => { const orig = history[name]; history[name] = function(){ const r = orig.apply(this, arguments); setTimeout(post, 0); return r; }; };
       wrap('pushState'); wrap('replaceState');
       window.addEventListener('popstate', () => setTimeout(post, 0));

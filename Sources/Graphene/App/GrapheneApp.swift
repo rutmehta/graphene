@@ -50,24 +50,27 @@ struct GrapheneCommands: Commands {
     private var app: AppState { focus.app ?? focusedApp ?? defaultApp }
 
     var body: some Commands {
+        // One action table per menu update: the body re-runs on every AppState change, and
+        // building the table per menu item (~90 lookups) made each change pay ~90 full builds.
+        let actions = CommandMenuTable(app.allCommandActions)
         CommandGroup(replacing: .newItem) {
-            buttons(["new-tab", "new-window", "private-window", "new-space", "location"])
+            buttons(["new-tab", "new-window", "private-window", "new-space", "location"], actions)
             Divider()
-            buttons(["close-tab", "close-window"])
+            buttons(["close-tab", "close-window"], actions)
         }
         CommandGroup(after: .newItem) {
-            buttons(["save", "export", "save-page", "print", "system-browser"])
+            buttons(["save", "export", "save-page", "print", "system-browser"], actions)
         }
-        CommandGroup(after: .textEditing) { buttons(["find", "find-next", "find-previous", "find-selection"]) }
+        CommandGroup(after: .textEditing) { buttons(["find", "find-next", "find-previous", "find-selection"], actions) }
         CommandGroup(after: .sidebar) {
-            buttons(["reload", "stop", "zoom-in", "zoom-in-plus", "zoom-out", "zoom-reset", "reader", "sidebar", "layout", "fullscreen"])
-            Menu("Appearance") { actionButton("dark"); actionButton("space-color") }
-            buttons(["web", "threads", "vault", "mail", "board", "ask", "summarize", "downloads"])
-            Menu("Developer") { actionButton("inspector") }
-            Menu("Site") { buttons(["site-controls", "boost", "zap", "clear-site"]) }
+            buttons(["reload", "stop", "zoom-in", "zoom-in-plus", "zoom-out", "zoom-reset", "reader", "sidebar", "layout", "fullscreen"], actions)
+            Menu("Appearance") { actionButton("dark", actions); actionButton("space-color", actions) }
+            buttons(["web", "threads", "vault", "mail", "board", "ask", "summarize", "downloads"], actions)
+            Menu("Developer") { actionButton("inspector", actions) }
+            Menu("Site") { buttons(["site-controls", "boost", "zap", "clear-site"], actions) }
         }
         CommandMenu("History") {
-            buttons(["back", "forward", "home", "archive", "reopen"])
+            buttons(["back", "forward", "home", "archive", "reopen"], actions)
             Menu("Recently Closed") {
                 ForEach(Array(app.archivedTabs.suffix(20).reversed()), id: \.archiveID) { entry in
                     Button(entry.title ?? entry.url ?? "Tab") { if let id = entry.archiveID { app.restoreArchive(id) } }
@@ -76,23 +79,23 @@ struct GrapheneCommands: Commands {
             Button("Show Full History") { app.show(.threads) }
         }
         CommandMenu("Spaces") {
-            ForEach(0..<min(9, app.spaces.count), id: \.self) { index in actionButton("space-\(index + 1)") }
-            buttons(["new-space", "next-space", "previous-space", "route-site"])
+            ForEach(0..<min(9, app.spaces.count), id: \.self) { index in actionButton("space-\(index + 1)", actions) }
+            buttons(["new-space", "next-space", "previous-space", "route-site"], actions)
         }
         CommandMenu("Tabs") {
-            buttons(["next-tab", "previous-tab", "next-tab-arrow", "previous-tab-arrow", "mru-next", "mru-previous"])
-            Menu("Select Tab") { ForEach(1..<10, id: \.self) { number in actionButton("tab-\(number)") } }
+            buttons(["next-tab", "previous-tab", "next-tab-arrow", "previous-tab-arrow", "mru-next", "mru-previous"], actions)
+            Menu("Select Tab") { ForEach(1..<10, id: \.self) { number in actionButton("tab-\(number)", actions) } }
             Divider()
-            buttons(["pin", "favorite", "rename", "new-folder", "pinned-folder", "tidy-tabs", "archive-all", "copy-url", "copy-markdown", "pip", "peek"])
-            Menu("Split View") { buttons(["split", "split-vertical", "split-horizontal", "separate"]) }
-            buttons(["move-up", "move-down", "collapse-branch", "expand-branch"])
+            buttons(["pin", "favorite", "rename", "new-folder", "pinned-folder", "tidy-tabs", "archive-all", "copy-url", "copy-markdown", "pip", "peek"], actions)
+            Menu("Split View") { buttons(["split", "split-vertical", "split-horizontal", "separate"], actions) }
+            buttons(["move-up", "move-down", "collapse-branch", "expand-branch"], actions)
             Menu("Move Tab to Space") {
                 ForEach(app.spaces.filter { $0.id != app.activeTab?.spaceID }) { space in
                     Button(space.name) { if let tab = app.activeTab { app.placeTab(tab.id, section: tab.section, spaceID: space.id) } }
                 }
             }.disabled(app.activeTab == nil)
         }
-        CommandGroup(replacing: .appSettings) { actionButton("settings") }
+        CommandGroup(replacing: .appSettings) { actionButton("settings", actions) }
         CommandGroup(replacing: .help) {
             Button("Graphene Help") {
                 let alert = NSAlert(); alert.messageText = "Graphene"
@@ -102,10 +105,17 @@ struct GrapheneCommands: Commands {
         }
     }
 
-    @ViewBuilder private func buttons(_ ids: [String]) -> some View { ForEach(ids, id: \.self) { actionButton($0) } }
-    @ViewBuilder private func actionButton(_ id: String) -> some View {
-        if let action = app.allCommandActions.first(where: { $0.id == id }) { ActionMenuButton(action: action) }
+    @ViewBuilder private func buttons(_ ids: [String], _ actions: CommandMenuTable) -> some View { ForEach(ids, id: \.self) { actionButton($0, actions) } }
+    @ViewBuilder private func actionButton(_ id: String, _ actions: CommandMenuTable) -> some View {
+        if let action = actions[id] { ActionMenuButton(action: action) }
     }
+}
+
+/// The command actions of one menu update, looked up by id.
+struct CommandMenuTable {
+    private let byID: [String: BrowserAction]
+    init(_ actions: [BrowserAction]) { byID = Dictionary(actions.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }) }
+    subscript(id: String) -> BrowserAction? { byID[id] }
 }
 
 struct ActionMenuButton: View {

@@ -1,18 +1,37 @@
 import SwiftUI
 import AppKit
 
+/// The ⌃Tab switcher's open list and selection.
+@MainActor
+final class TabSwitcherModel: ObservableObject {
+    @Published var ids: [UUID] = []
+    @Published var index = 0
+}
+
+/// Shows the switcher while it is open; observes only the switcher, not the whole shell.
+struct TabSwitcherOverlay: View {
+    @ObservedObject var switcher: TabSwitcherModel
+    var body: some View {
+        if !switcher.ids.isEmpty { TabSwitcher(switcher: switcher) }
+    }
+}
+
 /// ⌃Tab: a centred card of recent tabs, each a 96×60 thumbnail over a title row.
 struct TabSwitcher: View {
     @EnvironmentObject var app: AppState
+    @ObservedObject var switcher: TabSwitcherModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var thumbnails = ThumbnailCache.shared
     var body: some View {
+        // One lookup table per body, not a linear search per tile; tiles are built lazily, so
+        // a 200-tab profile draws the few on screen.
+        let byID = Dictionary(app.tabs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ShellLayout.windowGap) {
-                    ForEach(Array(app.switcherIDs.enumerated()), id: \.element) { index, id in
-                        if let tab = app.tabs.first(where: { $0.id == id }) {
-                            tile(tab, selected: index == app.switcherIndex)
+                LazyHStack(spacing: ShellLayout.windowGap) {
+                    ForEach(Array(switcher.ids.enumerated()), id: \.element) { index, id in
+                        if let tab = byID[id] {
+                            tile(tab, selected: index == switcher.index)
                                 .id(index).onTapGesture { app.switcherIndex = index; app.finishTabSwitch() }
                         }
                     }
@@ -23,7 +42,7 @@ struct TabSwitcher: View {
             .background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
             .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
             .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
-            .onChange(of: app.switcherIndex) { _, index in proxy.scrollTo(index) }
+            .onChange(of: switcher.index) { _, index in proxy.scrollTo(index) }
         }
         .accessibilityIdentifier("tabSwitcher")
     }

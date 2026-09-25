@@ -17,6 +17,8 @@ struct ToastQueue {
         items.append(Toast(icon: icon, title: title, remaining: seconds, actionTitle: actionTitle, action: action))
     }
     mutating func dismiss(_ id: UUID) { items.removeAll { $0.id == id }; isPaused = false }
+    /// A toast's time ran out (the overlay's countdown).
+    mutating func expire(_ id: UUID) { items.removeAll { $0.id == id } }
     mutating func tick(seconds: Double) {
         guard !isPaused, !items.isEmpty else { return }
         items[0].remaining -= max(0, seconds)

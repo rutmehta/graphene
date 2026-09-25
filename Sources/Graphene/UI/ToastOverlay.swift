@@ -5,7 +5,6 @@ import SwiftUI
 struct ToastOverlay: View {
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    private let timer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
     var body: some View {
         ZStack(alignment: .bottom) {
             if let toast = app.toasts.items.first {
@@ -34,6 +33,17 @@ struct ToastOverlay: View {
         }
         .padding(.bottom, ShellLayout.toastInset)
         .animation(Motion.toast.reduced(reduceMotion), value: app.toasts.items.first?.id)
-        .onReceive(timer) { _ in app.tickToasts(seconds: 0.25) }
+        // The countdown is kept here, not ticked through AppState: a published tick every
+        // 250 ms redrew every window (sidebar, toolbar, menus) for as long as a toast showed.
+        .task(id: app.toasts.items.first?.id) {
+            guard let toast = app.toasts.items.first else { return }
+            var remaining = toast.remaining
+            while remaining > 0 {
+                try? await Task.sleep(for: .milliseconds(250))
+                if Task.isCancelled { return }
+                if !app.toasts.isPaused { remaining -= 0.25 }
+            }
+            if app.toasts.items.first?.id == toast.id { app.toasts.expire(toast.id) }
+        }
     }
 }

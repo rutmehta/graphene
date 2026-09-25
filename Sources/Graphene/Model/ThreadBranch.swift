@@ -42,6 +42,8 @@ struct ProvenanceLayout: Equatable {
     let rows: [ProvenanceRow]
     /// False when no row has a parent: the list renders exactly as a flat Today list.
     let hasBranches: Bool
+    /// Rows with at least one child (shown or collapsed), for the row's branch chevron.
+    let parentIDs: Set<UUID>
 
     init(ids: [UUID], parents: [UUID: UUID], collapsed: Set<UUID> = []) {
         let allowed = Set(ids)
@@ -49,6 +51,7 @@ struct ProvenanceLayout: Equatable {
         guard !linked.isEmpty else {
             rows = ids.map { ProvenanceRow(id: $0, depth: 0, parentID: nil, rootID: $0, descendants: 0, collapsed: false) }
             hasBranches = false
+            parentIDs = []
             return
         }
         let branch = ThreadBranch.rows(ids: ids, parents: linked)
@@ -73,6 +76,7 @@ struct ProvenanceLayout: Equatable {
         }
         rows = visible
         hasBranches = true
+        parentIDs = Set(linked.values)
     }
 
     /// Vertical hairlines and ticks for the visible rows, in the rows' own coordinate space

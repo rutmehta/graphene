@@ -36,5 +36,8 @@ struct Settings: Codable, Equatable {
     private static func clampedAskWidth(_ width: Double) -> Double {
         min(Double(ShellLayout.chatWidthRange.upperBound), max(Double(ShellLayout.chatWidthRange.lowerBound), width))
     }
+    private var loadedTabs: Int?
+    /// Loaded background pages kept before the least recently active are discarded (LRU cap).
+    var backgroundTabLimit: Int { get { max(0, loadedTabs ?? TabLifecycle.defaultBackgroundLimit) } set { loadedTabs = max(0, newValue) } }
     var onboardingComplete: Bool { get { completed ?? false } set { completed = newValue } }
 }

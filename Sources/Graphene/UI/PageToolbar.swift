@@ -192,17 +192,19 @@ struct PageToolbar<Trailing: View>: View {
 
 /// 2pt `accent` bar tracking `estimatedProgress` (ease-out 150ms), fading out 200ms at completion.
 struct PageProgressBar: View {
-    @ObservedObject var tab: Tab
+    /// The tab's throttled progress (`Tab.loading`), so load ticks redraw only this bar.
+    @ObservedObject var progress: LoadProgress
     @EnvironmentObject var app: AppState
     @Environment(\.pageIsDark) private var pageIsDark
+    init(tab: Tab) { progress = tab.loading }
     private static var height: CGFloat { ShellLayout.hairline * 2 }
     var body: some View {
         GeometryReader { geometry in
             Rectangle().fill(app.pal.page(dark: pageIsDark).accent)
-                .frame(width: geometry.size.width * PageToolbarGeometry.progressFraction(isLoading: tab.isLoading, progress: tab.progress), height: Self.height)
-                .animation(.easeOut(duration: PageToolbarGeometry.progressEase), value: tab.progress)
-                .opacity(PageToolbarGeometry.progressOpacity(isLoading: tab.isLoading))
-                .animation(.easeOut(duration: PageToolbarGeometry.progressFade), value: tab.isLoading)
+                .frame(width: geometry.size.width * PageToolbarGeometry.progressFraction(isLoading: progress.isLoading, progress: progress.value), height: Self.height)
+                .animation(.easeOut(duration: PageToolbarGeometry.progressEase), value: progress.value)
+                .opacity(PageToolbarGeometry.progressOpacity(isLoading: progress.isLoading))
+                .animation(.easeOut(duration: PageToolbarGeometry.progressFade), value: progress.isLoading)
         }
         .frame(height: Self.height).allowsHitTesting(false).accessibilityHidden(true)
     }
