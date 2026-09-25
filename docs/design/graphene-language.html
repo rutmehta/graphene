@@ -52,7 +52,7 @@ ul{padding-left:18px;color:var(--ink2);max-width:70ch}li{margin:4px 0}
 .sb{width:224px;height:560px;padding:0 8px;position:relative}
 .band{height:44px;position:relative}
 .tl{position:absolute;top:16px;width:12px;height:12px;border-radius:50%}
-.tl.r{left:14px;background:#FF5F57}.tl.y{left:34px;background:#FEBC2E}.tl.g{left:54px;background:#28C840}
+.tl-r{left:14px;background:#FF5F57}.tl-y{left:34px;background:#FEBC2E}.tl-g{left:54px;background:#28C840}
 .favs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .fav{height:44px;border-radius:10px;background:var(--fill);display:grid;place-items:center}
 .fav .ic{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff}
@@ -82,7 +82,7 @@ ul{padding-left:18px;color:var(--ink2);max-width:70ch}li{margin:4px 0}
 .map .node .dot{position:absolute;left:20px;top:22px}
 .map .qlabel{position:absolute;font-size:11px;font-weight:600;color:var(--pi3)}
 .map .time{position:absolute;font-size:11px;color:var(--pi3)}
-.map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.map .canvas>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .hovercard{position:absolute;width:300px;padding:10px 12px;background:var(--ev);border-radius:12px;box-shadow:inset 0 0 0 1px var(--phair),var(--ps);color:var(--pi)}
 .hovercard .acts{display:flex;gap:12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--pi3)}
 
@@ -148,7 +148,7 @@ mark .ix{font:600 10px var(--sys);color:var(--accent);vertical-align:super;margi
 .board .card .h{display:flex;align-items:center;gap:6px}
 .board .card .host{font-size:11px;color:var(--pi3)}
 .board .thumb{margin-top:8px;height:90px;border-radius:6px;background:var(--pfill)}
-.board svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.board .cv>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
 /* ---- mail ---- */
 .mail{width:560px;height:360px}
@@ -180,7 +180,7 @@ mark .ix{font:600 10px var(--sys);color:var(--accent);vertical-align:super;margi
   <div class="row2">
     <div>
       <div class="stage"><div class="chrome sb" id="sb">
-        <div class="band"><i class="tl r"></i><i class="tl y"></i><i class="tl g"></i></div>
+        <div class="band"><i class="tl tl-r"></i><i class="tl tl-y"></i><i class="tl tl-g"></i></div>
         <div class="favs">
           <div class="fav"><div class="ic" style="background:#3B6FD8">W</div></div>
           <div class="fav"><div class="ic" style="background:#24292F">G</div></div>
@@ -234,9 +234,9 @@ mark .ix{font:600 10px var(--sys);color:var(--accent);vertical-align:super;margi
       <div class="time" style="left:20px;top:14px">Tue 14:05</div>
       <div class="qlabel" style="left:20px;top:32px">“graphene tensile strength”</div>
       <svg viewBox="0 0 760 368">
-        <path d="M40 74 V186 M40 114 q0 6 6 6 h134 M40 154 q0 6 6 6 h134 M40 186 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
-        <path d="M220 154 V226 M220 226 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
-        <path d="M220 154 V226 q0 6 6 6 h134 M40 74 V154 q0 6 6 6 h134" stroke="var(--tline2)" fill="none"/>
+        <path d="M40 74 V188 M40 108 q0 6 6 6 h134 M40 148 q0 6 6 6 h134 M40 188 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
+        
+        <path d="M220 154 V226 q0 6 6 6 h134 M40 74 V148 q0 6 6 6 h134" stroke="var(--tline2)" fill="none"/>
         <path d="M400 232 V272 q0 6 6 6 h134" stroke="var(--tline)" fill="none"/>
       </svg>
       <div class="node" style="left:20px;top:56px"><span class="fi" style="background:#3B6FD8">W</span>Graphene<span class="host">en.wikipedia.org</span></div>
