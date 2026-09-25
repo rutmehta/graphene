@@ -336,7 +336,7 @@ enum Surface: String, CaseIterable { case web, threads, mail, vault, board }
 /// updates on change. The window is flooded with the space's two-stop chrome
 /// gradient; every fill on top of it is translucent ink, and colour otherwise
 /// comes only from `accent`.
-struct Palette {
+struct Palette: Equatable {
     let mode: ThemeMode
     let space: SpaceColor
     var theme: SpaceTheme? = nil

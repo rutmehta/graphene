@@ -63,6 +63,7 @@ struct WindowAccessor: NSViewRepresentable {
         // write on the main thread each time any window state changed).
         let n = window.windowNumber
         guard Self.writtenWindowNumber != n else { return }
+        if Self.writtenWindowNumber == nil { StartupTrace.mark("first window in a view hierarchy (window \(n))") }
         Self.writtenWindowNumber = n
         try? "\(n)".write(to: Paths.root.appendingPathComponent("window.txt"), atomically: true, encoding: .utf8)
     }

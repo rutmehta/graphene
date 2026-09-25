@@ -32,17 +32,28 @@ struct ChromeColors: Equatable {
     init(_ pal: Palette) { top = pal.chromeTop; bottom = pal.chromeBottom }
 }
 
-/// 1px noise at the palette's grain opacity.
+/// 1px noise at the palette's grain opacity. The 2,400 dots are rasterised once per window
+/// size into a mask (`MaskRaster`) and filled with the grain colour, so chrome redraws and the
+/// space-switch cross-fade composite an image instead of refilling every dot.
 struct ChromeGrain: View {
     @EnvironmentObject var app: AppState
+    static let dots = 2400
+    static let rasterKind = "grain"
+    /// Dot `index`'s rect in a plane of `size` points.
+    static func dot(_ index: Int, in size: CGSize) -> CGRect {
+        CGRect(x: CGFloat((index * 73) % 997) / 997 * size.width, y: CGFloat((index * 193) % 991) / 991 * size.height, width: 1, height: 1)
+    }
+    static func draw(_ context: CGContext, size: CGSize) {
+        for index in 0..<dots { context.fill(dot(index, in: size)) }
+    }
+    /// The cached mask for a plane of `size` points at `scale`.
+    static func mask(size: CGSize, scale: CGFloat) -> CGImage? {
+        MaskRaster.shared.image(kind: rasterKind, size: size, scale: scale, draw: draw)
+    }
     var body: some View {
         let color = app.pal.chromeGrain
-        Canvas { context, size in
-            for index in 0..<2400 {
-                let x = CGFloat((index * 73) % 997) / 997 * size.width
-                let y = CGFloat((index * 193) % 991) / 991 * size.height
-                context.fill(Path(CGRect(x: x, y: y, width: 1, height: 1)), with: .color(color))
-            }
+        RasterMaskFill(kind: Self.rasterKind, color: color, draw: Self.draw) { context, size in
+            for index in 0..<Self.dots { context.fill(Path(Self.dot(index, in: size)), with: .color(color)) }
         }.accessibilityHidden(true)
     }
 }

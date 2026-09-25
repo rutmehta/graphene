@@ -37,25 +37,38 @@ enum TabLifecycle {
         var evictable: Bool { !displayed && !playing && !downloading && !dirty && !loading }
     }
 
+    /// The most recently active background tabs (the one you just left among them) that the
+    /// cap and a memory-pressure warning never discard, and that do not count toward the cap.
+    /// Going back to one of them must not reload it: on a swapping machine a warning-level
+    /// discard made a page left a moment ago reload on return (a 4 s wait). Only a critical
+    /// event may discard them.
+    static let recentExempt = 3
+
     /// Loaded background tabs to discard so at most `limit` stay loaded, least recently active
-    /// first. Tabs on screen never count; tabs that are playing, downloading, loading or hold
-    /// unsaved form input are kept even beyond the limit.
-    static func lruVictims(_ residents: [Resident], limit: Int) -> [UUID] {
-        let background = residents.filter { !$0.displayed }
-        guard background.count > max(0, limit) else { return [] }
-        return background.sorted { $0.lastActive > $1.lastActive }
-            .dropFirst(max(0, limit)).filter(\.evictable).map(\.id)
+    /// first. Tabs on screen never count; the `exemptRecent` most recently active background
+    /// tabs are kept and do not count either; tabs that are playing, downloading, loading or
+    /// hold unsaved form input are kept even beyond the limit.
+    static func lruVictims(_ residents: [Resident], limit: Int, exemptRecent: Int = 0) -> [UUID] {
+        let background = residents.filter { !$0.displayed }.sorted { $0.lastActive > $1.lastActive }
+        let counted = background.dropFirst(max(0, exemptRecent))
+        guard counted.count > max(0, limit) else { return [] }
+        return counted.dropFirst(max(0, limit)).filter(\.evictable).map(\.id)
     }
 
     /// How many background pages survive a memory-pressure event: half the cap on a warning,
     /// none on a critical event.
     static func pressureLimit(critical: Bool, limit: Int) -> Int { critical ? 0 : max(0, limit) / 2 }
+    /// Recent tabs spared by a memory-pressure event: `recentExempt` on a warning, none when critical.
+    static func pressureExempt(critical: Bool) -> Int { critical ? 0 : recentExempt }
 
     /// Whether a thumbnail should be taken of a tab's page now: once per navigation (a URL not
     /// already captured), only of the selected, finished, loaded page, never of private pages.
     static func needsThumbnail(active: Bool, loaded: Bool, loading: Bool, isPrivate: Bool, url: URL?, captured: URL?) -> Bool {
         active && loaded && !loading && !isPrivate && url != nil && url != captured
     }
+    /// The page text for the graph snippet is read this long after a page finishes loading,
+    /// never during first paint; a page left sooner is not read at all.
+    static let captureDelay: Duration = .seconds(2)
     /// A thumbnail waits this long after a switch or a load, so it never competes with the
     /// switch itself.
     static let thumbnailDelay: Duration = .milliseconds(800)
@@ -115,19 +128,20 @@ extension AppState {
             }
         }
         let chosen = Set(victims.map(\.id))
-        victims += lruVictims(limit: settings.backgroundTabLimit).filter { !chosen.contains($0.id) }
+        victims += lruVictims(limit: settings.backgroundTabLimit, exemptRecent: TabLifecycle.recentExempt).filter { !chosen.contains($0.id) }
         await discard(victims, verified: polled)
     }
 
-    /// The loaded background tabs beyond `limit`, least recently active first (`TabLifecycle.lruVictims`).
-    func lruVictims(limit: Int) -> [Tab] {
+    /// The loaded background tabs beyond `limit`, least recently active first, sparing the
+    /// `exemptRecent` most recent (`TabLifecycle.lruVictims`).
+    func lruVictims(limit: Int, exemptRecent: Int = 0) -> [Tab] {
         let displayed = displayedTabIDs
         let residents = tabs.compactMap { tab -> TabLifecycle.Resident? in
             guard let engine = tab.loadedEngine as? WKWebEngine else { return nil }
             return TabLifecycle.Resident(id: tab.id, lastActive: tab.lastActiveAt, displayed: displayed.contains(tab.id) || tab.id == activeTabID,
                                          playing: tab.isPlayingAudio, downloading: engine.activeDownloads > 0, dirty: engine.formDirty, loading: engine.isLoading)
         }
-        let ids = TabLifecycle.lruVictims(residents, limit: limit)
+        let ids = TabLifecycle.lruVictims(residents, limit: limit, exemptRecent: exemptRecent)
         return ids.compactMap { id in tabs.first { $0.id == id } }
     }
 
@@ -147,10 +161,10 @@ extension AppState {
     }
 
     /// The system is short of memory: discard least recently active background pages down to
-    /// half the cap (warning) or all of them (critical).
+    /// half the cap (warning), keeping the three most recent, or all of them (critical).
     func relieveMemoryPressure(critical: Bool) async {
         let limit = TabLifecycle.pressureLimit(critical: critical, limit: settings.backgroundTabLimit)
-        await discard(lruVictims(limit: limit), verified: [])
+        await discard(lruVictims(limit: limit, exemptRecent: TabLifecycle.pressureExempt(critical: critical)), verified: [])
     }
 
     func startMemoryPressureMonitor() {

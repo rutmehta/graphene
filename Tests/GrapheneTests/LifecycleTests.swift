@@ -14,7 +14,7 @@ final class LifecycleTests: XCTestCase {
         XCTAssertNil(app.tabs[1].loadedEngine)
         XCTAssertTrue(app.graph.visits.isEmpty)
         XCTAssertEqual(try Data(contentsOf: file.appendingPathExtension("v1.backup")), legacy)
-        app.persist()
+        app.persist(); app.flushSaves()
         XCTAssertEqual(try JSONDecoder().decode(AppState.SessionData.self, from: Data(contentsOf: file)).version, 2)
     }
 

@@ -18,6 +18,7 @@ final class BrowserFocus: ObservableObject {
 final class WindowState: ObservableObject {
     private static var primaryClaimed = false
     static func initial() -> WindowState {
+        StartupTrace.once("WindowState.initial")
         let app = primaryClaimed ? AppState(sharing: AppState.shared) : AppState.shared
         primaryClaimed = true
         return WindowState(app: app)

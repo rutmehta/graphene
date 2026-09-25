@@ -59,11 +59,20 @@ struct Lattice: View {
     /// Height of the lattice band an empty state draws above its line of text.
     static let bandHeight: CGFloat = ShellLayout.latticeCell * 5
 
+    static let rasterKind = "lattice"
+    /// Strokes the lattice for `size` into a mask; rasterised once per size (`MaskRaster`).
+    static func draw(_ context: CGContext, size: CGSize) {
+        context.addPath(LatticeGeometry.path(in: size, cell: ShellLayout.latticeCell).cgPath)
+        context.setLineWidth(ShellLayout.hairline)
+        context.strokePath()
+    }
+
     var body: some View {
         if !reduceTransparency {
-            Canvas { context, size in
+            let color = app.pal.lattice
+            RasterMaskFill(kind: Self.rasterKind, color: color, draw: Self.draw) { context, size in
                 context.stroke(LatticeGeometry.path(in: size, cell: ShellLayout.latticeCell),
-                               with: .color(app.pal.lattice), lineWidth: ShellLayout.hairline)
+                               with: .color(color), lineWidth: ShellLayout.hairline)
             }
             .mask(LinearGradient(stops: [.init(color: .black, location: 0),
                                          .init(color: .black, location: LatticeGeometry.fadeStart),

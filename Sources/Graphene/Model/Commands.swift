@@ -45,8 +45,57 @@ extension AppState {
         if let id = activeTabID { requestCloseTab(id) }
     }
 
-    var commandActions: [BrowserAction] { allCommandActions.filter(\.enabled) }
-    var allCommandActions: [BrowserAction] {
+    /// The enabled commands. Built once per change of `CommandRegistryKey`, not per call:
+    /// the command bar asked for the table once per result row on every keystroke.
+    var commandActions: [BrowserAction] { commandRegistry.enabled }
+    /// Every command, enabled or not (menus, Settings → Shortcuts, remapping).
+    var allCommandActions: [BrowserAction] { commandRegistry.all }
+    /// One command by id, from the cached table.
+    func commandAction(_ id: String) -> BrowserAction? { commandRegistry.byID[id].flatMap { $0.enabled ? $0 : nil } }
+
+    /// Everything the command table is built from. Actions capture the active tab and the
+    /// spaces; titles and enabled flags read the rest. Anything else an action needs is read
+    /// when it runs.
+    var commandRegistryKey: CommandRegistryKey {
+        let tab = activeTab
+        var today = false, looseToday = false
+        for candidate in tabs where candidate.spaceID == activeSpaceID && candidate.section == .today {
+            today = true
+            if candidate.folderID == nil { looseToday = true; break }
+        }
+        let branch = selectedBranchID
+        return CommandRegistryKey(
+            tab: tab.map(ObjectIdentifier.init), page: tab?.url != nil, loading: tab?.isLoading == true,
+            back: tab?.canGoBack == true, forward: tab?.canGoForward == true,
+            pinned: tab?.isPinned == true, favorite: tab?.isFavorite == true,
+            reopen: !archivedTabs.isEmpty, split: activeSplit?.tabIDs.count,
+            branch: branch, branchCollapsed: branch.map(collapsedBranchIDs.contains) ?? false,
+            spaces: spaces.prefix(9).map { CommandRegistryKey.SpaceName(id: $0.id, name: $0.name) }, spaceCount: spaces.count,
+            today: today, looseToday: looseToday, findEmpty: findQuery.isEmpty,
+            threads: !isPrivate && graph.hasThreads(spaceID: activeSpaceID), overrides: settings.shortcutOverrides)
+    }
+
+    var commandRegistry: CommandRegistry {
+        let key = commandRegistryKey
+        if let cached = commandRegistryCache, cached.key == key { return cached.registry }
+        let registry = CommandRegistry(buildCommandActions())
+        commandRegistryCache = (key, registry)
+        commandRegistryBuilds += 1
+        return registry
+    }
+
+    /// Commands by key equivalent, for the window's key monitor: a dictionary lookup per
+    /// keystroke. Keys change only with shortcut overrides and the number of spaces.
+    func commandIDs(for shortcut: CommandShortcut) -> [String] {
+        let key = ShortcutIndexKey(overrides: settings.shortcutOverrides, spaces: min(9, spaces.count))
+        if let cached = shortcutIndexCache, cached.key == key { return cached.index[shortcut] ?? [] }
+        var index: [CommandShortcut: [String]] = [:]
+        for action in allCommandActions where action.key != nil { index[CommandShortcut(action: action), default: []].append(action.id) }
+        shortcutIndexCache = (key, index)
+        return index[shortcut] ?? []
+    }
+
+    func buildCommandActions() -> [BrowserAction] {
         var actions: [BrowserAction] = []
         func add(_ id: String, _ title: String, _ key: KeyEquivalent? = nil, _ modifiers: EventModifiers = .command, _ hint: String = "", enabled: Bool = true, run: @escaping @MainActor () -> Void) {
             var action = BrowserAction(id: id, title: title, key: key, modifiers: modifiers, hint: hint, enabled: enabled, run: run)
@@ -97,12 +146,12 @@ extension AppState {
         add("move-up", "Move Tab Up", .upArrow, [.command, .option, .control], "⌃⌥⌘↑") { self.reorderActiveTab(-1) }
         add("move-down", "Move Tab Down", .downArrow, [.command, .option, .control], "⌃⌥⌘↓") { self.reorderActiveTab(1) }
         let branch = selectedBranchID, branchCollapsed = branch.map(collapsedBranchIDs.contains) ?? false
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let reduceMotion = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
         add("collapse-branch", "Collapse Branch", .leftArrow, [.command, .option, .control], "⌃⌥⌘←", enabled: branch != nil && !branchCollapsed) {
-            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { self.setSelectedBranch(collapsed: true) }
+            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion())) { self.setSelectedBranch(collapsed: true) }
         }
         add("expand-branch", "Expand Branch", .rightArrow, [.command, .option, .control], "⌃⌥⌘→", enabled: branch != nil && branchCollapsed) {
-            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { self.setSelectedBranch(collapsed: false) }
+            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion())) { self.setSelectedBranch(collapsed: false) }
         }
         add("pinned-folder", "New Pinned Folder") { self.createFolder(section: .pinned) }
         add("peek", "Peek Current Page", enabled: page) { if let url = tab?.url { self.showPeek(url) } }
@@ -255,6 +304,40 @@ extension AppState {
             guard let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { notify("Choose another default browser in macOS Settings."); return }
             NSWorkspace.shared.open([url], withApplicationAt: safari, configuration: NSWorkspace.OpenConfiguration())
         } else { NSWorkspace.shared.open(url) }
+    }
+}
+
+/// See `AppState.commandRegistryKey`.
+struct CommandRegistryKey: Equatable {
+    struct SpaceName: Equatable { var id: UUID; var name: String }
+    var tab: ObjectIdentifier?
+    var page: Bool, loading: Bool, back: Bool, forward: Bool, pinned: Bool, favorite: Bool
+    var reopen: Bool
+    var split: Int?
+    var branch: UUID?
+    var branchCollapsed: Bool
+    var spaces: [SpaceName]
+    var spaceCount: Int
+    var today: Bool, looseToday: Bool
+    var findEmpty: Bool
+    var threads: Bool
+    var overrides: [String: CommandShortcut]
+}
+
+struct ShortcutIndexKey: Equatable {
+    var overrides: [String: CommandShortcut]
+    var spaces: Int
+}
+
+/// One build of the command table: in order, enabled only, and by id.
+struct CommandRegistry {
+    let all: [BrowserAction]
+    let enabled: [BrowserAction]
+    let byID: [String: BrowserAction]
+    init(_ actions: [BrowserAction]) {
+        all = actions
+        enabled = actions.filter(\.enabled)
+        byID = Dictionary(actions.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 }
 

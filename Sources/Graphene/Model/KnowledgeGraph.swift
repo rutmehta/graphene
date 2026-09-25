@@ -62,7 +62,7 @@ final class KnowledgeGraph: ObservableObject {
     /// the Threads list, the Ask panel and the command bar ask for them on every redraw.
     private var threadCache: [String: [Thread]] = [:]
     @Published private(set) var summaries: [String: ThreadSummary] = [:]
-    func cacheSummary(_ summary: ThreadSummary, threadID: UUID) { summaries[threadID.uuidString] = summary; scheduleSave() }
+    func cacheSummary(_ summary: ThreadSummary, threadID: UUID) { ensureLoaded(); summaries[threadID.uuidString] = summary; scheduleSave() }
     @Published private(set) var errorText: String?
     private var canSave = true
     private let file: URL
@@ -71,9 +71,47 @@ final class KnowledgeGraph: ObservableObject {
 
     var nodeArray: [GraphNode] { Array(nodes.values) }
 
-    init(file: URL = Paths.graphFile, inMemory: Bool = false) {
+    /// `deferLoad` reads and decodes the file on a background queue instead of in `init`
+    /// (the app's own graph at launch: 130 ms for 2,000 pages in a debug build, before the
+    /// first frame). Until it lands the graph reads as empty and publishes once when it does;
+    /// any change waits for it first (`ensureLoaded`), so nothing recorded meanwhile is lost.
+    init(file: URL = Paths.graphFile, inMemory: Bool = false, deferLoad: Bool = false) {
         self.file = file; canSave = !inMemory
-        if !inMemory { load() }
+        guard !inMemory else { return }
+        if deferLoad { startLoad() } else { apply(Self.read(file)) }
+    }
+
+    private final class LoadBox: @unchecked Sendable { var result: Result<Snapshot, Error>? }
+    private var pendingLoad: (group: DispatchGroup, box: LoadBox)?
+    private var loadWaiters: [() -> Void] = []
+    /// Whether the file has been read (always true for an in-memory or synchronously loaded graph).
+    var isLoaded: Bool { pendingLoad == nil }
+
+    private func startLoad() {
+        let box = LoadBox(), group = DispatchGroup(), file = self.file
+        group.enter()
+        // User-initiated: the main thread may wait for it (`ensureLoaded`), and a group wait does not raise priority.
+        DispatchQueue.global(qos: .userInitiated).async {
+            box.result = Self.read(file)
+            group.leave()
+        }
+        pendingLoad = (group, box)
+        group.notify(queue: .main) { [weak self] in MainActor.assumeIsolated { self?.ensureLoaded() } }
+    }
+
+    /// Applies a deferred load, waiting for the background read if it has not finished.
+    func ensureLoaded() {
+        guard let pending = pendingLoad else { return }
+        pending.group.wait()
+        pendingLoad = nil
+        StartupTrace.measure("graph.json applied (decoded in the background)") { apply(pending.box.result) }
+        let waiters = loadWaiters; loadWaiters = []
+        waiters.forEach { $0() }
+    }
+
+    /// Runs `body` once the graph is loaded (at once when it already is).
+    func whenLoaded(_ body: @escaping () -> Void) {
+        if isLoaded { body() } else { loadWaiters.append(body) }
     }
 
     // MARK: recording
@@ -82,6 +120,7 @@ final class KnowledgeGraph: ObservableObject {
     /// from its parent. Returns the node id so the tab can track its position.
     @discardableResult
     func recordVisit(url: URL, title: String?, spaceID: UUID?, parentNodeID: UUID?, query: String?, date: Date = Date(), continuingThreadID: UUID? = nil, resumeThreadID: UUID? = nil) -> UUID {
+        ensureLoaded()
         let key = normalize(url)
         let now = date
         let host = url.host ?? ""
@@ -122,6 +161,7 @@ final class KnowledgeGraph: ObservableObject {
 
     /// Store a short snippet of the page for previews (and future grouping).
     func attachText(nodeID: UUID, text: String) {
+        ensureLoaded()
         guard var node = nodes[nodeID], !text.isEmpty else { return }
         node.snippet = String(text.prefix(16000))
         nodes[nodeID] = node
@@ -130,6 +170,7 @@ final class KnowledgeGraph: ObservableObject {
 
     /// Sites often set their title via JS after the load finishes; back-fill it.
     func setTitle(nodeID: UUID, title: String) {
+        ensureLoaded()
         guard var node = nodes[nodeID], !title.isEmpty, node.title != title else { return }
         node.title = title
         nodes[nodeID] = node
@@ -137,6 +178,7 @@ final class KnowledgeGraph: ObservableObject {
     }
 
     func bumpAnnotationCount(nodeID: UUID) {
+        ensureLoaded()
         guard var node = nodes[nodeID] else { return }
         node.annotationCount += 1
         nodes[nodeID] = node
@@ -244,6 +286,7 @@ final class KnowledgeGraph: ObservableObject {
     }
 
     func updatePositions(_ positions: [UUID: (Double, Double)]) {
+        ensureLoaded()
         for (id, p) in positions where nodes[id] != nil {
             nodes[id]?.x = p.0
             nodes[id]?.y = p.1
@@ -265,6 +308,7 @@ final class KnowledgeGraph: ObservableObject {
     // MARK: forget
 
     func forget(host: String) {
+        ensureLoaded()
         let doomed = nodes.values.filter { hostMatches($0.host, host) }.map { $0.id }
         let set = Set(doomed)
         for id in doomed { if let n = nodes[id] { urlIndex[n.url] = nil }; nodes[id] = nil }
@@ -320,6 +364,7 @@ final class KnowledgeGraph: ObservableObject {
     /// Saves now. `wait` (the default, used at quit and by callers that read the file back)
     /// returns after the file is written; the scheduled save does not wait.
     func save(wait: Bool = true) {
+        ensureLoaded()
         guard canSave else { return }
         let snap = Snapshot(nodes: Array(nodes.values), edges: edges, visits: visits, summaries: summaries)
         let file = self.file
@@ -340,12 +385,23 @@ final class KnowledgeGraph: ObservableObject {
         }
     }
 
-    private func load() {
-        guard FileManager.default.fileExists(atPath: file.path) else { return }
+    /// Reads and decodes the file; `nil` when there is none. Runs on any queue.
+    nonisolated private static func read(_ file: URL) -> Result<Snapshot, Error>? {
+        guard FileManager.default.fileExists(atPath: file.path) else { return nil }
+        return Result { try JSONDecoder().decode(Snapshot.self, from: Data(contentsOf: file)) }
+    }
+
+    private func apply(_ result: Result<Snapshot, Error>?) {
+        guard let result else { return }
         let snap: Snapshot
-        do { snap = try JSONDecoder().decode(Snapshot.self, from: Data(contentsOf: file)) }
+        do { snap = try result.get() }
         catch { canSave = false; errorText = "The history file couldn’t be read. It has been left untouched."; return }
-        for n in snap.nodes { nodes[n.id] = n; urlIndex[n.url] = n.id }
+        // Built locally and assigned once: a deferred load lands while views observe the graph,
+        // and one assignment per node would publish once per node.
+        var loadedNodes = nodes, index = urlIndex
+        for n in snap.nodes { loadedNodes[n.id] = n; index[n.url] = n.id }
+        urlIndex = index
+        nodes = loadedNodes
         edges = snap.edges
         summaries = snap.summaries ?? [:]
         if let recorded = snap.visits {
@@ -354,12 +410,14 @@ final class KnowledgeGraph: ObservableObject {
             // Preserve old history once, then record each navigation independently.
             var threadID = UUID()
             var previous: GraphNode?
+            var migrated = visits
             for node in snap.nodes.sorted(by: { $0.firstVisit < $1.firstVisit }) {
                 if let p = previous, node.firstVisit.timeIntervalSince(p.firstVisit) > 2400 || node.query != nil { threadID = UUID() }
-                visits.append(GraphVisit(id: UUID(), nodeID: node.id, threadID: threadID,
-                                         parentNodeID: previous?.id, spaceID: nil, date: node.firstVisit, query: node.query))
+                migrated.append(GraphVisit(id: UUID(), nodeID: node.id, threadID: threadID,
+                                           parentNodeID: previous?.id, spaceID: nil, date: node.firstVisit, query: node.query))
                 previous = node
             }
+            visits = migrated
         }
     }
 }

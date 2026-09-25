@@ -56,6 +56,12 @@ final class AppState: ObservableObject, BrowserCoordinator {
         }
     }
     private var recentIDs: [UUID] = []
+    /// The command table and the key-equivalent index (`Commands.swift`), rebuilt only when
+    /// their inputs change.
+    var commandRegistryCache: (key: CommandRegistryKey, registry: CommandRegistry)?
+    var shortcutIndexCache: (key: ShortcutIndexKey, index: [CommandShortcut: [String]])?
+    /// Command table builds, for tests.
+    var commandRegistryBuilds = 0
     struct ProvenanceKey: Equatable { var ids: [UUID]; var parents: [UUID: UUID]; var collapsed: Set<UUID> }
     private var provenanceCache: (key: ProvenanceKey, layout: ProvenanceLayout)?
     /// ⌃Tab state lives on its own object: each ⌃Tab press used to publish AppState and redraw
@@ -213,24 +219,30 @@ final class AppState: ObservableObject, BrowserCoordinator {
         archiveFile = root.appendingPathComponent("archive.json")
         if !isPrivate { try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true) }
         sessionFile = root.appendingPathComponent("session.json")
-        sites = owner?.sites ?? SiteSettings(file: root.appendingPathComponent("sites.json"), persistent: !isPrivate)
-        boosts = owner?.boosts ?? Boosts(directory: root.appendingPathComponent("boosts"), persistent: !isPrivate)
+        let isPrivate = self.isPrivate
+        let traced = owner == nil && directory == nil && !isPrivate && StartupTrace.enabled
+        if traced { StartupTrace.mark("AppState.init start") }
+        sites = owner?.sites ?? StartupTrace.measure("sites.json") { SiteSettings(file: root.appendingPathComponent("sites.json"), persistent: !isPrivate) }
+        boosts = owner?.boosts ?? StartupTrace.measure("boosts") { Boosts(directory: root.appendingPathComponent("boosts"), persistent: !isPrivate) }
+        // A window that closed a moment ago may still be writing these files.
+        if owner == nil && !isPrivate { SessionWriter.shared.flush() }
         if owner == nil && !isPrivate {
             let file = root.appendingPathComponent("settings.json")
             if FileManager.default.fileExists(atPath: file.path) {
-                do { library.settings = try JSONDecoder().decode(Settings.self, from: Data(contentsOf: file)) }
+                do { library.settings = try StartupTrace.measure("settings.json decode") { try JSONDecoder().decode(Settings.self, from: Data(contentsOf: file)) } }
                 catch { canPersistSettings = false; settingsError = "Settings couldn’t be read. The original file is untouched." }
             }
             onboardingPresented = !FileManager.default.fileExists(atPath: root.appendingPathComponent("session.json").path) && !library.settings.onboardingComplete
         }
-        graph = owner?.graph ?? KnowledgeGraph(file: root.appendingPathComponent("graph.json"), inMemory: isPrivate)
-        vault = owner?.vault ?? Vault(file: root.appendingPathComponent("annotations.json"), directory: isPrivate ? root : (directory ?? Paths.vault), inMemory: isPrivate)
-        downloads = owner?.downloads ?? DownloadStore(file: isPrivate ? nil : root.appendingPathComponent("downloads.json"))
-        boards = owner?.boards ?? BoardStore(file: isPrivate ? nil : root.appendingPathComponent("boards.json"))
+        // The app's own graph is decoded off the main thread; the first frame does not need it.
+        graph = owner?.graph ?? StartupTrace.measure("graph.json") { KnowledgeGraph(file: root.appendingPathComponent("graph.json"), inMemory: isPrivate, deferLoad: directory == nil) }
+        vault = owner?.vault ?? StartupTrace.measure("vault (annotations.json)") { Vault(file: root.appendingPathComponent("annotations.json"), directory: isPrivate ? root : (directory ?? Paths.vault), inMemory: isPrivate) }
+        downloads = owner?.downloads ?? StartupTrace.measure("downloads.json") { DownloadStore(file: isPrivate ? nil : root.appendingPathComponent("downloads.json")) }
+        boards = owner?.boards ?? StartupTrace.measure("boards.json") { BoardStore(file: isPrivate ? nil : root.appendingPathComponent("boards.json")) }
         activeSpaceID = spaces[0].id
-        if owner == nil && !isPrivate { restoreSession() }
+        if owner == nil && !isPrivate { StartupTrace.measure("session restore") { restoreSession() } }
         if owner == nil && !isPrivate && FileManager.default.fileExists(atPath: archiveFile.path) {
-            do { archivedTabs = try JSONDecoder().decode([SessionTab].self, from: Data(contentsOf: archiveFile)) }
+            do { archivedTabs = try StartupTrace.measure("archive.json decode") { try JSONDecoder().decode([SessionTab].self, from: Data(contentsOf: archiveFile)) } }
             catch { canPersistSession = false; sessionError = "The archive couldn’t be read. Its file has been left untouched." }
         }
         library.windows.append(WeakBrowserState(self))
@@ -266,6 +278,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
         vault.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &subscriptions)
         if isPrivate { mode = .dark }
         if directory == nil && owner == nil && !isPrivate { startDebugDriverIfEnabled() }
+        if traced { StartupTrace.mark("AppState.init end") }
     }
 
     /// A WKWebView has exactly one host. Selecting a visible tab in another
@@ -916,9 +929,13 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.resumeThreadID = nil
         persistSoon()
         Task { [weak self, weak tab] in
+            // After `captureDelay`, and only if the page is still there: a page left within two
+            // seconds is never read, and reading never competes with first paint.
+            try? await Task.sleep(for: TabLifecycle.captureDelay)
             // Only a loaded page is read; `tab.engine` would reload a tab discarded meanwhile.
-            guard let tab, let engine = tab.loadedEngine else { return }
-            let text = await engine.captureSnapshotText()
+            guard let tab, let engine = tab.loadedEngine, tab.url == url, tab.currentNodeID == node else { return }
+            let text: String
+            if let web = engine as? WKWebEngine { text = await web.captureSnapshotText(idle: true) } else { text = await engine.captureSnapshotText() }
             guard tab.loadedEngine === engine, tab.currentNodeID == node, tab.url == url, self?.captureAllowed(tab, url: url) == true else { return }
             self?.graph.attachText(nodeID: node, text: text)
             if let t = engine.pageTitle, !t.isEmpty { self?.graph.setTitle(nodeID: node, title: t) }
@@ -1209,20 +1226,31 @@ final class AppState: ObservableObject, BrowserCoordinator {
         var profiles: [Profile]?
     }
 
+    /// Bursts of changes (a drag, a resize, a run of tab switches) coalesce into one save.
+    static let saveDelay: TimeInterval = 0.5
+
     func persistSoon() {
         saveWork?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.persist() }
         saveWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.saveDelay, execute: work)
     }
 
+    /// Saves settings, the session and (when it changed) the archive. The main thread only
+    /// takes a snapshot of value types; `SessionWriter` encodes and writes it, atomically and
+    /// in order. `flushSaves()` waits for the writes (quit, and readers of the files).
     func persist() {
+        saveWork?.cancel(); saveWork = nil
+        let writer = SessionWriter.shared
         if !isPrivate && canPersistSettings {
-            do {
-                try JSONEncoder().encode(exportedSettings).write(to: dataDirectory.appendingPathComponent("settings.json"), options: .atomic)
-                if settingsError != nil { settingsError = nil }
+            let snapshot = exportedSettings
+            writer.write(dataDirectory.appendingPathComponent("settings.json"), encode: { try JSONEncoder().encode(snapshot) }) { [weak self] error in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    let text = error.map { "Couldn’t save settings: \($0)" }
+                    if self.settingsError != text { self.settingsError = text }
+                }
             }
-            catch { settingsError = "Couldn’t save settings: \(error.localizedDescription)" }
         }
         guard canPersistSession, !isPrivate else { return }
         let data = SessionData(
@@ -1242,12 +1270,32 @@ final class AppState: ObservableObject, BrowserCoordinator {
             excludedHosts: excludedHosts, pausedSpaces: pausedSpaces,
             layout: layout, searchSuggestions: searchSuggestions, profiles: profiles
         )
-        do {
-            try JSONEncoder().encode(archivedTabs).write(to: archiveFile, options: .atomic)
-            try JSONEncoder().encode(data).write(to: sessionFile, options: .atomic)
-            // Assigning nil publishes even when it was nil, redrawing every window on each save.
-            if sessionError != nil { sessionError = nil }
-        } catch { sessionError = "Couldn’t save the browser session: \(error.localizedDescription)" }
+        // Up to 2,000 entries: encoded only when the archive changed since the last save.
+        if library.savedArchiveRevision != library.archiveRevision {
+            let archive = archivedTabs
+            library.savedArchiveRevision = library.archiveRevision
+            writer.write(archiveFile, encode: { try JSONEncoder().encode(archive) }) { [weak self] error in
+                MainActor.assumeIsolated {
+                    guard let self, let error else { return }
+                    self.library.savedArchiveRevision = -1
+                    self.sessionError = "Couldn’t save the browser session: \(error)"
+                }
+            }
+        }
+        writer.write(sessionFile, encode: { try JSONEncoder().encode(data) }) { [weak self] error in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let text = error.map { "Couldn’t save the browser session: \($0)" }
+                // Assigning nil publishes even when it was nil, redrawing every window on each save.
+                if self.sessionError != text && (error != nil || self.library.savedArchiveRevision != -1) { self.sessionError = text }
+            }
+        }
+    }
+
+    /// Writes any pending save now and waits for the session writer to finish.
+    func flushSaves() {
+        if saveWork != nil { persist() }
+        SessionWriter.shared.flush()
     }
 
     private func restoreSession() {
@@ -1305,9 +1353,14 @@ final class AppState: ObservableObject, BrowserCoordinator {
             tab.currentNodeID = st.nodeID
             tab.currentThreadID = st.threadID
             if let s = st.url, let url = URL(string: s) {
-                tab.currentNodeID = st.nodeID ?? graph.node(for: url)?.id
                 tab.isRestoring = true
                 tab.url = url
+                // An older session without node ids looks its pages up once the graph has loaded.
+                if st.nodeID == nil {
+                    graph.whenLoaded { [weak tab, graph] in
+                        if let tab, tab.currentNodeID == nil, tab.url == url { tab.currentNodeID = graph.node(for: url)?.id }
+                    }
+                }
             }
             // Blank tabs also need their own space's store, not the active space's.
             tab.discard()

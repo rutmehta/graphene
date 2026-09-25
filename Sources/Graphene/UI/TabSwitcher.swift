@@ -101,7 +101,10 @@ struct TabKeyboardMonitor: NSViewRepresentable {
                 if event.type == .keyDown {
                     let flags = event.modifierFlags
                     let pressed = CommandShortcut(key: event.charactersIgnoringModifiers ?? "", command: flags.contains(.command), option: flags.contains(.option), control: flags.contains(.control), shift: flags.contains(.shift))
-                    if let action = app.commandActions.first(where: { ["mru-next", "mru-previous"].contains($0.id) && CommandShortcut(action: $0) == pressed }) { action.run(); return nil }
+                    // A dictionary lookup by key equivalent; the command table is not built per keystroke.
+                    if let id = app.commandIDs(for: pressed).first(where: { $0 == "mru-next" || $0 == "mru-previous" }) {
+                        app.cycleRecentTab(id == "mru-next" ? 1 : -1); return nil
+                    }
                 }
                 if event.type == .keyDown && event.keyCode == 53 && !app.switcherIDs.isEmpty { app.switcherIDs = []; return nil }
                 if event.type == .keyDown && event.keyCode == 53 && app.peekTab != nil { app.closePeek(); return nil }

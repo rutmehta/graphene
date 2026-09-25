@@ -46,6 +46,7 @@ struct ProfileSettings: View {
                 for index in app.spaces.indices where app.spaces[index].profileID == profile.id { app.spaces[index].profileID = nil }
                 for tab in app.tabs where tab.profileID == profile.id { tab.discard(); tab.profileID = Profile.defaultID }
                 let storeID = Profile.storeID(profile.id, namespace: ProcessInfo.processInfo.environment["GRAPHENE_DATA_DIR"])
+                WKWebEngine.forgetDataStore(storeID: storeID)
                 WKWebsiteDataStore.remove(forIdentifier: storeID) { error in
                     Task { @MainActor in
                         if let error { status = "Couldn’t remove website data: \(error.localizedDescription)" }
