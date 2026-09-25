@@ -2,17 +2,24 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// Sidebar motion (arc-look.md §4): the space switch slides 24pt with a fade; hover and
-/// selection fade in 100ms. Reduce Motion turns the slide into a 120ms fade.
+/// Sidebar motion (arc-look.md §4): the space switch slides 24pt with a fade in the
+/// direction of travel; hover and selection fade in 100ms. Reduce Motion turns the slide
+/// into a 120ms fade.
 enum SidebarMotion {
     static let hover = Animation.easeOut(duration: 0.10)
-    static func spaceSwitch(reduceMotion: Bool) -> Animation {
-        reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.18)
+    static func spaceSwitch(reduceMotion: Bool) -> Animation { Motion.spaceSwitch.reduced(reduceMotion) }
+    /// Horizontal offsets for the incoming and outgoing space's content. Toward the next
+    /// space (`direction` 1) the content moves left: the new space enters from the right and
+    /// the old one leaves to the left; toward the previous space it all moves right.
+    static func spaceSlideOffsets(direction: Int) -> (insertion: CGFloat, removal: CGFloat) {
+        let sign: CGFloat = direction < 0 ? -1 : 1
+        return (sign * ShellLayout.spaceSlide, -sign * ShellLayout.spaceSlide)
     }
-    static func spaceTransition(reduceMotion: Bool) -> AnyTransition {
-        reduceMotion ? .opacity : .asymmetric(
-            insertion: .offset(x: ShellLayout.spaceSlide).combined(with: .opacity),
-            removal: .offset(x: -ShellLayout.spaceSlide).combined(with: .opacity))
+    static func spaceTransition(reduceMotion: Bool, direction: Int) -> AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        let offsets = spaceSlideOffsets(direction: direction)
+        return .asymmetric(insertion: .offset(x: offsets.insertion).combined(with: .opacity),
+                           removal: .offset(x: offsets.removal).combined(with: .opacity))
     }
     /// Branch collapse and expand (graphene-identity.md §4): child rows slide 8pt and fade over
     /// 160ms; Reduce Motion keeps only a 120ms fade.
@@ -47,7 +54,7 @@ struct Sidebar: View {
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var deleteSpace: SpaceInfo?
-    @State private var draggingTab = false
+    private var dragging: Bool { app.sidebarDragTabID != nil }
     private var showsAddress: Bool { app.settings.addressPlacement == .sidebar && app.activeTab != nil }
 
     var body: some View {
@@ -70,24 +77,28 @@ struct Sidebar: View {
                 SpaceLabel().padding(.horizontal, ShellLayout.windowGap)
                 ArchiveView()
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        if hasContent(.favorites) || draggingTab { favorites.padding(.bottom, ShellLayout.sectionGap) }
-                        SpaceLabel()
-                        rows(.pinned)
-                        TodayDivider()
-                        VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
-                            NewTabRow()
-                            rows(.today)
-                        }
-                    }.padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.sectionGap)
+                // Each space has its own scroll view, swapped with a slide in the direction of
+                // travel; the ZStack (not the scroll content) owns the transition so it animates.
+                ZStack {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            if hasContent(.favorites) || dragging { favorites.padding(.bottom, ShellLayout.sectionGap) }
+                            SpaceLabel()
+                            rows(.pinned)
+                            TodayDivider()
+                            VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
+                                NewTabRow()
+                                rows(.today)
+                            }
+                        }.padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.sectionGap)
+                            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: app.visibleTabs.map(\.id))
+                    }.scrollIndicators(.hidden)
+                        .overlay(alignment: .top) { DragAutoScrollEdge(direction: -1, active: dragging).frame(height: ShellLayout.rowHeight / 2) }
+                        .overlay(alignment: .bottom) { DragAutoScrollEdge(direction: 1, active: dragging).frame(height: ShellLayout.rowHeight / 2) }
                         .id(app.activeSpaceID)
-                        .transition(SidebarMotion.spaceTransition(reduceMotion: reduceMotion))
-                }.scrollIndicators(.hidden)
+                        .transition(SidebarMotion.spaceTransition(reduceMotion: reduceMotion, direction: app.spaceTravel))
+                }.clipped()
                     .animation(SidebarMotion.spaceSwitch(reduceMotion: reduceMotion), value: app.activeSpaceID)
-                    .overlay(alignment: .top) { DragAutoScrollEdge(direction: -1).frame(height: 12) }
-                    .overlay(alignment: .bottom) { DragAutoScrollEdge(direction: 1).frame(height: 12) }
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: app.visibleTabs.map(\.id))
             }
             if let tab = app.tabs.first(where: { $0.id == app.mediaTabID }) {
                 NowPlayingRow(tab: tab).padding(.horizontal, ShellLayout.windowGap)
@@ -96,7 +107,17 @@ struct Sidebar: View {
             SidebarFooter(store: app.downloads, deleteSpace: $deleteSpace)
         }
         .background(SidebarSwipe { app.selectRelativeSpace($0) })
-        .onDrop(of: [.utf8PlainText], isTargeted: $draggingTab) { _ in false }
+        // Mouse clicks leave no focus ring on the sidebar's controls (keyboard focus draws its own).
+        .focusEffectDisabled()
+        // A drag that ends outside every drop target (or is cancelled) reports nothing, so the
+        // drag state ends when the mouse button is released.
+        .task(id: app.sidebarDragTabID) {
+            guard app.sidebarDragTabID != nil else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(150))
+                if NSEvent.pressedMouseButtons & 1 == 0 { app.endSidebarDrag(); return }
+            }
+        }
         .alert("Delete \(deleteSpace?.name ?? "space")?", isPresented: Binding(get: { deleteSpace != nil }, set: { if !$0 { deleteSpace = nil } })) {
             Button("Cancel", role: .cancel) { deleteSpace = nil }
             Button("Delete", role: .destructive) { if let space = deleteSpace { app.deleteSpace(space.id) }; deleteSpace = nil }
@@ -104,15 +125,21 @@ struct Sidebar: View {
     }
 
     /// Shown only when the space has favorites, or while a tab is dragged so it can become one.
+    /// The whole grid, gaps and empty band included, is hit-testable so a drop anywhere on it lands.
     private var favorites: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ShellLayout.favoriteGap), count: ShellLayout.favoriteColumns(width: ShellLayout.sidebarContentWidth(width))), spacing: ShellLayout.favoriteGap) {
-            ForEach(app.visibleTabs.filter { $0.section == .favorites }) { tab in
+        let tiles = app.visibleTabs.filter { $0.section == .favorites }
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ShellLayout.favoriteGap), count: ShellLayout.favoriteColumns(width: ShellLayout.sidebarContentWidth(width))), spacing: ShellLayout.favoriteGap) {
+            ForEach(tiles) { tab in
                 SidebarTab(tab: tab, tile: true)
             }
-        }.frame(minHeight: ShellLayout.favoriteHeight)
-            .modifier(ShellDropTarget { payload in
-                if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .favorites, spaceID: app.activeSpaceID) }
-            })
+        }.frame(maxWidth: .infinity, minHeight: ShellLayout.favoriteHeight)
+            .background {
+                if tiles.isEmpty { RoundedRectangle(cornerRadius: ShellLayout.favoriteRadius).fill(app.pal.fill) }
+                else { app.pal.hitTarget }
+            }
+            .contentShape(Rectangle())
+            .modifier(ShellDropTarget { payload, _ in app.sidebarDrop(payload, on: .favorites) })
+            .accessibilityIdentifier("sidebar.favorites")
     }
 
     private func hasContent(_ section: TabSection) -> Bool {
@@ -261,6 +288,8 @@ private struct BranchKeyMonitor: NSViewRepresentable {
             }
         }
         required init?(coder: NSCoder) { nil }
+        /// Only a monitor: never the target of clicks, hovers, drags or scroll-wheel events.
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
         deinit { if let monitor { NSEvent.removeMonitor(monitor) } }
     }
 }
@@ -279,7 +308,7 @@ struct SidebarGlyphButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: system).font(font).frame(width: size, height: size).contentShape(Rectangle())
-        }.buttonStyle(ShellButtonStyle(muted: true))
+        }.buttonStyle(ShellButtonStyle(muted: true)).keyboardFocusRing()
             .help(title).accessibilityLabel(title).accessibilityIdentifier(identifier).accessibilityAddTraits(.isButton)
     }
 }
@@ -325,9 +354,7 @@ private struct SpaceLabel: View {
                 Button("Space Theme…") { app.spaceEditorPresented = true }
                 Button("New Folder") { app.createFolder(section: .pinned) }
             }
-            .modifier(ShellDropTarget { payload in
-                if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .pinned, spaceID: app.activeSpaceID) }
-            })
+            .modifier(ShellDropTarget { payload, _ in app.sidebarDrop(payload, on: .pinned) })
             .accessibilityElement(children: .contain).accessibilityLabel("Space \(app.activeSpace.name)")
             .accessibilityIdentifier("sidebar.spaceLabel")
             .accessibilityAction(named: "Space options") { app.spaceEditorPresented = true }
@@ -362,9 +389,7 @@ private struct TodayDivider: View {
                 Button("Archive Stale Tabs") { app.archiveStaleTabs() }
                 Button("New Folder") { app.createFolder(section: .today) }
             }
-            .modifier(ShellDropTarget { payload in
-                if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .today, spaceID: app.activeSpaceID) }
-            })
+            .modifier(ShellDropTarget { payload, _ in app.sidebarDrop(payload, on: .today) })
             .accessibilityElement(children: .contain).accessibilityLabel("Today")
             .accessibilityIdentifier("sidebar.todayDivider")
             .accessibilityAction(named: "Clear Today tabs") { app.archiveToday() }
@@ -441,23 +466,20 @@ private struct SpaceDots: View {
     private var dots: some View {
         HStack(spacing: 0) {
             ForEach(app.spaces) { space in
-                Button { app.selectSpace(space.id) } label: {
-                    Group {
-                        if let icon = space.icon, !icon.isEmpty { SpaceGlyph(icon: icon) }
-                        else { Circle().frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot) }
-                    }.foregroundStyle(space.id == app.activeSpaceID ? app.pal.ink : app.pal.ink3)
-                        .frame(width: ShellLayout.spaceDotPitch, height: ShellLayout.controlSize).contentShape(Rectangle())
-                }.buttonStyle(.plain).id(space.id)
-                    .help(space.name).accessibilityLabel("Switch to \(space.name)")
+                // A tap target rather than a Button, so a drag that starts on a dot reorders spaces.
+                Group {
+                    if let icon = space.icon, !icon.isEmpty { SpaceGlyph(icon: icon) }
+                    else { Circle().frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot) }
+                }.foregroundStyle(space.id == app.activeSpaceID ? app.pal.ink : app.pal.ink3)
+                    .frame(width: ShellLayout.spaceDotPitch, height: ShellLayout.controlSize).contentShape(Rectangle())
+                    .onTapGesture { app.selectSpace(space.id) }
+                    .id(space.id)
+                    .help(space.name).accessibilityElement(children: .ignore).accessibilityLabel("Switch to \(space.name)")
                     .accessibilityIdentifier("sidebar.space.\(space.id)").accessibilityAddTraits(.isButton)
                     .accessibilityAddTraits(space.id == app.activeSpaceID ? [.isSelected] : [])
+                    .accessibilityAction { app.selectSpace(space.id) }
                     .onDrag { NSItemProvider(object: "space:\(space.id)" as NSString) }
-                    .modifier(ShellDropTarget { payload in
-                        if let id = payloadID(payload, prefix: "space:") { app.moveSpace(id, before: space.id) }
-                        else if let id = payloadID(payload, prefix: "tab:"), let tab = app.tabs.first(where: { $0.id == id }) {
-                            app.placeTab(id, section: tab.section, spaceID: space.id)
-                        }
-                    })
+                    .modifier(ShellDropTarget { payload, _ in app.sidebarDrop(payload, on: .space(space.id)) })
                     .contextMenu {
                         Button("Rename / Theme…") { app.selectSpace(space.id); app.spaceEditorPresented = true }
                         Button("Move left") { if let i = app.spaces.firstIndex(where: { $0.id == space.id }), i > 0 { app.moveSpace(space.id, before: app.spaces[i - 1].id) } }
@@ -466,6 +488,8 @@ private struct SpaceDots: View {
                     }
             }
         }.fixedSize()
+            // The active dot's colour eases with the space switch, so the change reads.
+            .animation(SidebarMotion.spaceSwitch(reduceMotion: reduceMotion), value: app.activeSpaceID)
     }
 }
 
@@ -489,6 +513,18 @@ private struct SidebarAddress: View {
     }
 }
 
+/// What a sidebar row shows for its state (arc-look.md §3.3), kept free of views so it is testable.
+struct SidebarRowModel: Equatable {
+    var section: TabSection
+    var hovered: Bool
+    var selected: Bool
+    var tile = false
+    /// Today rows carry the close glyph; pinned rows and favorite tiles never do (⌘W resets them).
+    var closable: Bool { !tile && section == .today }
+    /// The glyph shows on hover and on the selected row.
+    var showsClose: Bool { closable && (hovered || selected) }
+}
+
 private struct SidebarTab: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
@@ -505,16 +541,19 @@ private struct SidebarTab: View {
     @State private var previewShown = false
     private var selected: Bool { app.activeTabID == tab.id && app.activeSurface == .web }
     private var highlighted: Bool { selected || (app.selectedTabIDs.contains(tab.id) && app.selectedTabIDs.count > 1) }
+    private var model: SidebarRowModel { SidebarRowModel(section: tab.section, hovered: hovered, selected: selected, tile: tile) }
     /// A pinned tab that has navigated away from its base URL; clicking its favicon resets it.
     private var offBase: Bool { tab.isPinned && tab.pinnedURL != nil && tab.pinnedURL != tab.url }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: tile ? ShellLayout.favoriteRadius : ShellLayout.rowRadius) }
 
     var body: some View {
         Group { if tile { tileContent } else { rowContent } }
-            .overlay(shape.strokeBorder(grouping ? app.pal.accent : .clear))
+            .overlay(shape.strokeBorder(grouping ? app.pal.accent : .clear).allowsHitTesting(false))
             .animation(SidebarMotion.hover, value: hovered)
             .animation(SidebarMotion.hover, value: highlighted)
-            .contentShape(Rectangle()).onTapGesture { app.sidebarClick(tab) }
+            // The row is a tap target, not a Button: a Button tracks the mouse itself, so a drag
+            // that starts on it never reaches `onDrag`.
+            .contentShape(Rectangle()).onTapGesture { app.sidebarClick(tab, reset: tile && tab.isPinned) }
             .onHover { inside in
                 hovered = inside; app.hoveredTabID = inside ? tab.id : nil
                 previewTask?.cancel()
@@ -527,25 +566,28 @@ private struct SidebarTab: View {
             .accessibilityElement(children: .contain).accessibilityLabel(tab.displayTitle)
             .accessibilityIdentifier("sidebar.\(tile ? "favorite" : tab.section.rawValue).\(tab.id)").accessibilityAddTraits(.isButton)
             .accessibilityAddTraits(selected ? [.isSelected] : [])
-            .accessibilityAction { app.activate(tab.id) }
+            .accessibilityAction { app.sidebarClick(tab, reset: tile && tab.isPinned) }
             .accessibilityAction(named: "Rename") { beginRename() }
-            .onDrag { NSItemProvider(object: "tab:\(tab.id)" as NSString) }
-            .modifier(ShellDropTarget(onTarget: { inside in
+            // The permanent close affordance for VoiceOver and keyboard users, whatever the
+            // hover state; ⌘W does the same for the selected tab.
+            .accessibilityActions {
+                if model.closable { Button("Close \(tab.displayTitle)") { app.requestCloseTab(tab.id) } }
+                if tab.isPinned { Button("Reset to pinned page") { app.resetPinnedTab(tab) } }
+            }
+            .onDrag {
+                previewTask?.cancel(); previewShown = false
+                app.beginSidebarDrag(tab.id)
+                return NSItemProvider(object: "tab:\(tab.id)" as NSString)
+            }
+            .modifier(ShellDropTarget(horizontal: tile, beside: true, onTarget: { inside in
                 groupTask?.cancel()
+                grouping = false
                 if inside && !tile {
-                    grouping = false
                     groupTask = Task { try? await Task.sleep(for: .milliseconds(500)); if !Task.isCancelled { grouping = true } }
                 }
-            }, accept: { payload in
-                guard let id = payloadID(payload, prefix: "tab:"), id != tab.id else { return }
-                if grouping && !tile {
-                    let folder = tab.folderID ?? app.createFolder(section: tab.section)
-                    app.placeTab(tab.id, section: tab.section, folderID: folder)
-                    app.placeTab(id, section: tab.section, folderID: folder, spaceID: tab.spaceID)
-                } else {
-                    app.placeTab(id, section: tab.section, folderID: tab.folderID, spaceID: tab.spaceID)
-                    app.moveTab(id, onto: tab.id, before: true)
-                }
+            }, accept: { payload, after in
+                if payloadID(payload, prefix: "tab:") == tab.id { app.endSidebarDrag() }
+                else { app.sidebarDrop(payload, on: grouping && !tile ? .group(tab.id) : .row(tab.id, after: after)) }
                 grouping = false; groupTask?.cancel()
             }))
             .popover(isPresented: Binding(get: { tile && renaming }, set: { if !$0 { renaming = false } })) {
@@ -563,13 +605,10 @@ private struct SidebarTab: View {
 
     /// Favorite tile: translucent fill and a centred 20pt icon; selected adds a 1px stroke.
     private var tileContent: some View {
-        Button { app.sidebarClick(tab, reset: tab.isPinned) } label: {
-            icon(size: ShellLayout.favoriteIconSize)
-                .frame(maxWidth: .infinity).frame(height: ShellLayout.favoriteHeight).contentShape(Rectangle())
-        }.buttonStyle(.plain)
-            .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)").accessibilityLabel(tab.displayTitle).accessibilityAddTraits(.isButton)
+        icon(size: ShellLayout.favoriteIconSize)
+            .frame(maxWidth: .infinity).frame(height: ShellLayout.favoriteHeight).contentShape(Rectangle())
             .background(highlighted ? app.pal.fillSelected : (hovered ? app.pal.fillHover : app.pal.fill), in: shape)
-            .overlay(shape.strokeBorder(highlighted ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline))
+            .overlay(shape.strokeBorder(highlighted ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline).allowsHitTesting(false))
     }
 
     /// Pinned and Today row: 20pt icon slot, title, audio glyph; Today rows add a close glyph.
@@ -579,33 +618,38 @@ private struct SidebarTab: View {
     private func toggleBranch() {
         withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { app.setBranch(tab.id, collapsed: !branchCollapsed) }
     }
+    private func iconTap(chevron: Bool) {
+        if chevron { toggleBranch() } else { app.sidebarClick(tab, reset: offBase) }
+    }
 
     private var rowContent: some View {
         let chevron = hovered && branchParent
         return HStack(spacing: ShellLayout.iconGap) {
-            Button { if chevron { toggleBranch() } else { app.sidebarClick(tab, reset: offBase) } } label: {
-                Group {
-                    if chevron {
-                        // Like a folder row's: down while open, turned to point right when collapsed.
-                        Image(systemName: "chevron.down").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
-                            .rotationEffect(.degrees(branchCollapsed ? -90 : 0))
-                            .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
-                    } else {
-                        icon(size: ShellLayout.iconSize)
-                            .overlay(alignment: .bottomTrailing) {
-                                if offBase {
-                                    Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
-                                        .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
-                                }
+            Group {
+                if chevron {
+                    // Like a folder row's: down while open, turned to point right when collapsed.
+                    Image(systemName: "chevron.down").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
+                        .rotationEffect(.degrees(branchCollapsed ? -90 : 0))
+                        .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+                } else {
+                    icon(size: ShellLayout.iconSize)
+                        .overlay(alignment: .bottomTrailing) {
+                            if offBase {
+                                Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                                    .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
                             }
-                    }
-                }.frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
-            }.buttonStyle(.plain).help(chevron ? (branchCollapsed ? "Expand branch (⌃⌥⌘→)" : "Collapse branch (⌃⌥⌘←)") : (offBase ? "Return to pinned page" : "Open tab"))
+                        }
+                }
+            }.frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
+                .onTapGesture { iconTap(chevron: chevron) }
+                .help(chevron ? (branchCollapsed ? "Expand branch (⌃⌥⌘→)" : "Collapse branch (⌃⌥⌘←)") : (offBase ? "Return to pinned page" : "Open tab"))
+                .accessibilityElement(children: .ignore)
                 .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)")
                 .accessibilityLabel(offBase ? "Return \(tab.displayTitle) to pinned page" : "Open \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+                .accessibilityAction { iconTap(chevron: false) }
                 .accessibilityActions { if branchParent { Button(branchCollapsed ? "Expand branch" : "Collapse branch") { toggleBranch() } } }
-                .modifier(BranchDropTarget(enabled: tab.section == .today && tab.folderID == nil) { payload in
-                    if let id = payloadID(payload, prefix: "tab:") { app.adoptTab(id, under: tab.id) }
+                .modifier(BranchDropTarget(enabled: tab.section == .today && tab.folderID == nil) { payload, _ in
+                    app.sidebarDrop(payload, on: .branch(tab.id))
                 })
             if renaming { InlineName(text: $name) { app.renameTab(tab, name: name); renaming = false } }
             else {
@@ -623,18 +667,36 @@ private struct SidebarTab: View {
                     .help("\(hiddenDescendants) hidden tabs; ⌥→ expands")
                     .accessibilityLabel("\(hiddenDescendants) collapsed tabs")
             }
-            if tab.section == .today {
-                Button { app.requestCloseTab(tab.id) } label: {
-                    Image(systemName: "xmark").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
-                        .frame(width: ShellLayout.closeTarget, height: ShellLayout.closeTarget).contentShape(Rectangle())
-                }.buttonStyle(.plain).opacity(hovered || selected ? 1 : 0).help("Close \(tab.displayTitle)")
-                    .accessibilityIdentifier("sidebar.close.\(tab.id)").accessibilityLabel("Close \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+            if model.closable {
+                SidebarCloseButton(title: tab.displayTitle, identifier: "sidebar.close.\(tab.id)", visible: model.showsClose) {
+                    app.requestCloseTab(tab.id)
+                }
             }
         }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight)
             .background(highlighted ? app.pal.rowSelected : (hovered ? app.pal.rowHover : .clear), in: shape)
     }
 
     private func beginRename() { name = tab.displayTitle; renaming = true }
+}
+
+/// A Today row's close glyph: 12pt `xmark` in `ink3` in a 24×24 target with its own hover
+/// fill. Hidden and not clickable until the row is hovered or selected; it also shows while
+/// it holds keyboard focus.
+private struct SidebarCloseButton: View {
+    let title: String
+    let identifier: String
+    var visible: Bool
+    var action: () -> Void
+    @State private var focused = false
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark").font(ShellType.glyphSmall)
+                .frame(width: ShellLayout.closeTarget, height: ShellLayout.closeTarget).contentShape(Rectangle())
+        }.buttonStyle(ShellButtonStyle(muted: true)).keyboardFocusRing { focused = $0 }
+            .opacity(visible || focused ? 1 : 0).allowsHitTesting(visible || focused)
+            .help("Close \(title) (⌘W)")
+            .accessibilityIdentifier(identifier).accessibilityLabel("Close \(title)").accessibilityAddTraits(.isButton)
+    }
 }
 
 private struct FolderRow: View {
@@ -675,9 +737,7 @@ private struct FolderRow: View {
                 }
                 .modifier(ShellDropTarget(onTarget: { inside in
                     if inside { app.updateFolder(folder.id, collapsed: false) }
-                }, accept: { payload in
-                    if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: folder.section, folderID: folder.id, spaceID: folder.spaceID) }
-                }))
+                }, accept: { payload, _ in app.sidebarDrop(payload, on: .folder(folder.id)) }))
             // A Today folder keeps its tabs' branches and their connectors (landing-and-tidy.md §4).
             if !folder.collapsed, let branches = todayBranches {
                 ProvenanceRows(layout: branches).padding(.leading, ShellLayout.folderIndent)
@@ -725,7 +785,38 @@ struct ShellButtonStyle: ButtonStyle {
             .background(configuration.isPressed ? pal.active : (selected ? pal.active : (hovered && enabled ? pal.hover : .clear)), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             .contentShape(Rectangle()).onHover { hovered = $0 }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: hovered)
+            .focusEffectDisabled()
     }
+}
+
+/// Whether a focus change came from the keyboard (Tab, arrows, full keyboard access) rather
+/// than a click. Only keyboard focus draws a ring.
+enum FocusSource {
+    static func isKeyboard(_ type: NSEvent.EventType?) -> Bool { type == .keyDown || type == .keyUp }
+}
+
+/// The shell's buttons show no system focus ring, so a click leaves no box behind; focus
+/// reached from the keyboard draws a 2pt `accent` ring instead.
+struct KeyboardFocusRing: ViewModifier {
+    @EnvironmentObject var app: AppState
+    var onChange: (Bool) -> Void = { _ in }
+    @FocusState private var focused: Bool
+    @State private var fromKeyboard = false
+    func body(content: Content) -> some View {
+        content.focusEffectDisabled().focused($focused)
+            .overlay {
+                RoundedRectangle(cornerRadius: ShellLayout.rowRadius)
+                    .strokeBorder(focused && fromKeyboard ? app.pal.accent : .clear, lineWidth: ShellLayout.hairline * 2)
+                    .allowsHitTesting(false)
+            }
+            .onChange(of: focused) { _, now in
+                fromKeyboard = now && FocusSource.isKeyboard(NSApp.currentEvent?.type)
+                onChange(fromKeyboard)
+            }
+    }
+}
+extension View {
+    func keyboardFocusRing(onChange: @escaping (Bool) -> Void = { _ in }) -> some View { modifier(KeyboardFocusRing(onChange: onChange)) }
 }
 
 func payloadID(_ payload: String, prefix: String) -> UUID? {
@@ -737,27 +828,73 @@ func payloadID(_ payload: String, prefix: String) -> UUID? {
 /// take children get no drop target, so the row's own reorder target handles the drop.
 private struct BranchDropTarget: ViewModifier {
     var enabled: Bool
-    var accept: (String) -> Void
+    var accept: (String, Bool) -> Void
     func body(content: Content) -> some View {
         if enabled { content.modifier(ShellDropTarget(accept: accept)) } else { content }
     }
 }
 
+/// One sidebar drop destination. Every target in the sidebar uses this modifier and the one
+/// `onDrag` payload ("tab:<id>" / "space:<id>" as UTF-8 text), so there is a single drag
+/// mechanism. `beside` targets (rows and tiles) report which half the pointer is in and draw
+/// an insertion line there; section targets (favorites, space label, Today, folders, space
+/// dots) draw a hover fill.
 private struct ShellDropTarget: ViewModifier {
     @EnvironmentObject var app: AppState
-    @State private var targeted = false
+    /// Tiles split left/right; rows split top/bottom.
+    var horizontal = false
+    var beside = false
     var onTarget: (Bool) -> Void = { _ in }
-    var accept: (String) -> Void
+    var accept: (_ payload: String, _ after: Bool) -> Void
+    @State private var targeted = false
+    @State private var after = false
+    @State private var size: CGSize = .zero
     func body(content: Content) -> some View {
-        content.overlay(alignment: .top) { if targeted { Rectangle().fill(app.pal.accentText).frame(height: 2) } }
-            .onDrop(of: [.utf8PlainText], isTargeted: $targeted) { providers in
-                guard let provider = providers.first else { return false }
-                provider.loadObject(ofClass: NSString.self) { object, _ in
-                    guard let payload = object as? String else { return }
-                    Task { @MainActor in accept(payload) }
-                }
-                return true
-            }.onChange(of: targeted) { _, inside in onTarget(inside) }
+        content
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+            .overlay(alignment: indicatorAlignment) { if targeted { indicator.allowsHitTesting(false) } }
+            .onDrop(of: [.utf8PlainText], delegate: SidebarDropDelegate(size: size, horizontal: horizontal, targeted: $targeted, after: $after, accept: accept))
+            .onChange(of: targeted) { _, inside in onTarget(inside) }
+    }
+    private var indicatorAlignment: Alignment {
+        guard beside else { return .center }
+        return horizontal ? (after ? .trailing : .leading) : (after ? .bottom : .top)
+    }
+    @ViewBuilder private var indicator: some View {
+        if !beside {
+            RoundedRectangle(cornerRadius: ShellLayout.rowRadius).fill(app.pal.rowHover)
+        } else if horizontal {
+            Rectangle().fill(app.pal.accent).frame(width: ShellLayout.hairline * 2)
+        } else {
+            Rectangle().fill(app.pal.accent).frame(height: ShellLayout.hairline * 2)
+        }
+    }
+}
+
+private struct SidebarDropDelegate: DropDelegate {
+    let size: CGSize
+    let horizontal: Bool
+    @Binding var targeted: Bool
+    @Binding var after: Bool
+    let accept: (String, Bool) -> Void
+    func validateDrop(info: DropInfo) -> Bool { info.hasItemsConforming(to: [.utf8PlainText]) }
+    func dropEntered(info: DropInfo) { targeted = true; track(info) }
+    func dropUpdated(info: DropInfo) -> DropProposal? { track(info); return DropProposal(operation: .move) }
+    func dropExited(info: DropInfo) { targeted = false }
+    func performDrop(info: DropInfo) -> Bool {
+        let after = SidebarDropPlacement.after(location: info.location, size: size, horizontal: horizontal)
+        targeted = false
+        guard let provider = info.itemProviders(for: [.utf8PlainText]).first else { return false }
+        let accept = accept
+        provider.loadObject(ofClass: NSString.self) { object, _ in
+            guard let payload = object as? String else { return }
+            Task { @MainActor in accept(payload, after) }
+        }
+        return true
+    }
+    private func track(_ info: DropInfo) {
+        let now = SidebarDropPlacement.after(location: info.location, size: size, horizontal: horizontal)
+        if now != after { after = now }
     }
 }
 

@@ -140,7 +140,7 @@ struct TopBrowserToolbar: View {
             Spacer(minLength: 8)
             HStack(spacing: 4) {
             Button { app.toggleKnowledge() } label: {
-                Label("Chat", systemImage: "bubble.left.fill").font(ShellType.rowSelected)
+                Label("Chat", systemImage: ShellGlyph.ask).font(ShellType.rowSelected)
                     .padding(.horizontal, 10).frame(height: 28)
             }.buttonStyle(ShellButtonStyle(selected: app.knowledgeSearchPresented)).help("Ask Graphene (⌘K)").disabled(app.isPrivate)
                 .accessibilityIdentifier("toolbar.chat").accessibilityLabel("Chat").accessibilityAddTraits(.isButton)

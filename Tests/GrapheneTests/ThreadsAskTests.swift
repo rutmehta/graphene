@@ -69,7 +69,7 @@ final class ThreadsAskTests: XCTestCase {
 
     func testTheChatGlyphIsSparkle() throws {
         let ledger = try source("Sources/Graphene/UI/LedgerView.swift")
-        XCTAssertTrue(ledger.contains(#"LibraryBarButton("Ask this thread", system: "sparkle")"#))
+        XCTAssertTrue(ledger.contains(#"LibraryBarButton("Ask this thread", system: ShellGlyph.ask)"#), "the Ask glyph comes from the shared ShellGlyph.ask (sparkle)")
         XCTAssertFalse(ledger.contains("text.bubble"))
     }
 

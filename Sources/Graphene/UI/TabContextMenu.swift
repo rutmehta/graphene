@@ -32,7 +32,9 @@ struct TabContextMenu: View {
         command("peek", "Peek") { if let url = tab.url { app.showPeek(url) } }.disabled(tab.url == nil)
         BatchTabMenu()
         Divider()
-        command("close-tab", tab.isPinned ? "Close" : "Archive Tab") { app.requestCloseTab(tab.id) }
+        // ⌘W resets a pinned tab, so its immediate Close carries no shortcut hint.
+        if tab.isPinned { Button("Close") { app.closeTab(tab.id) } }
+        else { command("close-tab", "Archive Tab") { app.closeTab(tab.id) } }
         // Provenance rows (graphene-identity.md §3.1): only Today rows in a branch gain these.
         if !app.branchChildren(of: tab.id).isEmpty { Button("Close branch") { app.closeBranch(tab.id) } }
         if app.branchParent(of: tab.id) != nil { Button("Detach from parent") { app.detachFromParent(tab.id) } }

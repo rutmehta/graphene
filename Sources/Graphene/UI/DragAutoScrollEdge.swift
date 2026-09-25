@@ -1,31 +1,47 @@
 import SwiftUI
 import AppKit
 
-/// Native drag destinations at the scroll viewport edges. A cancelled drag never
-/// changes model order; only the final row/section drop mutates tabs.
+/// Auto-scroll bands at the sidebar scroll view's top and bottom edges. While a sidebar tab
+/// drag is `active`, a pointer resting in a band scrolls the list toward it.
+///
+/// The band is deliberately not a drag destination and never hit-tests: it only polls the
+/// pointer. An AppKit drag destination here sat on top of the first and last rows (and the
+/// favorites grid) and took their drops, refusing them in `performDragOperation`. A
+/// cancelled drag never changes model order; only the final row or section drop mutates tabs.
 struct DragAutoScrollEdge: NSViewRepresentable {
     var direction: CGFloat
+    var active: Bool
     func makeNSView(context: Context) -> EdgeView {
-        let view = EdgeView(); view.direction = direction
-        view.registerForDraggedTypes([.string]); return view
+        let view = EdgeView(); view.direction = direction; view.active = active; return view
     }
-    func updateNSView(_ view: EdgeView, context: Context) { view.direction = direction }
+    func updateNSView(_ view: EdgeView, context: Context) { view.direction = direction; view.active = active }
     final class EdgeView: NSView {
         var direction: CGFloat = 1
+        var active = false {
+            didSet { if active != oldValue { active ? start() : stop() } }
+        }
         private var timer: Timer?
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
-        override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-            guard sender.draggingPasteboard.string(forType: .string)?.hasPrefix("tab:") == true else { return [] }
-            timer?.invalidate()
-            timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.scroll() }
-            }
-            return .move
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if window == nil { stop() } else if active { start() }
         }
-        override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { .move }
-        override func draggingExited(_ sender: NSDraggingInfo?) { timer?.invalidate(); timer = nil }
-        override func draggingEnded(_ sender: NSDraggingInfo) { timer?.invalidate(); timer = nil }
-        override func performDragOperation(_ sender: NSDraggingInfo) -> Bool { timer?.invalidate(); timer = nil; return false }
+        private func start() {
+            guard timer == nil, window != nil else { return }
+            // Common modes, so it also fires inside the drag session's tracking loop.
+            let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.tick() }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            self.timer = timer
+        }
+        private func stop() { timer?.invalidate(); timer = nil }
+        private func tick() {
+            guard let window else { stop(); return }
+            let point = convert(window.convertPoint(fromScreen: NSEvent.mouseLocation), from: nil)
+            guard bounds.contains(point) else { return }
+            scroll()
+        }
         private func scroll() {
             guard let root = window?.contentView else { return }
             let point = convert(NSPoint(x: bounds.midX, y: bounds.midY), to: root)

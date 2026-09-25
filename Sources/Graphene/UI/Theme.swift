@@ -185,6 +185,13 @@ enum ShellLayout {
     }
 }
 
+/// SF Symbols with one meaning across the shell.
+enum ShellGlyph {
+    /// Ask / chat, wherever it appears: the page toolbar, the library bars, the command bar,
+    /// the top-tabs toolbar.
+    static let ask = "sparkle"
+}
+
 /// The shell's type scale (arc-look.md §2.2): system face, default design, nothing above 22.
 enum ShellType {
     static let label = Font.system(size: labelSize, weight: .semibold)

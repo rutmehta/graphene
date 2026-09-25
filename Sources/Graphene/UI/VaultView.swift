@@ -97,7 +97,7 @@ struct VaultView: View {
                         LibraryBarButton("Add to Board", system: "rectangle.on.rectangle") { addToBoard(selected) }
                     }
                     LibraryBarButton(byPage ? "Newest first" : "By page", system: byPage ? "list.bullet" : "list.bullet.indent") { byPage.toggle() }
-                    LibraryBarButton("Ask my notes", system: "sparkle") { askNotes() }.disabled(notes.isEmpty)
+                    LibraryBarButton("Ask my notes", system: ShellGlyph.ask) { askNotes() }.disabled(notes.isEmpty)
                 }
                 LibraryBarButton("Open vault folder", system: "folder") { NSWorkspace.shared.open(Paths.vault) }
             }

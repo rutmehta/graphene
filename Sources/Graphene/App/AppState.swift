@@ -128,6 +128,12 @@ final class AppState: ObservableObject, BrowserCoordinator {
     var pal: Palette { Palette(mode: mode, space: activeSpace.color, theme: activeSpace.theme, neutralChrome: layout == .topTabs) }
     @Published var spaceEditorPresented = false
     @Published var sidebarPeek = false
+    /// The tab being dragged in the sidebar, from drag start until its drop or the mouse
+    /// button's release; keeps the favorites grid open as a drop target meanwhile.
+    @Published var sidebarDragTabID: UUID?
+    /// The last space switch's direction of travel: 1 toward the next space, -1 toward the
+    /// previous one. The sidebar slides its content the matching way (arc-look.md §4).
+    @Published private(set) var spaceTravel = 1
 
     @Published var commandBarFocusRequest = 0
     @Published var commandBarPresented = false
@@ -300,14 +306,18 @@ final class AppState: ObservableObject, BrowserCoordinator {
 
     func selectRelativeSpace(_ delta: Int) {
         guard let index = spaces.firstIndex(where: { $0.id == activeSpaceID }) else { return }
-        selectSpace(spaces[(index + delta + spaces.count) % spaces.count].id)
+        selectSpace(spaces[(index + delta + spaces.count) % spaces.count].id, travel: delta)
     }
 
     var visibleTabs: [Tab] { tabs.filter { $0.spaceID == activeSpaceID } }
     var currentThreads: [KnowledgeGraph.Thread] { graph.threads(spaceID: activeSpaceID) }
 
-    func selectSpace(_ id: UUID) {
+    /// `travel` is the relative step that asked for the switch (swipe, ⌃⇥-style commands);
+    /// without it the direction follows the spaces' order.
+    func selectSpace(_ id: UUID, travel: Int? = nil) {
         guard spaces.contains(where: { $0.id == id }) else { return }
+        let from = spaces.firstIndex(where: { $0.id == activeSpaceID }), to = spaces.firstIndex(where: { $0.id == id })
+        if let direction = SpaceTravel.direction(from: from, to: to, delta: travel) { spaceTravel = direction }
         selectedTabIDs = []; selectionAnchor = nil
         if let activeTabID { lastActiveTabs[activeSpaceID] = activeTabID }
         activeSpaceID = id
@@ -441,7 +451,11 @@ final class AppState: ObservableObject, BrowserCoordinator {
         objectWillChange.send(); persistSoon()
     }
 
-    func resetPinnedTab(_ tab: Tab) { if let url = tab.pinnedURL { tab.load(url); activate(tab.id) } }
+    func resetPinnedTab(_ tab: Tab) {
+        guard let url = tab.pinnedURL else { return }
+        if tab.url != url { tab.load(url) }
+        activate(tab.id)
+    }
 
     func duplicateTab(_ tab: Tab) {
         let copy = makeTab()
@@ -575,18 +589,12 @@ final class AppState: ObservableObject, BrowserCoordinator {
         archivedTabs.append(entry); reopenClosedTab()
     }
 
+    /// ⌘W and a tab's close glyph, the way Arc does it: a pinned tab (or favorite) stays in
+    /// place and returns to its pinned page, with no dialog; any other tab is archived with an
+    /// Undo toast. Unpin and Close for pinned tabs live in the context menu.
     func requestCloseTab(_ id: UUID) {
         guard let tab = tabs.first(where: { $0.id == id }) else { return }
-        if tab.isPinned {
-            let alert = NSAlert(); alert.messageText = "Unpin or close?"
-            alert.informativeText = "\(tab.displayTitle) is a saved destination. Unpin keeps it in Today."
-            alert.addButton(withTitle: "Unpin"); alert.addButton(withTitle: "Close"); alert.addButton(withTitle: "Cancel")
-            switch alert.runModal() {
-            case .alertFirstButtonReturn: placeTab(id, section: .today)
-            case .alertSecondButtonReturn: closeTab(id)
-            default: break
-            }
-        } else { closeTab(id) }
+        if tab.isPinned { resetPinnedTab(tab) } else { closeTab(id) }
     }
     func focusAddress() {
         presentCommandBar()
@@ -1170,7 +1178,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
         var profiles: [Profile]?
     }
 
-    private func persistSoon() {
+    func persistSoon() {
         saveWork?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.persist() }
         saveWork = work

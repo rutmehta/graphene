@@ -119,7 +119,7 @@ struct ToolbarGlyphButton: View {
     @EnvironmentObject var app: AppState
     var body: some View {
         Button(action: action) { ToolbarGlyph(system: system, on: on) }
-            .buttonStyle(ShellButtonStyle())
+            .buttonStyle(ShellButtonStyle()).keyboardFocusRing()
             .help(title).accessibilityLabel(title).accessibilityAddTraits(.isButton)
             .accessibilityIdentifier(identifier ?? "toolbar.\(system)")
     }
@@ -274,7 +274,7 @@ struct WebPageToolbar: View {
                     addressAction: { app.activate(tab.id); app.focusAddress() },
                     backgroundTap: paneCount > 1 ? { app.activate(tab.id) } : nil) {
             SiteControlsButton(tab: tab)
-            ToolbarGlyphButton(title: "Ask Graphene (⌘K)", system: "sparkle", on: app.knowledgeSearchPresented, identifier: "toolbar.chat") {
+            ToolbarGlyphButton(title: "Ask Graphene (⌘K)", system: ShellGlyph.ask, on: app.knowledgeSearchPresented, identifier: "toolbar.chat") {
                 app.toggleKnowledge()
             }.disabled(app.isPrivate)
             ToolbarGlyphButton(title: "Split view", system: "rectangle.split.2x1", identifier: "toolbar.split") {
@@ -282,7 +282,7 @@ struct WebPageToolbar: View {
             }.disabled(tab.url == nil || !canSplit)
             if paneCount > 1 {
                 ToolbarGlyphButton(title: "Close pane: \(tab.displayTitle)", system: "xmark", identifier: "split.close.\(tab.id)") {
-                    app.requestCloseTab(tab.id)
+                    app.closePane(tab.id)
                 }
             }
         }
