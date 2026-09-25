@@ -14,6 +14,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     let isPrivate: Bool
     let aiProfileID: UUID
     var capturePermitted: () -> Bool = { true }
+    /// The Vault notes with a quote saved from a page, marked in it after every load.
+    var savedNotes: (URL) -> [Annotation] = { _ in [] }
     weak var aiOwner: AppState?
     var aiPopover: NSPopover?
     private var dialogs = DialogGuard()
@@ -135,7 +137,9 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     /// paints under the page (the document background by default).
     private func reportPageDarkness() {
         guard let dark = Palette.pageIsDark(webView.themeColor) ?? Palette.pageIsDark(webView.underPageBackgroundColor) else { return }
+        let changed = pageIsDark != dark
         pageIsDark = dark
+        if changed { Task { await applyAnnotationTheme() } }
         delegate?.engine(self, didChangePageDarkness: dark)
     }
 
@@ -179,6 +183,7 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         let items: [[String: Any]] = eligible.map { passage in
             var item: [String: Any] = ["id": passage.id, "text": passage.text]
             if let index = passage.index { item["index"] = index }
+            if Annotation.noteID(markID: passage.id) != nil { item["kind"] = "note" }
             return item
         }
         let palette = aiOwner?.pal.page(dark: pageIsDark) ?? Palette(mode: pageIsDark == true ? .dark : .light, space: .slate)
@@ -234,6 +239,71 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         return src
     }()
 
+    // MARK: saved notes (Resources/annotate.js, graphene-language.md §5.3)
+
+    /// Late-rendering pages get a few more tries before a saved quote counts as missing.
+    static let noteMarkAttempts = 3
+    static let noteMarkRetry: Duration = .milliseconds(700)
+
+    /// Sends annotate.js the page-scheme tokens and the page's saved notes, then marks each
+    /// note's quote with cite.js as `note:<uuid>`, kind "note". Returns the mark ids found.
+    @discardableResult
+    func markSavedNotes() async -> [String] {
+        guard !isPrivate, let url = currentURL else { return [] }
+        let notes = savedNotes(url)
+        await applyAnnotationTheme()
+        let list: [[String: Any]] = notes.map { ["id": $0.markID, "quote": $0.text, "note": $0.note] }
+        await callAnnotate("if (window.__grapheneAnnotateNotes) window.__grapheneAnnotateNotes(notes);", arguments: ["notes": list])
+        guard currentURL == url else { return [] }
+        return await highlight(passages: notes.compactMap(\.passage))
+    }
+
+    /// Marks the saved notes after a load, retrying while quotes of a late-rendering page are missing.
+    private func markSavedNotesAfterLoad(_ url: URL?) async {
+        for attempt in 0..<Self.noteMarkAttempts {
+            guard currentURL == url, let url, !isLoading else { return }
+            let wanted = savedNotes(url).compactMap(\.passage).count
+            if await markSavedNotes().count >= wanted { return }
+            if attempt + 1 < Self.noteMarkAttempts { try? await Task.sleep(for: Self.noteMarkRetry) }
+        }
+    }
+
+    /// Saves the page's live selection as a note (⌘D). False when nothing is selected.
+    func saveSelection() async -> Bool {
+        guard !isPrivate else { return false }
+        return await evaluateJavaScript("window.__grapheneAnnotateSave ? window.__grapheneAnnotateSave() : false") as? Bool ?? false
+    }
+
+    /// The selection bar, editor, margin dot and note card take the page's scheme.
+    private func applyAnnotationTheme() async {
+        guard !isPrivate else { return }
+        let palette = aiOwner?.pal.page(dark: pageIsDark) ?? Palette(mode: pageIsDark == true ? .dark : .light, space: .graphite)
+        await callAnnotate("if (window.__grapheneAnnotateTheme) window.__grapheneAnnotateTheme(style);", arguments: ["style": Self.annotationStyle(palette)])
+    }
+
+    private func callAnnotate(_ body: String, arguments: [String: Any]) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            webView.callAsyncJavaScript(body, arguments: arguments, in: nil, in: .page) { _ in continuation.resume() }
+        }
+    }
+
+    /// The tokens annotate.js draws with, from the page-scheme `palette`: CSS colours, and
+    /// sizes in CSS px.
+    static func annotationStyle(_ palette: Palette) -> [String: Any] {
+        [
+            "elev": cssColor(palette.elev), "hairline": cssColor(palette.hairline), "ink": cssColor(palette.ink),
+            "ink2": cssColor(palette.ink2), "ink3": cssColor(palette.ink3), "accent": cssColor(palette.accent),
+            "elevFill": cssColor(palette.elevFill), "quoteRule": cssColor(palette.quoteRule),
+            "shadow": cssColor(palette.pageShadow), "shadowRadius": Double(palette.pageShadowRadius), "shadowY": Double(palette.pageShadowY),
+            "highlightActive": cssColor(palette.highlightActive),
+            "radius": Double(ShellLayout.popoverRadius), "rowRadius": Double(ShellLayout.rowRadius),
+            "barHeight": Double(ShellLayout.annotationBarHeight), "cardWidth": Double(ShellLayout.annotationCardWidth),
+            "gap": Double(ShellLayout.annotationGap), "dot": Double(ShellLayout.statusDot),
+            "labelSize": Double(ShellType.labelSize), "rowSize": Double(ShellType.rowSize), "bodySize": Double(ShellType.rowSize),
+            "quoteSize": Double(ShellType.quoteSize), "quoteLineHeight": Double(ShellType.quoteLineHeight),
+        ]
+    }
+
     func captureSnapshotText() async -> String {
         guard !isPrivate, capturePermitted() else { return "" }
         return await captureReadableContent().text
@@ -270,6 +340,7 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         delegate?.engineDidChangeState(self)
         reportPageDarkness()
         let url = webView.url
+        Task { await markSavedNotesAfterLoad(url) }
         Task {
             let detected = await evaluateJavaScript("!!document.querySelector('article, main') && (document.querySelector('article, main').innerText || '').length > 600") as? Bool ?? false
             let rejected = await evaluateJavaScript("(document.body.innerText || '').includes('This browser or app may not be secure')") as? Bool ?? false
@@ -437,6 +508,17 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
                 text: body["text"] as? String ?? "", note: body["note"] as? String ?? "",
                 url: webView.url, title: webView.title ?? "", context: body["context"] as? String ?? "")
             delegate?.engine(self, didCaptureAnnotation: ann)
+        case "ask":
+            guard !isPrivate, capturePermitted(), let app = aiOwner, let tab = app.activeTab, tab.loadedEngine === self, app.aiTabAllowed(tab),
+                  let text = body["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, text.count <= 8000 else { return }
+            app.askAboutSelection(text, in: tab)
+        case "noteEdit", "noteOpen":
+            // Only a note saved from this page, whose mark the page shows, can be changed from it.
+            guard !isPrivate, let app = aiOwner, let markID = body["id"] as? String, let id = Annotation.noteID(markID: markID),
+                  let note = app.vault.annotations.first(where: { $0.id == id }), let page = currentURL,
+                  KnowledgeGraph.canonicalURL(note.url) == KnowledgeGraph.canonicalURL(page.absoluteString) else { return }
+            if kind == "noteOpen" { app.openNoteInVault(id) }
+            else if let text = body["note"] as? String, text.count <= 20_000 { app.updateNote(note, text: text) }
         case "copy":
             delegate?.engine(self, didCopyText: body["text"] as? String ?? "", url: webView.url)
         case "citeHover":
