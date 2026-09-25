@@ -7,7 +7,6 @@ struct RootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var systemScheme
     @Environment(\.openSettings) private var openSettings
-    @State private var peekTask: Task<Void, Never>?
     @State private var askResizeStart: Double?
     @SceneStorage("shell.windowID") private var windowID = UUID().uuidString
     private var sidebarWidth: CGFloat { app.sidebarWidths[windowID].map { CGFloat($0) } ?? app.sidebarWidth }
@@ -100,12 +99,12 @@ struct RootView: View {
                             .padding(ShellLayout.windowGap)
                             .onHover { inside in if !inside && !app.spaceEditorPresented { app.sidebarPeek = false } }
                             .transition(reduceMotion ? .opacity : .offset(x: -sidebarWidth).combined(with: .opacity))
-                    } else {
-                        Rectangle().fill(app.pal.hitTarget).frame(width: 4).onHover { inside in
-                            peekTask?.cancel()
-                            if inside { peekTask = Task { try? await Task.sleep(for: .milliseconds(200)); if !Task.isCancelled { app.sidebarPeek = true } } }
-                        }
                     }
+                }
+            }
+            .background {
+                if app.layout == .sidebar && app.sidebarCollapsed {
+                    SidebarPeekEdgeMonitor(peeking: app.sidebarPeek, sidebarWidth: sidebarWidth) { app.sidebarPeek = $0 }.frame(width: 0, height: 0)
                 }
             }
             .overlay(alignment: .top) {
