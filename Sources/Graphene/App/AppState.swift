@@ -106,6 +106,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
     let clock: () -> Date
     private var lifecycleTimer: Timer?
     @Published var archivePresented = false
+    /// The sidebar footer's Library popover.
+    @Published var libraryPresented = false
     @Published var peekTab: Tab?
     var hoveredTabID: UUID?
     @Published var selectedTabIDs: Set<UUID> = []

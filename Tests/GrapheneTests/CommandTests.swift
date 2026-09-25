@@ -51,3 +51,49 @@ final class CommandTests: XCTestCase {
         XCTAssertFalse(restored.littlePinnedLinks)
     }
 }
+
+/// The empty command bar (arc-look.md §3.4): recent tabs in this space, then six everyday commands.
+@MainActor
+final class EmptyCommandBarTests: XCTestCase {
+    func testSuggestedCommandsAreTheEverydaySixInOrder() {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let app = AppState(directory: directory)
+        let tab = app.newTab(); tab.url = URL(string: "https://example.com")
+        let suggested = CommandBarSuggestions.actions(app.commandActions).map(\.id)
+        XCTAssertEqual(suggested, ["new-tab", "split", "sidebar", "archive", "library", "ask"])
+        for specialist in ["site-controls", "boost", "zap"] {
+            XCTAssertFalse(suggested.contains(specialist), "\(specialist) appears only when typed")
+            XCTAssertTrue(app.commandActions.contains { $0.id == specialist }, "\(specialist) stays reachable by typing")
+        }
+        XCTAssertEqual(CommandBarSuggestions.section, "Suggested")
+    }
+
+    func testLibraryCommandOpensThePopoverWhenTheSidebarShows() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let app = AppState(directory: directory)
+        try XCTUnwrap(app.commandActions.first { $0.id == "library" }).run()
+        XCTAssertTrue(app.libraryPresented)
+        app.libraryPresented = false; app.layout = .topTabs
+        try XCTUnwrap(app.commandActions.first { $0.id == "library" }).run()
+        XCTAssertFalse(app.libraryPresented)
+        XCTAssertEqual(app.activeSurface, .threads)
+    }
+
+    func testRecentTabsComeFromThisSpaceCappedAtFive() {
+        let here = UUID(), there = UUID()
+        func tab(_ space: UUID, url: String?) -> Tab {
+            let tab = Tab(engine: WKWebEngine(privateMode: true), privateMode: true)
+            tab.spaceID = space; tab.url = url.flatMap(URL.init(string:))
+            return tab
+        }
+        let current = tab(here, url: "https://current.example")
+        let blank = tab(here, url: nil)
+        let elsewhere = tab(there, url: "https://elsewhere.example")
+        let others = (0..<6).map { tab(here, url: "https://site\($0).example") }
+        let picked = CommandBarSuggestions.recentTabs([current, blank, elsewhere] + others, space: here, excluding: current.id)
+        XCTAssertEqual(picked.map(\.id), others.prefix(5).map(\.id))
+        XCTAssertEqual(CommandBarSuggestions.recentTabLimit, 5)
+    }
+}

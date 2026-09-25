@@ -3,10 +3,9 @@ import SwiftUI
 /// Native destinations remain one click away without occupying the tab list.
 struct LibraryButton: View {
     @EnvironmentObject var app: AppState
-    @State private var presented = false
     var body: some View {
-        SidebarGlyphButton("Library", system: "books.vertical", identifier: "sidebar.library") { presented.toggle() }
-            .popover(isPresented: $presented) {
+        SidebarGlyphButton("Library", system: "books.vertical", identifier: "sidebar.library") { app.libraryPresented.toggle() }
+            .popover(isPresented: $app.libraryPresented) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Library").font(ShellType.label).foregroundStyle(app.pal.ink3).padding(ShellLayout.rowInsetLeading)
                     entry("Archived tabs", symbol: "archivebox", hint: "⇧⌘A") { app.archivePresented.toggle() }
@@ -21,7 +20,7 @@ struct LibraryButton: View {
             }
     }
     private func entry(_ title: String, symbol: String, hint: String = "", action: @escaping () -> Void) -> some View {
-        Button { presented = false; action() } label: {
+        Button { app.libraryPresented = false; action() } label: {
             HStack(spacing: ShellLayout.iconGap) {
                 Image(systemName: symbol).frame(width: ShellLayout.iconSlot); Text(title); Spacer(); Text(hint).font(ShellType.label).foregroundStyle(app.pal.ink3)
             }.font(ShellType.row).padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.controlSize)

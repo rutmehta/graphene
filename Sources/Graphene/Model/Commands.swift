@@ -29,7 +29,7 @@ struct BrowserAction: Identifiable {
     var group: String {
         if ["site-controls", "boost", "zap"].contains(id) { return "View & Settings" }
         if ["save-page", "system-browser"].contains(id) { return "File" }
-        if ["settings", "dark", "space-color", "layout", "sidebar", "fullscreen", "inspector", "downloads", "zoom-in", "zoom-out", "zoom-reset", "reader", "stop", "reload"].contains(id) { return "View & Settings" }
+        if ["settings", "dark", "space-color", "layout", "sidebar", "fullscreen", "inspector", "downloads", "library", "zoom-in", "zoom-out", "zoom-reset", "reader", "stop", "reload"].contains(id) { return "View & Settings" }
         if ["new-tab", "new-window", "private-window", "close-tab", "close-window", "location", "save", "export", "print"].contains(id) { return "File" }
         if id.hasPrefix("find") { return "Find" }
         if id.hasPrefix("space-") || ["new-space", "next-space", "previous-space", "route-site"].contains(id) { return "Spaces" }
@@ -174,6 +174,10 @@ extension AppState {
         }
         add("settings", "Open Settings", ",", .command, "⌘,") { self.settingsPresented = true }
         add("archive", "Open Archive", "a", [.command, .shift], "⇧⌘A") { self.archivePresented = true }
+        add("library", "Open Library") {
+            // The Library popover hangs off the sidebar footer; without a visible sidebar, open Threads instead.
+            if self.layout == .sidebar && !self.sidebarCollapsed { self.libraryPresented = true } else { self.show(.threads) }
+        }
         add("downloads", "Open Downloads") { self.downloadsPresented = true }
         add("threads", "Open Threads", "2", [.command, .option], "⌥⌘2") { self.show(.threads) }
         add("vault", "Open Vault", "4", [.command, .option], "⌥⌘4") { self.show(.vault) }

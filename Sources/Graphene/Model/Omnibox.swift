@@ -96,6 +96,27 @@ enum CommandBarLayout {
     }
 }
 
+/// What an empty command bar offers (arc-look.md §3.4): recent tabs from the current space,
+/// then a short list of everyday commands. Everything else waits until something is typed.
+enum CommandBarSuggestions {
+    /// Section title for the everyday commands shown before anything is typed.
+    static let section = "Suggested"
+    /// The only commands an empty query lists, in display order.
+    static let actionIDs = ["new-tab", "split", "sidebar", "archive", "library", "ask"]
+    static let recentTabLimit = 5
+
+    /// Up to `recentTabLimit` tabs from `space`, most recently used first, leaving out `excluding`
+    /// (the tab already on screen) and tabs with no page loaded.
+    @MainActor static func recentTabs(_ tabs: [Tab], space: UUID, excluding: UUID?) -> [Tab] {
+        Array(tabs.filter { $0.spaceID == space && $0.id != excluding && $0.url != nil }.prefix(recentTabLimit))
+    }
+
+    /// The suggested actions present in `actions`, in `actionIDs` order.
+    @MainActor static func actions(_ actions: [BrowserAction]) -> [BrowserAction] {
+        actionIDs.compactMap { id in actions.first { $0.id == id } }
+    }
+}
+
 enum SearchEngine: String, Codable, CaseIterable {
     case google, duckduckgo
 

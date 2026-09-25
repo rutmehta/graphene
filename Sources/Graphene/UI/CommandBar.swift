@@ -79,7 +79,18 @@ struct CommandBar: View {
                 Result(id: "attach-\(tab.id)", title: tab.displayTitle, detail: space.name, host: tab.url?.host, symbol: nil, kind: "Attach tab", destination: .attach(tab.id))
             } }
         }
-        if asking && !query.isEmpty { matches.append(Result(id: "ask", title: "Ask Graphene: \(query)", detail: "Current page and attached tabs · On-device", host: nil, symbol: "sparkle", kind: "Ask", destination: .ask)) }
+        if query.isEmpty {
+            for tab in CommandBarSuggestions.recentTabs(app.recentTabs, space: app.activeSpaceID, excluding: app.commandBarCreatesTab ? nil : app.activeTabID) {
+                matches.append(Result(id: "tab-\(tab.id)", title: tab.displayTitle, detail: displayHost(tab.url?.host), host: tab.url?.host,
+                                      symbol: nil, kind: "Tabs", destination: .tab(tab.id)))
+            }
+            for action in CommandBarSuggestions.actions(app.commandActions) {
+                matches.append(Result(id: "action-\(action.id)", title: action.title, detail: "", host: nil, symbol: "command",
+                                      kind: CommandBarSuggestions.section, destination: .action(action.id)))
+            }
+            return matches
+        }
+        if asking { matches.append(Result(id: "ask", title: "Ask Graphene: \(query)", detail: "Current page and attached tabs · On-device", host: nil, symbol: "sparkle", kind: "Ask", destination: .ask)) }
         for action in app.commandActions where CommandMatch.matches(query, title: action.title) {
             matches.append(Result(id: "action-\(action.id)", title: action.title, detail: action.id == "archive-all" ? "Archive Today tabs; keep pins and favorites" : "", host: nil, symbol: "command", kind: "Commands", destination: .action(action.id)))
         }
