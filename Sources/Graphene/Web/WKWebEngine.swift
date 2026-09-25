@@ -59,18 +59,36 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     private var blocker: WKContentRuleList?
     private var blockingGeneration = 0
 
+    /// The compiled rule list, shared by every engine so only the first navigation in the process compiles.
+    private static var sharedBlocker: WKContentRuleList?
+
     func applyBlocking(host: String) async {
+        if applyBlockingIfReady(host: host) { return }
         blockingGeneration += 1; let generation = blockingGeneration
-        let controller = webView.configuration.userContentController
-        controller.removeAllContentRuleLists(); blockingActive = false
-        guard sites?.site(host).blocking ?? globalBlocking() else { notifyState(); return }
         do {
-            if blocker == nil { blocker = try await ContentBlocker.compile() }
+            let compiled = try await ContentBlocker.compile()
+            Self.sharedBlocker = compiled; blocker = compiled
             guard generation == blockingGeneration else { return }
-            if let blocker { controller.add(blocker); blockingActive = true }
+            webView.configuration.userContentController.add(compiled); blockingActive = true
             blockerError = nil
         } catch { blockerError = "Content blocker unavailable: \(error.localizedDescription)" }
         notifyState()
+    }
+
+    /// Applies the blocking policy without suspending when no compile is needed (blocking off, or the
+    /// list already compiled). Returns false when the caller must await `applyBlocking`. Deciding a
+    /// navigation synchronously matters: an awaited policy decision that WebKit supersedes (a redirect,
+    /// a second load) is logged as an ignored policy listener with a full backtrace.
+    @discardableResult
+    func applyBlockingIfReady(host: String) -> Bool {
+        let controller = webView.configuration.userContentController
+        controller.removeAllContentRuleLists(); blockingActive = false
+        guard sites?.site(host).blocking ?? globalBlocking() else { blockingGeneration += 1; notifyState(); return true }
+        if blocker == nil { blocker = Self.sharedBlocker }
+        guard let blocker else { return false }
+        blockingGeneration += 1
+        controller.add(blocker); blockingActive = true; blockerError = nil
+        notifyState(); return true
     }
 
     func setZoom(_ value: Double) {
@@ -402,7 +420,9 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         }
         if navigationAction.targetFrame?.isMainFrame == true, let url = navigationAction.request.url,
            ["http", "https"].contains(url.scheme ?? ""), navigationAction.navigationType != .linkActivated {
-            Task { await applyBlocking(host: url.host ?? ""); decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow) }
+            let policy: WKNavigationActionPolicy = navigationAction.shouldPerformDownload ? .download : .allow
+            if applyBlockingIfReady(host: url.host ?? "") { decisionHandler(policy) }
+            else { Task { await applyBlocking(host: url.host ?? ""); decisionHandler(policy) } }
             return
         }
         if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url,
@@ -413,12 +433,18 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             delegate?.engine(self, requestNewTabFor: url, activate: navigationAction.modifierFlags.contains(.shift))
             decisionHandler(.cancel)
         } else if navigationAction.targetFrame?.isMainFrame == true {
-            Task { await applyBlocking(host: navigationAction.request.url?.host ?? ""); decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow) }
+            let host = navigationAction.request.url?.host ?? ""
+            let policy: WKNavigationActionPolicy = navigationAction.shouldPerformDownload ? .download : .allow
+            if applyBlockingIfReady(host: host) { decisionHandler(policy) }
+            else { Task { await applyBlocking(host: host); decisionHandler(policy) } }
         } else { decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow) }
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
         if navigationResponse.isForMainFrame {
-            Task { await applyBlocking(host: navigationResponse.response.url?.host ?? ""); decisionHandler(navigationResponse.canShowMIMEType ? .allow : .download) }
+            let host = navigationResponse.response.url?.host ?? ""
+            let policy: WKNavigationResponsePolicy = navigationResponse.canShowMIMEType ? .allow : .download
+            if applyBlockingIfReady(host: host) { decisionHandler(policy) }
+            else { Task { await applyBlocking(host: host); decisionHandler(policy) } }
         } else { decisionHandler(navigationResponse.canShowMIMEType ? .allow : .download) }
     }
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) { beginDownload(download) }
