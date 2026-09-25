@@ -131,6 +131,43 @@ enum BoardGrid {
                       height: fit(size.height, step: pitch, min: BoardItem.minSize.height, max: BoardItem.maxSize.height))
     }
 
+    /// The clearance a placed card keeps from every other card: half a cell.
+    static let placementGap: CGFloat = ShellLayout.latticeCell / 2
+    /// The row width placement fills when the canvas width is unknown: four page cards.
+    static var defaultRowWidth: CGFloat {
+        let page = BoardItem.defaultSize(for: .page).width
+        return 4 * page + 5 * ShellLayout.latticeCell
+    }
+
+    /// Where a new card of `size` goes when it arrives without a position: the first lattice
+    /// centre, scanning left to right and then top to bottom, whose card frame keeps
+    /// `placementGap` clear of every frame in `occupied`. A row ends where the card would pass
+    /// `rowWidth` (the first column is always tried). Candidates start half a cell in from the
+    /// canvas edge so a card never touches it.
+    static func firstFreeOrigin(for size: CGSize, avoiding occupied: [CGRect], rowWidth: CGFloat = defaultRowWidth,
+                                cell: CGFloat = ShellLayout.latticeCell) -> CGPoint {
+        let pitch = LatticeGeometry.rowPitch(cell: cell)
+        let margin = cell / 2, gap = placementGap
+        let blocked = occupied.map { $0.insetBy(dx: -gap, dy: -gap) }
+        let firstRow = Int(ceil(margin / pitch))
+        let lastRow = Int(CGFloat(BoardItem.maxOrigin) / pitch)
+        guard firstRow <= lastRow else { return CGPoint(x: margin, y: margin) }
+        for row in firstRow...lastRow {
+            let y = CGFloat(row) * pitch
+            let offset = row.isMultiple(of: 2) ? 0 : cell / 2
+            var x = offset
+            while x < margin { x += cell }
+            let rowStart = x
+            while x == rowStart || x + size.width <= rowWidth {
+                let frame = CGRect(origin: CGPoint(x: x, y: y), size: size)
+                if !blocked.contains(where: { $0.intersects(frame) }) { return frame.origin }
+                x += cell
+                if x > CGFloat(BoardItem.maxOrigin) { break }
+            }
+        }
+        return CGPoint(x: margin, y: CGFloat(lastRow) * pitch)
+    }
+
     /// `item` moved by `translation` and snapped to the lattice.
     static func moved(_ item: BoardItem, by translation: CGSize) -> BoardItem {
         var copy = item
@@ -163,6 +200,8 @@ struct BoardLink: Identifiable, Hashable {
 enum BoardLinks {
     /// Corner radius of the connector's elbows.
     static let cornerRadius: CGFloat = 6
+    /// Width of the `pageBg` stroke under a connector that clears the lattice beneath it.
+    static let knockoutWidth: CGFloat = 3
 
     /// Links between `cards` (card id and its page's graph node) from `visits`.
     static func derive(cards: [(id: UUID, nodeID: UUID?)], visits: [GraphVisit]) -> [BoardLink] {

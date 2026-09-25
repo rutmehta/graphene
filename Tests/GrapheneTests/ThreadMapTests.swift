@@ -1,5 +1,7 @@
 import XCTest
 import CoreGraphics
+import SwiftUI
+import AppKit
 @testable import Graphene
 
 /// G6 Thread map (graphene-language.md §5.2): the tree layout from a thread's visits, its
@@ -249,5 +251,98 @@ final class ThreadMapTests: XCTestCase {
         XCTAssertEqual(app.vaultSelectionID, note.id)
         XCTAssertEqual(app.activeSurface, .vault)
         XCTAssertFalse(app.noteComposerPresented)
+    }
+
+    // MARK: panes and click semantics (language verification fixes)
+
+    private static let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    private func ledgerSource() throws -> String {
+        try String(contentsOf: Self.root.appendingPathComponent("Sources/Graphene/UI/LedgerView.swift"), encoding: .utf8)
+    }
+
+    func testThreadListIsATokenWideColumn() throws {
+        XCTAssertEqual(ShellLayout.threadListWidth, 260)
+        XCTAssertEqual(ThreadPanes.listWidth, ShellLayout.threadListWidth)
+        let source = try ledgerSource()
+        XCTAssertTrue(source.contains(".frame(width: ThreadPanes.listWidth)"), "the thread list is sized by the token")
+        XCTAssertNil(source.range(of: #"\.frame\(width:\s*[0-9]"#, options: .regularExpression), "no literal pane widths")
+    }
+
+    func testHeaderIsASingleStripUnderTheLibraryBar() throws {
+        XCTAssertEqual(ShellLayout.threadHeaderHeight, 44)
+        XCTAssertEqual(ThreadPanes.headerHeight, ShellLayout.threadHeaderHeight)
+        XCTAssertEqual(ThreadPanes.counts(pages: 4, sites: 1, notes: 2), "4 pages · 1 site · 2 notes")
+        XCTAssertEqual(ThreadPanes.counts(pages: 1, sites: 2, notes: 0), "1 page · 2 sites · 0 notes")
+        let app = AppState(directory: directory)
+        let (thread, _) = try recordAcceptance(app)
+        let host = NSHostingView(rootView: ThreadHeaderStrip(thread: thread, notes: 2).environmentObject(app))
+        host.frame = CGRect(x: 0, y: 0, width: 900, height: 200)
+        host.layoutSubtreeIfNeeded()
+        XCTAssertEqual(host.fittingSize.height, ShellLayout.threadHeaderHeight, accuracy: 0.5, "title, counts and Continue browsing share one 44pt row")
+        let source = try ledgerSource()
+        XCTAssertTrue(source.contains("ThreadHeaderStrip(thread: thread, notes: notes.count)"), "the detail shows the header strip")
+    }
+
+    func testSummaryColumnAppearsOnlyWithASummary() {
+        XCTAssertFalse(ThreadPanes.showsSummary(text: "", working: false, error: nil), "no summary yet: the tree has the whole width")
+        XCTAssertFalse(ThreadPanes.showsSummary(text: "", working: false, error: ""))
+        XCTAssertTrue(ThreadPanes.showsSummary(text: "", working: true, error: nil), "streaming")
+        XCTAssertTrue(ThreadPanes.showsSummary(text: "A summary [1].", working: false, error: nil), "a summary exists")
+        XCTAssertTrue(ThreadPanes.showsSummary(text: "", working: false, error: "No provider"), "an error has somewhere to show")
+        XCTAssertFalse(ThreadSummaryModel().showsColumn)
+    }
+
+    func testPanesAreSeparatedBySpaceNotRules() throws {
+        let source = try ledgerSource()
+        XCTAssertNil(source.range(of: #"Rectangle\(\)\.fill\(app\.pal\.hairline\)\.frame\(width:"#, options: .regularExpression), "no vertical pane dividers")
+        let rows = try XCTUnwrap(source.range(of: "private struct ThreadRow")).lowerBound
+        XCTAssertFalse(source[..<rows].contains("app.pal.hairline"), "no Saved on this Mac divider")
+        XCTAssertFalse(source.contains("fillSelectedStroke"), "the selected node has no outline")
+        XCTAssertTrue(source.contains("selected ? app.pal.tileFill"), "the selected node's fill shows on the white card")
+        let light = Palette(mode: .light, space: .graphite)
+        XCTAssertEqual(light.tileFill, light.rowHover, "light tileFill is the visible rowHover, not translucent white")
+    }
+
+    func testClickTable() {
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 1, command: false), .select)
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 1, command: true), .select)
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 2, command: false), .open)
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 2, command: true), .openAsChild)
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 3, command: false), .open)
+        XCTAssertEqual(ThreadNodeClick.action(clickCount: 0, command: false), .select)
+    }
+
+    func testClickSelectsAndStaysInThreadsDoubleClickOpens() throws {
+        let app = AppState(directory: directory)
+        let (thread, ids) = try recordAcceptance(app)
+        let current = app.newTab()
+        let before = current.url, count = app.tabs.count
+        app.show(.threads)
+
+        XCTAssertFalse(app.openSelectedThreadNode(in: thread), "Return with nothing selected does nothing")
+        app.clickThreadNode(ids["d"]!, in: thread, clickCount: 1, command: false)
+        XCTAssertEqual(app.selectedThreadNodeID, ids["d"])
+        XCTAssertEqual(app.activeSurface, .threads, "a single click keeps the map on screen")
+        XCTAssertEqual(current.url, before, "and does not load the page")
+        XCTAssertEqual(app.threadLayout(thread).activeChildren(selected: app.selectedThreadNodeID), [ids["a"]!: ids["c"]!, ids["c"]!: ids["d"]!])
+
+        app.clickThreadNode(ids["d"]!, in: thread, clickCount: 2, command: false)
+        XCTAssertEqual(app.activeSurface, .web, "a double-click opens the page")
+        XCTAssertEqual(app.tabs.count, count, "in the current tab")
+        XCTAssertEqual(current.url?.lastPathComponent, "d")
+
+        app.show(.threads)
+        app.clickThreadNode(ids["b"]!, in: thread, clickCount: 2, command: true)
+        let child = try XCTUnwrap(app.activeTab)
+        XCTAssertEqual(app.tabs.count, count + 1)
+        XCTAssertEqual(child.url?.lastPathComponent, "b")
+        XCTAssertEqual(child.parentTabID, current.id, "⌘-double-click opens a child of the current tab")
+
+        app.activate(current.id); app.show(.threads)
+        app.clickThreadNode(ids["c"]!, in: thread, clickCount: 1, command: false)
+        XCTAssertEqual(app.activeSurface, .threads)
+        XCTAssertTrue(app.openSelectedThreadNode(in: thread), "Return opens the selected node")
+        XCTAssertEqual(current.url?.lastPathComponent, "c")
+        XCTAssertEqual(app.activeSurface, .web)
     }
 }

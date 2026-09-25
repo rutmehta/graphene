@@ -76,4 +76,33 @@ extension AppState {
         }
         return BoardDropCard(kind: .note, title: "Note", text: value)
     }
+
+    /// Adds `card` to the active space's Board and returns the saved item. A card dropped at
+    /// `point` snaps to the lattice there; one without a position (Add note, Add link, Vault's
+    /// Add to Board) takes the first free lattice cell in reading order that overlaps no card,
+    /// within `rowWidth` (the canvas width the Board last reported, else four page cards).
+    @discardableResult
+    func addBoardCard(_ card: BoardDropCard, at point: CGPoint? = nil, rowWidth: CGFloat? = nil) -> BoardItem {
+        var item = BoardItem(spaceID: activeSpaceID, title: card.title, text: card.text, url: card.url, kind: card.kind, quote: card.quote)
+        let size = BoardItem.defaultSize(for: card.kind)
+        item.width = size.width; item.height = size.height
+        let origin: CGPoint
+        if let point {
+            origin = BoardGrid.snap(point)
+        } else {
+            let occupied = boards.items(in: activeSpaceID).map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+            origin = BoardGrid.firstFreeOrigin(for: size, avoiding: occupied, rowWidth: rowWidth ?? boardRowWidth ?? BoardGrid.defaultRowWidth)
+        }
+        item.x = origin.x; item.y = origin.y
+        boards.upsert(item)
+        return item
+    }
+
+    /// Vault's Add to Board: the note becomes the same card a drop of it makes (a quote card
+    /// with its quote and provenance, or a note card when nothing was quoted), in the first free cell.
+    @discardableResult
+    func addNoteToBoard(_ noteID: UUID) -> BoardItem? {
+        guard let card = boardDropCard(for: NoteDrag.reference(noteID)) else { return nil }
+        return addBoardCard(card)
+    }
 }

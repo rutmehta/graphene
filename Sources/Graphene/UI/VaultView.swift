@@ -191,12 +191,9 @@ struct VaultView: View {
         app.notify("Copied as Markdown")
     }
 
+    /// The same quote card a drop of the note makes, in the Board's first free cell.
     private func addToBoard(_ note: Annotation) {
-        guard let card = app.boardDropCard(for: NoteDrag.reference(note.id)) else { return }
-        let count = app.boards.items(in: app.activeSpaceID).count
-        var item = BoardItem(spaceID: app.activeSpaceID, title: card.title, text: card.text, url: card.url)
-        item.x = Double(24 + count % 4 * 270); item.y = Double(24 + count / 4 * 210)
-        app.boards.upsert(item)
+        guard app.addNoteToBoard(note.id) != nil else { return }
         app.notify(app.boards.errorText == nil ? "Added to Board" : "Couldn’t add to Board")
     }
 

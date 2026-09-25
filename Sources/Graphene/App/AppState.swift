@@ -173,6 +173,11 @@ final class AppState: ObservableObject, BrowserCoordinator {
     var findBackwards = false
     @Published var toasts = ToastQueue()
     @Published var selectedThreadID: UUID?
+    /// The Thread map node a click selected; its ancestor path draws in `threadLineActive`.
+    /// Ignored when it is not in the thread on screen.
+    @Published var selectedThreadNodeID: UUID?
+    /// The Board canvas's last laid-out width, which new cards fill before wrapping.
+    var boardRowWidth: CGFloat?
     /// Today branches collapsed with ⌥← (per window, not persisted).
     @Published var collapsedBranchIDs: Set<UUID> = []
     private var subscriptions = Set<AnyCancellable>()
@@ -344,6 +349,27 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.originQuery = nil
         tab.load(url)
         activate(tab.id)
+    }
+
+    /// A map or list node was clicked: every click selects it (the ancestor path turns active
+    /// and Threads stays on screen); the second click of a double-click opens it in the current
+    /// tab, or as a child of the current tab with ⌘ held.
+    func clickThreadNode(_ nodeID: UUID, in thread: KnowledgeGraph.Thread, clickCount: Int, command: Bool) {
+        selectedThreadNodeID = nodeID
+        switch ThreadNodeClick.action(clickCount: clickCount, command: command) {
+        case .select: break
+        case .open: openThreadNode(nodeID, in: thread, asChild: false)
+        case .openAsChild: openThreadNode(nodeID, in: thread, asChild: true)
+        }
+    }
+
+    /// Return in the map: opens the selected node in the current tab. False when no node of
+    /// `thread` is selected.
+    @discardableResult
+    func openSelectedThreadNode(in thread: KnowledgeGraph.Thread) -> Bool {
+        guard let id = selectedThreadNodeID, thread.nodes.contains(where: { $0.id == id }) else { return false }
+        openThreadNode(id, in: thread, asChild: false)
+        return true
     }
 
     /// "Resume from here": reopens the branch from `nodeID` forward as Today tabs, each child

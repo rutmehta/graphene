@@ -187,6 +187,39 @@ struct ThreadLayout: Equatable {
     static func fadeDelay(column: Int) -> Double { min(Double(max(0, column)) * fadeStagger, fadeCap) }
 }
 
+/// What a click on a map or list node does: one click selects, a double-click opens the page
+/// in the current tab, ⌘-double-click opens it as a child of the current tab.
+enum ThreadNodeClick: Equatable {
+    case select
+    case open
+    case openAsChild
+
+    static func action(clickCount: Int, command: Bool) -> ThreadNodeClick {
+        guard clickCount >= 2 else { return .select }
+        return command ? .openAsChild : .open
+    }
+}
+
+/// The Threads surface's panes (graphene-language.md §5.2): a `threadListWidth` thread list,
+/// then the selected thread's `threadHeaderHeight` header strip over the tree, and the summary
+/// column only once a summary exists, is streaming or has something to say.
+enum ThreadPanes {
+    static let listWidth = ShellLayout.threadListWidth
+    static let headerHeight = ShellLayout.threadHeaderHeight
+
+    /// Whether the summary column is on screen. Until it is, "Summarize thread" is a glyph in
+    /// the library bar and the tree has the whole detail width.
+    static func showsSummary(text: String, working: Bool, error: String?) -> Bool {
+        working || !text.isEmpty || !(error ?? "").isEmpty
+    }
+
+    /// The header strip's metadata: "4 pages · 1 site · 2 notes".
+    static func counts(pages: Int, sites: Int, notes: Int) -> String {
+        func count(_ n: Int, _ noun: String) -> String { "\(n) \(noun)\(n == 1 ? "" : "s")" }
+        return [count(pages, "page"), count(sites, "site"), count(notes, "note")].joined(separator: " · ")
+    }
+}
+
 /// One path per parent (graphene-identity.md §3.1's connector vocabulary, turned sideways for
 /// the map): a vertical `threadLine` down the parent's favicon column from the bottom of its
 /// slot to the last child's row, and a horizontal into each child's slot, rounded at the corner.

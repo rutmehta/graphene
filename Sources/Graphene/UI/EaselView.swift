@@ -37,15 +37,23 @@ struct EaselView: View {
                 ScrollView([.horizontal, .vertical]) {
                     ZStack(alignment: .topLeading) {
                         Lattice(fade: false)
+                        // Above the lattice: a `pageBg` knockout clears the lattice under the
+                        // connector, so the `threadLine` stroke sits on the plain canvas at its
+                        // full token opacity instead of mixing with the lattice strokes.
                         ForEach(links) { link in
                             if let parent = frames[link.parent], let child = frames[link.child] {
                                 let ends = BoardLinks.endpoints(parent: parent, child: child)
-                                BoardConnector(from: ends.from, to: ends.to)
-                                    .stroke(app.pal.threadLine, lineWidth: ShellLayout.hairline)
-                                    .transition(.opacity)
+                                ZStack {
+                                    BoardConnector(from: ends.from, to: ends.to)
+                                        .stroke(app.pal.pageBg, lineWidth: BoardLinks.knockoutWidth)
+                                    BoardConnector(from: ends.from, to: ends.to)
+                                        .stroke(app.pal.threadLine, lineWidth: ShellLayout.hairline)
+                                }
+                                .transition(.opacity)
                             }
                         }
                         .allowsHitTesting(false)
+                        .zIndex(0.5)
                         .animation(BoardMotion.connector(reduced: reduceMotion), value: links)
                         ForEach(items) { item in
                             let frame = frames[item.id] ?? CGRect(x: item.x, y: item.y, width: item.width, height: item.height)
@@ -53,7 +61,7 @@ struct EaselView: View {
                                       move: { track(item, resizing: false, $0) }, endMove: { finish(item, resizing: false, $0) },
                                       resize: { track(item, resizing: true, $0) }, endResize: { finish(item, resizing: true, $0) })
                                 .offset(x: frame.minX, y: frame.minY)
-                                .zIndex(gesture?.id == item.id ? 1 : 0)
+                                .zIndex(gesture?.id == item.id ? 2 : 1)
                         }
                     }
                     .frame(width: max(viewport.size.width, (frames.values.map(\.maxX).max() ?? 0) + ShellLayout.latticeCell * 4),
@@ -65,6 +73,7 @@ struct EaselView: View {
                         return true
                     }
                 }
+                .onChange(of: viewport.size.width, initial: true) { _, width in app.boardRowWidth = width }
                 .overlay {
                     if items.isEmpty {
                         Text("Drop tabs, notes and quotes here.").font(ShellType.secondary).foregroundStyle(app.pal.ink3)
@@ -115,16 +124,9 @@ struct EaselView: View {
         guard let tab = app.activeTab, let url = tab.url else { return }
         add(BoardDropCard(kind: .page, title: tab.displayTitle, url: url.absoluteString))
     }
+    /// A drop keeps its snapped position; Add note and Add link take the first free cell.
     private func add(_ card: BoardDropCard, at point: CGPoint? = nil) {
-        var item = BoardItem(spaceID: app.activeSpaceID, title: card.title, text: card.text, url: card.url, kind: card.kind, quote: card.quote)
-        let size = BoardItem.defaultSize(for: card.kind)
-        item.width = size.width; item.height = size.height
-        let count = items.count
-        let origin = point ?? CGPoint(x: ShellLayout.latticeCell + CGFloat(count % 4) * (size.width + ShellLayout.latticeCell),
-                                      y: ShellLayout.latticeCell + CGFloat(count / 4) * (size.height + ShellLayout.latticeCell))
-        let snapped = BoardGrid.snap(origin)
-        item.x = snapped.x; item.y = snapped.y
-        withAnimation(BoardMotion.snap(reduced: reduceMotion)) { app.boards.upsert(item) }
+        withAnimation(BoardMotion.snap(reduced: reduceMotion)) { _ = app.addBoardCard(card, at: point) }
     }
     private func export() {
         let panel = NSSavePanel(); panel.nameFieldStringValue = "\(app.activeSpace.name) Board.md"

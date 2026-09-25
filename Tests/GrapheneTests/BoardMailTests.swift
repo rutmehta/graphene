@@ -95,6 +95,94 @@ final class BoardMailTests: XCTestCase {
         XCTAssertEqual(resized.width.truncatingRemainder(dividingBy: cell), 0, accuracy: 0.001)
     }
 
+    // MARK: Placement
+
+    func testNewCardsTakeTheFirstFreeLatticeCell() {
+        let cell = ShellLayout.latticeCell, pitch = LatticeGeometry.rowPitch(cell: cell)
+        let size = BoardItem.defaultSize(for: .page)
+        let first = BoardGrid.firstFreeOrigin(for: size, avoiding: [], rowWidth: 1000)
+        XCTAssertEqual(first.x, cell / 2, accuracy: 0.001, "the first cell, half a cell in from the edge")
+        XCTAssertEqual(first.y, pitch, accuracy: 0.001)
+        XCTAssertEqual(BoardGrid.snap(first), first, "on a lattice centre")
+
+        var frames = [CGRect(origin: first, size: size)]
+        let second = BoardGrid.firstFreeOrigin(for: size, avoiding: frames, rowWidth: 1000)
+        XCTAssertEqual(second.y, first.y, accuracy: 0.001, "left to right before top to bottom")
+        XCTAssertGreaterThanOrEqual(second.x, frames[0].maxX + BoardGrid.placementGap)
+        XCTAssertLessThan(second.x, frames[0].maxX + BoardGrid.placementGap + cell, "the nearest free cell, not a later one")
+        frames.append(CGRect(origin: second, size: size))
+        let third = BoardGrid.firstFreeOrigin(for: size, avoiding: frames, rowWidth: 1000)
+        XCTAssertEqual(third.y, first.y, accuracy: 0.001)
+        frames.append(CGRect(origin: third, size: size))
+        let wrapped = BoardGrid.firstFreeOrigin(for: size, avoiding: frames, rowWidth: 1000)
+        XCTAssertGreaterThan(wrapped.y, first.y, "a full row wraps to the next free row")
+        XCTAssertLessThanOrEqual(wrapped.x, cell, "at the start of the row")
+        for frame in frames {
+            XCTAssertFalse(frame.intersects(CGRect(origin: wrapped, size: size)), "never overlaps a card")
+        }
+
+        // A gap between cards is used before the rows below them.
+        let hole = [CGRect(x: 0, y: 0, width: 200, height: 300), CGRect(x: 600, y: 0, width: 200, height: 300)]
+        let note = BoardItem.defaultSize(for: .note)
+        let filled = BoardGrid.firstFreeOrigin(for: note, avoiding: hole, rowWidth: 1000)
+        XCTAssertLessThan(filled.y, 300, "fits between the two cards")
+        XCTAssertGreaterThan(filled.x, 200); XCTAssertLessThan(filled.x + note.width, 600)
+
+        // A narrow canvas still places the card, in the first column.
+        let narrow = BoardGrid.firstFreeOrigin(for: size, avoiding: [], rowWidth: 100)
+        XCTAssertEqual(narrow.x, cell / 2, accuracy: 0.001)
+    }
+
+    func testAddWithoutAPositionNeverOverlapsAndDropsKeepTheirCell() throws {
+        let app = AppState(directory: root)
+        let a = app.addBoardCard(BoardDropCard(kind: .page, title: "A", url: "https://example.org/a"), rowWidth: 1200)
+        let b = app.addBoardCard(BoardDropCard(kind: .page, title: "B", url: "https://example.org/b"), rowWidth: 1200)
+        let note = app.addBoardCard(BoardDropCard(kind: .note, title: "Note"), rowWidth: 1200)
+        let frames = app.boards.items(in: app.activeSpaceID).map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+        XCTAssertEqual(frames.count, 3)
+        for (i, f) in frames.enumerated() { for g in frames[(i + 1)...] { XCTAssertFalse(f.intersects(g), "\(f) overlaps \(g)") } }
+        XCTAssertEqual(a.y, b.y, accuracy: 0.001); XCTAssertGreaterThan(b.x, a.x)
+        XCTAssertGreaterThan(note.x, b.x, "Add note goes beside the cards, not over them")
+
+        let dropped = app.addBoardCard(BoardDropCard(kind: .note, title: "Dropped"), at: CGPoint(x: 40, y: 30))
+        XCTAssertEqual(CGPoint(x: dropped.x, y: dropped.y), BoardGrid.snap(CGPoint(x: 40, y: 30)), "a drop keeps its snapped position")
+    }
+
+    func testVaultAddToBoardMakesAQuoteCard() throws {
+        let app = AppState(directory: root)
+        app.vault.add(text: "Graphene is a single layer of carbon.", note: "for the intro", url: URL(string: "https://en.wikipedia.org/wiki/Graphene"),
+                      title: "Graphene - Wikipedia", context: "", spaceID: app.activeSpaceID)
+        let note = try XCTUnwrap(app.vault.annotations.first)
+        let existing = app.addBoardCard(BoardDropCard(kind: .page, title: "Graphene - Wikipedia", url: "https://en.wikipedia.org/wiki/Graphene"))
+        let item = try XCTUnwrap(app.addNoteToBoard(note.id))
+        XCTAssertEqual(item.kind, .quote, "a quote card, not a page card")
+        XCTAssertEqual(item.cardKind, .quote)
+        XCTAssertEqual(item.quote, "Graphene is a single layer of carbon.")
+        XCTAssertEqual(item.text, "for the intro")
+        XCTAssertEqual(BoardCardText.provenance(item), "Graphene - Wikipedia · en.wikipedia.org")
+        XCTAssertEqual(CGSize(width: item.width, height: item.height), BoardItem.defaultSize(for: .quote))
+        XCTAssertFalse(CGRect(x: item.x, y: item.y, width: item.width, height: item.height)
+            .intersects(CGRect(x: existing.x, y: existing.y, width: existing.width, height: existing.height)))
+        XCTAssertEqual(app.boards.items(in: app.activeSpaceID).last, item, "saved")
+        XCTAssertNil(app.addNoteToBoard(UUID()), "a deleted note adds nothing")
+
+        let vault = try String(contentsOf: Self.sources.appendingPathComponent("UI/VaultView.swift"), encoding: .utf8)
+        XCTAssertTrue(vault.contains("app.addNoteToBoard(note.id)"), "the Vault bar action uses the drop path")
+    }
+
+    private static let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appendingPathComponent("Sources/Graphene")
+
+    func testConnectorSitsAboveTheLatticeOnAKnockout() throws {
+        let easel = try String(contentsOf: Self.sources.appendingPathComponent("UI/EaselView.swift"), encoding: .utf8)
+        let lattice = try XCTUnwrap(easel.range(of: "Lattice(fade: false)"))
+        let knockout = try XCTUnwrap(easel.range(of: ".stroke(app.pal.pageBg, lineWidth: BoardLinks.knockoutWidth)"))
+        let line = try XCTUnwrap(easel.range(of: ".stroke(app.pal.threadLine, lineWidth: ShellLayout.hairline)"))
+        XCTAssertLessThan(lattice.lowerBound, knockout.lowerBound, "drawn after (above) the lattice")
+        XCTAssertLessThan(knockout.lowerBound, line.lowerBound, "the threadLine stroke sits on the knockout")
+        XCTAssertGreaterThan(BoardLinks.knockoutWidth, ShellLayout.hairline)
+    }
+
     // MARK: Card kinds
 
     func testDropPayloadsMakeTheRightCardKind() throws {

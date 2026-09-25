@@ -87,6 +87,10 @@ enum ShellLayout {
     static let threadNodeSize: CGFloat = 20
     static let threadColumn: CGFloat = 180
     static let threadRowPitch: CGFloat = 40
+    /// Threads surface: the thread list column, and the selected thread's one-line header strip
+    /// (title, counts, Continue browsing) under the library bar.
+    static let threadListWidth: CGFloat = 260
+    static let threadHeaderHeight: CGFloat = 44
     /// Reset-tab dot on a pinned favicon and footer space dots.
     static let statusDot: CGFloat = 6
     static let spaceDotPitch: CGFloat = 14
