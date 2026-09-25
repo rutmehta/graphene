@@ -140,6 +140,9 @@ final class KnowledgeGraph: ObservableObject {
         scheduleSave()
     }
 
+    /// Every recorded visit of one thread, in recording order.
+    func visits(inThread id: UUID) -> [GraphVisit] { visits.filter { $0.threadID == id } }
+
     func node(for url: URL) -> GraphNode? {
         guard let id = urlIndex[normalize(url)] else { return nil }
         return nodes[id]

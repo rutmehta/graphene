@@ -4,6 +4,8 @@ import AppKit
 struct LedgerView: View {
     @EnvironmentObject var app: AppState
     @State private var filter = ""
+    /// Map (the tree) or List (scanning); graphene-language.md §5.2.
+    @State private var map = true
     private var threads: [KnowledgeGraph.Thread] {
         app.currentThreads.filter { filter.isEmpty || ($0.title + " " + $0.hosts.joined(separator: " ") + " " + $0.nodes.map(\.snippet).joined(separator: " ")).localizedCaseInsensitiveContains(filter) }
     }
@@ -12,6 +14,8 @@ struct LedgerView: View {
         VStack(spacing: 0) {
             LibraryBar(title: "Threads", detail: app.currentThreads.isEmpty ? nil : "\(app.currentThreads.count)") {
                 if let selected {
+                    LibraryBarButton("List", system: "list.bullet.indent", selected: !map) { map = false }
+                    LibraryBarButton("Map", system: "point.3.connected.trianglepath.dotted", selected: map) { map = true }
                     LibraryBarButton("Ask this thread", system: "text.bubble") { app.askThread(selected) }
                     LibraryBarButton("Export thread as Markdown", system: "square.and.arrow.up") { ThreadDetail.export(selected, app: app) }
                 }
@@ -53,7 +57,7 @@ struct LedgerView: View {
                     .onKeyPress(.downArrow) { moveSelection(1); return .handled }
                     .onKeyPress(.return) { if let selected { app.resumeThread(selected) }; return .handled }
                 Rectangle().fill(app.pal.hairline).frame(width: ShellLayout.hairline)
-                if let selected { ThreadDetail(thread: selected).id(selected.id) }
+                if let selected { ThreadDetail(thread: selected, map: map).id(selected.id) }
                 else { Color.clear }
             }
         }
@@ -96,73 +100,51 @@ private struct ThreadRow: View {
     }
 }
 
+/// The selected thread: its header, the map (or the list) on the left and the streamed summary
+/// in a `summaryWidth` column on the right (graphene-language.md §5.2).
 private struct ThreadDetail: View {
     let thread: KnowledgeGraph.Thread
+    let map: Bool
     @EnvironmentObject var app: AppState
-    @State private var map = false
-    private var branches: [ThreadBranch] {
-        var parents: [UUID: UUID] = [:], seen = Set<UUID>()
-        for visit in app.graph.visits where visit.threadID == thread.id {
-            if seen.insert(visit.nodeID).inserted, let parent = visit.parentNodeID { parents[visit.nodeID] = parent }
-        }
-        return ThreadBranch.rows(ids: thread.nodes.map(\.id), parents: parents)
-    }
+    /// The node a click selected; its ancestor path draws in `threadLineActive`.
+    @State private var selectedID: UUID?
+    /// The node a summary citation chip is hovering.
+    @State private var citedID: UUID?
     private var notes: [Annotation] { Self.notes(for: thread, app: app) }
     static func notes(for thread: KnowledgeGraph.Thread, app: AppState) -> [Annotation] {
         let urls = Set(thread.nodes.map { KnowledgeGraph.canonicalURL($0.url) })
         return app.vault.annotations.filter { urls.contains(KnowledgeGraph.canonicalURL($0.url)) }
     }
     var body: some View {
-        ScrollView {
+        let layout = app.threadLayout(thread)
+        let notes = notes
+        let noted = Set(notes.map { KnowledgeGraph.canonicalURL($0.url) })
+        let current = app.activeTab?.currentNodeID.flatMap { layout.node($0) == nil ? nil : $0 }
+        let state = ThreadNodeState(layout: layout, current: current, selected: selectedID ?? current, cited: citedID, noted: noted)
+        HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
-                Label(thread.start.formatted(.dateTime.month(.wide).day().hour().minute()), systemImage: "clock")
-                    .font(ShellType.caption).foregroundStyle(app.pal.ink3).padding(.bottom, 8)
-                Text(thread.title).font(ShellType.title).fixedSize(horizontal: false, vertical: true)
-                Text("\(thread.nodes.count) \(thread.nodes.count == 1 ? "page" : "pages") · \(thread.hosts.count) \(thread.hosts.count == 1 ? "site" : "sites") · \(notes.count) \(notes.count == 1 ? "note" : "notes")")
-                    .font(ShellType.secondary).foregroundStyle(app.pal.ink2).padding(.top, 4)
-                Button { resume() } label: { Label("Continue browsing", systemImage: "arrow.up.right") }
-                    .buttonStyle(.bordered).controlSize(.small).font(ShellType.secondary).padding(.top, 14).padding(.bottom, 24)
-                ThreadSummaryView(thread: thread).padding(.bottom, 18)
-                HStack {
-                    Text("Pages").font(ShellType.label).foregroundStyle(app.pal.ink3)
-                    Spacer()
-                    Picker("Display", selection: $map) { Text("List").tag(false); Text("Map").tag(true) }.pickerStyle(.segmented).labelsHidden().frame(width: 120)
-                }.padding(.bottom, 8)
+                header(notes: notes.count).padding(.horizontal, ShellLayout.newTabGap).padding(.top, ShellLayout.newTabGap)
                 if map {
-                    ThreadMap(thread: thread).padding(.top, 12)
+                    ThreadMap(thread: thread, state: state) { selectedID = $0 }
                 } else {
-                    ForEach(branches) { branch in
-                        if let node = thread.nodes.first(where: { $0.id == branch.id }) {
-                            HStack(alignment: .top, spacing: 8) {
-                                if branch.depth > 0 {
-                                    Image(systemName: "arrow.turn.down.right").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3).padding(.top, 16)
-                                }
-                                SourceEntry(node: node, threadID: thread.id)
-                            }.padding(.leading, CGFloat(min(branch.depth, 6)) * 18)
-                                .accessibilityElement(children: .contain).accessibilityLabel("Branch level \(branch.depth + 1): \(node.title)")
-                                .accessibilityIdentifier("thread.branch.\(node.id)")
-                        }
-                    }
+                    ThreadList(thread: thread, state: state, notes: notes) { selectedID = $0 }
                 }
-                if !notes.isEmpty {
-                    Text("Saved notes").font(ShellType.label).foregroundStyle(app.pal.ink3).padding(.top, 24).padding(.bottom, 6)
-                    ForEach(notes) { note in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(note.text.isEmpty ? note.title : note.text).font(ShellType.row).lineSpacing(3).textSelection(.enabled)
-                            if !note.note.isEmpty { Text(note.note).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
-                            Text(URL(string: note.url)?.host ?? "Saved note").font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                        }.padding(.vertical, 14)
-                        Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
-                    }
-                }
-            }.frame(maxWidth: 720, alignment: .leading).padding(24).frame(maxWidth: .infinity, alignment: .top)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            Rectangle().fill(app.pal.hairline).frame(width: ShellLayout.hairline)
+            ScrollView {
+                ThreadSummaryView(thread: thread, nodeIDs: Set(layout.nodes.map(\.id)), citedNodeID: $citedID)
+                    .padding(ShellLayout.newTabGap).frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(width: ThreadLayout.summaryWidth)
         }
     }
-    private func resume() {
-        guard let node = thread.nodes.last, let url = URL(string: node.url) else { return }
-        let tab = app.newTab()
-        tab.currentNodeID = node.id; tab.currentThreadID = thread.id; tab.resumeThreadID = thread.id
-        tab.load(url)
+    private func header(notes: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(thread.title).font(ShellType.title).fixedSize(horizontal: false, vertical: true)
+            Text("\(thread.nodes.count) \(thread.nodes.count == 1 ? "page" : "pages") · \(thread.hosts.count) \(thread.hosts.count == 1 ? "site" : "sites") · \(notes) \(notes == 1 ? "note" : "notes")")
+                .font(ShellType.secondary).foregroundStyle(app.pal.ink2).padding(.top, 4)
+            Button { app.resumeThread(thread) } label: { Label("Continue browsing", systemImage: "arrow.up.right") }
+                .buttonStyle(.bordered).controlSize(.small).font(ShellType.secondary).padding(.top, 14).padding(.bottom, ShellLayout.sectionGap)
+        }
     }
     static func export(_ thread: KnowledgeGraph.Thread, app: AppState) {
         let notes = notes(for: thread, app: app)
@@ -180,105 +162,273 @@ private struct ThreadDetail: View {
     }
 }
 
-private struct SourceEntry: View {
-    let node: GraphNode
-    let threadID: UUID
+/// What the map and the list need to draw a node.
+private struct ThreadNodeState {
+    let layout: ThreadLayout
+    /// The current tab's node, if it is in this thread.
+    let current: UUID?
+    /// The node whose ancestor path is active: the clicked node, else the current one.
+    let selected: UUID?
+    /// The node a summary citation is pointing at.
+    let cited: UUID?
+    /// Canonical URLs of pages with a Vault note.
+    let noted: Set<String>
+    @MainActor func hasNote(_ page: GraphNode) -> Bool { noted.contains(KnowledgeGraph.canonicalURL(page.url)) }
+}
+
+/// Click opens the page in the current tab; ⌘-click opens it as a child of the current tab.
+@MainActor private func openNode(_ id: UUID, in thread: KnowledgeGraph.Thread, app: AppState, select: (UUID) -> Void) {
+    select(id)
+    let child = NSApp.currentEvent?.modifierFlags.contains(.command) == true
+    app.openThreadNode(id, in: thread, asChild: child)
+}
+
+/// The same actions as the hover card, for keyboard and pointer users alike.
+private struct ThreadNodeMenu: View {
+    let id: UUID
+    let thread: KnowledgeGraph.Thread
     @EnvironmentObject var app: AppState
-    @State private var expanded = false
-    private var parent: GraphNode? {
-        guard let id = app.graph.visits.first(where: { $0.threadID == threadID && $0.nodeID == node.id })?.parentNodeID,
-              id != node.id else { return nil }
-        return app.graph.nodes[id]
-    }
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: ShellLayout.rowInsetLeading) {
-                Favicon(host: node.host, size: ShellLayout.iconSize).padding(.top, 2)
-                VStack(alignment: .leading, spacing: 4) {
-                    Button { if let url = URL(string: node.url) { app.openTab(url: url, parent: nil, activate: true) } } label: {
-                        Text(node.title).font(ShellType.rowSelected).multilineTextAlignment(.leading)
-                    }.buttonStyle(.plain)
-                    Text(node.host).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                }
-                Spacer(minLength: 0)
-                Text(node.firstVisit.formatted(.dateTime.hour().minute())).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-            }
-            if !node.snippet.isEmpty {
-                Text(node.snippet.split(whereSeparator: \.isWhitespace).joined(separator: " ")).font(ShellType.secondary).foregroundStyle(app.pal.ink2)
-                    .lineSpacing(3).lineLimit(expanded ? nil : 2).textSelection(.enabled)
-                Button(expanded ? "Show less" : "Show more") { expanded.toggle() }.font(ShellType.caption).buttonStyle(.plain).foregroundStyle(app.pal.ink3)
-            }
-            if let parent {
-                Label("Opened from \(parent.title)", systemImage: "arrow.turn.down.right").font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
-            }
-        }.padding(.vertical, 14)
-        Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
+        Button("Open") { app.openThreadNode(id, in: thread, asChild: false) }
+        Button("Open as Child Tab") { app.openThreadNode(id, in: thread, asChild: true) }.disabled(app.activeTab == nil)
+        Button("Resume from Here") { app.resumeThread(from: id, in: thread) }
+        Button("Note") { app.openThreadNote(id, in: thread) }
     }
 }
 
+/// A node: favicon 16 in a `threadNodeSize` slot (with the accent dot when the page has a Vault
+/// note), the title in `row` `ink2` truncated at 26 characters, the host in `caption` `ink3`.
+/// The current tab's node is `rowSelected` with its title in `ink`; hover and a cited node are `rowHover`.
+private struct ThreadNodeLabel: View {
+    let page: GraphNode
+    let current: Bool
+    let highlighted: Bool
+    let noted: Bool
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: ShellLayout.rowRadius)
+        HStack(spacing: 0) {
+            Favicon(host: page.host, size: ShellLayout.iconSize, url: URL(string: page.url))
+                .overlay(alignment: .bottomTrailing) {
+                    if noted {
+                        Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                            .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
+                    }
+                }
+                .frame(width: ShellLayout.threadNodeSize, height: ShellLayout.threadNodeSize)
+            Text(ThreadLayout.truncatedTitle(page.title.isEmpty ? page.host : page.title)).font(ShellType.row)
+                .foregroundStyle(current ? app.pal.ink : app.pal.ink2).lineLimit(1).fixedSize()
+                .padding(.leading, ShellLayout.iconGap)
+            Text(page.host).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1).fixedSize()
+                .padding(.leading, ThreadLayout.hostGap)
+        }
+        .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight)
+        .background(current ? app.pal.rowSelected : (highlighted ? app.pal.rowHover : .clear), in: shape)
+        .overlay(shape.strokeBorder(current ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline))
+        .contentShape(shape)
+    }
+}
+
+/// A connector path drawn from parent to child: `progress` trims it from its start.
+private struct ThreadConnectorShape: Shape {
+    let path: Path
+    var progress: CGFloat
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+    func path(in rect: CGRect) -> Path { path.trimmedPath(from: 0, to: progress) }
+}
+
+/// The tree (graphene-language.md §5.2): scrolls in both axes inside the page card and never zooms.
 private struct ThreadMap: View {
     let thread: KnowledgeGraph.Thread
+    let state: ThreadNodeState
+    let select: (UUID) -> Void
     @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var appeared = false
+    @State private var hoveredID: UUID?
+    @State private var cardID: UUID?
+    @State private var cardHovered = false
 
-    private var firstParents: [UUID: UUID] {
-        var parents: [UUID: UUID] = [:]
-        var seen = Set<UUID>()
-        let ids = Set(thread.nodes.map(\.id))
-        for visit in app.graph.visits where visit.threadID == thread.id {
-            guard seen.insert(visit.nodeID).inserted, let parent = visit.parentNodeID,
-                  parent != visit.nodeID, ids.contains(parent) else { continue }
-            parents[visit.nodeID] = parent
-        }
-        return parents
-    }
-    private var positions: [UUID: CGPoint] {
-        let parents = firstParents
-        var depths: [UUID: Int] = [:]
-        for node in thread.nodes { depths[node.id] = parents[node.id].flatMap { depths[$0] }.map { $0 + 1 } ?? 0 }
-        let columns = Dictionary(grouping: thread.nodes, by: { depths[$0.id] ?? 0 })
-        let rows = columns.values.map(\.count).max() ?? 1
-        var result: [UUID: CGPoint] = [:]
-        for (column, nodes) in columns {
-            for (row, node) in nodes.enumerated() {
-                result[node.id] = CGPoint(x: 20 + CGFloat(column) * 195, y: 20 + CGFloat(row) * 112 + CGFloat(rows - nodes.count) * 56)
+    /// Room around the grid, and to the right of the deepest column for its labels.
+    private static let inset = ShellLayout.newTabGap
+    private static let labelRoom = ShellLayout.threadColumn * 2
+    /// Below the last row, so the last node's hover card is not clipped.
+    private static let cardRoom = ShellLayout.threadRowPitch * 4
+    /// How long the card stays after the pointer leaves the node, so it can move onto the card.
+    private static let cardGrace: Duration = .milliseconds(250)
+
+    var body: some View {
+        let layout = state.layout
+        let pages = Dictionary(thread.nodes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let active = layout.activeChildren(selected: state.selected)
+        ScrollView([.horizontal, .vertical]) {
+            ZStack(alignment: .topLeading) {
+                ForEach(layout.connectors) { connector in
+                    if !reduceMotion || appeared {
+                        ThreadConnectorShape(path: Path(connector.path()), progress: reduceMotion || appeared ? 1 : 0)
+                            .stroke(app.pal.threadLine, lineWidth: ShellLayout.hairline)
+                            .animation(reduceMotion ? nil : .easeOut(duration: ThreadLayout.connectorDraw)
+                                .delay(ThreadLayout.fadeDelay(column: connector.parentColumn)), value: appeared)
+                            .transition(fade(column: 0))
+                    }
+                }
+                ForEach(layout.connectors) { connector in
+                    if appeared, let child = active[connector.parentID] {
+                        ThreadConnectorShape(path: Path(connector.path(to: [child])), progress: 1)
+                            .stroke(app.pal.threadLineActive, lineWidth: ShellLayout.hairline)
+                            .transition(.opacity.animation(.easeOut(duration: ThreadLayout.recolour)))
+                            .id("\(connector.parentID)-\(child)")
+                    }
+                }
+                ForEach(layout.headers) { header in
+                    if appeared {
+                        HStack(spacing: ThreadLayout.hostGap) {
+                            if let start = header.start { Text(ThreadLayout.startLabel(start)).font(ShellType.caption).foregroundStyle(app.pal.ink3) }
+                            if let query = header.query { Text("“\(query)”").font(ShellType.label).foregroundStyle(app.pal.ink3).lineLimit(1) }
+                        }
+                        .fixedSize()
+                        .frame(height: ShellLayout.threadRowPitch, alignment: .leading)
+                        .offset(y: CGFloat(header.row) * ShellLayout.threadRowPitch)
+                        .transition(fade(column: 0))
+                    }
+                }
+                ForEach(layout.nodes) { node in
+                    if appeared, let page = pages[node.id] {
+                        Button { openNode(node.id, in: thread, app: app, select: select) } label: {
+                            ThreadNodeLabel(page: page, current: state.current == node.id,
+                                            highlighted: hoveredID == node.id || state.cited == node.id, noted: state.hasNote(page))
+                        }
+                        .buttonStyle(.plain)
+                        .onHover { hover(node.id, $0) }
+                        .contextMenu { ThreadNodeMenu(id: node.id, thread: thread) }
+                        .help("Click to open · ⌘-click to open as a child tab")
+                        .accessibilityLabel("\(page.title), \(page.host)")
+                        .accessibilityIdentifier("thread.node.\(node.id)")
+                        .accessibilityAddTraits(state.selected == node.id ? [.isSelected] : [])
+                        .offset(x: node.origin.x - ShellLayout.rowInsetLeading,
+                                y: node.origin.y + (ShellLayout.threadRowPitch - ShellLayout.rowHeight) / 2)
+                        .transition(fade(column: node.column))
+                    }
+                }
+                if let id = cardID, let node = layout.node(id), let page = pages[id] {
+                    ThreadHoverCard(page: page, thread: thread) { cardHovered = $0; if !$0 { scheduleHide(id) } }
+                        .offset(x: node.origin.x - ShellLayout.rowInsetLeading,
+                                y: node.origin.y + (ShellLayout.threadRowPitch + ShellLayout.rowHeight) / 2 + ShellLayout.iconBackingInset)
+                        .transition(.opacity.animation(Motion.hover.reduced(reduceMotion)))
+                        .zIndex(1)
+                }
             }
+            .frame(width: layout.size.width + Self.labelRoom, height: layout.size.height + Self.cardRoom, alignment: .topLeading)
+            .padding(Self.inset)
         }
-        return result
+        .defaultScrollAnchor(.topLeading)
+        .onAppear { appeared = true }
+        .accessibilityElement(children: .contain).accessibilityLabel("Thread map")
+    }
+
+    /// Nodes fade in by depth: 40ms per column, at most 200ms; Reduce Motion drops the stagger.
+    private func fade(column: Int) -> AnyTransition {
+        let delay = reduceMotion ? 0 : ThreadLayout.fadeDelay(column: column)
+        return .opacity.animation(.easeOut(duration: ThreadLayout.fadeDuration).delay(delay))
+    }
+    private func hover(_ id: UUID, _ inside: Bool) {
+        if inside { hoveredID = id; cardID = id; return }
+        if hoveredID == id { hoveredID = nil }
+        scheduleHide(id)
+    }
+    private func scheduleHide(_ id: UUID) {
+        Task { @MainActor in
+            try? await Task.sleep(for: Self.cardGrace)
+            if hoveredID != id, !cardHovered, cardID == id { cardID = nil }
+        }
+    }
+}
+
+/// The node hover card: `elev`, `popoverRadius`, hairline, `pageShadow`, 320 wide, with the page
+/// snippet in `quoteSmall` and "Open · Resume from here · Note" in `label`.
+private struct ThreadHoverCard: View {
+    let page: GraphNode
+    let thread: KnowledgeGraph.Thread
+    let hovering: (Bool) -> Void
+    @EnvironmentObject var app: AppState
+    private static let snippetLength = 420
+    private var snippet: String {
+        String(page.snippet.split(whereSeparator: \.isWhitespace).joined(separator: " ").prefix(Self.snippetLength))
     }
     var body: some View {
-        let positions = positions
-        let width = (positions.values.map(\.x).max() ?? 20) + 170
-        let height = (positions.values.map(\.y).max() ?? 20) + 100
-        VStack(alignment: .leading, spacing: 0) {
-            ScrollView([.horizontal, .vertical]) {
-                ZStack(alignment: .topLeading) {
-                    Canvas { context, _ in
-                        for (child, parent) in firstParents {
-                            guard let origin = positions[parent], let target = positions[child] else { continue }
-                            let a = CGPoint(x: origin.x + 150, y: origin.y + 40)
-                            let b = CGPoint(x: target.x, y: target.y + 40)
-                            var path = Path(); path.move(to: a)
-                            path.addCurve(to: b, control1: CGPoint(x: a.x + 24, y: a.y), control2: CGPoint(x: b.x - 24, y: b.y))
-                            context.stroke(path, with: .color(app.pal.ink3), lineWidth: ShellLayout.hairline)
-                            var arrow = Path(); arrow.move(to: CGPoint(x: b.x - 5, y: b.y - 3)); arrow.addLine(to: b); arrow.addLine(to: CGPoint(x: b.x - 5, y: b.y + 3))
-                            context.stroke(arrow, with: .color(app.pal.ink3), lineWidth: ShellLayout.hairline)
+        let shape = RoundedRectangle(cornerRadius: ShellLayout.popoverRadius)
+        VStack(alignment: .leading, spacing: ShellLayout.sectionGap) {
+            if snippet.isEmpty {
+                Text(page.url).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(2)
+            } else {
+                Text(snippet).font(ShellType.quoteSmall).foregroundStyle(app.pal.ink)
+                    .lineSpacing(ShellType.lineSpacing(size: ShellType.quoteSmallSize, lineHeight: ShellType.quoteLineHeight))
+                    .lineLimit(6).fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: ThreadLayout.hostGap) {
+                Button("Open") { app.openThreadNode(page.id, in: thread, asChild: false) }
+                Text("·").foregroundStyle(app.pal.ink3)
+                Button("Resume from here") { app.resumeThread(from: page.id, in: thread) }
+                Text("·").foregroundStyle(app.pal.ink3)
+                Button("Note") { app.openThreadNote(page.id, in: thread) }
+            }.buttonStyle(.plain).font(ShellType.label).foregroundStyle(app.pal.ink2)
+        }
+        .padding(ShellLayout.sectionGap)
+        .frame(width: ThreadLayout.hoverCardWidth, alignment: .leading)
+        .background(app.pal.elev, in: shape)
+        .overlay(shape.strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
+        .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
+        .onHover(perform: hovering)
+        .accessibilityElement(children: .contain).accessibilityLabel("\(page.title) preview")
+    }
+}
+
+/// List mode, for scanning: rows of `rowHeight` with the map's node treatment, indented by depth.
+private struct ThreadList: View {
+    let thread: KnowledgeGraph.Thread
+    let state: ThreadNodeState
+    let notes: [Annotation]
+    let select: (UUID) -> Void
+    @EnvironmentObject var app: AppState
+    @State private var hoveredID: UUID?
+    var body: some View {
+        let pages = Dictionary(thread.nodes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(state.layout.nodes) { node in
+                    if let page = pages[node.id] {
+                        Button { openNode(node.id, in: thread, app: app, select: select) } label: {
+                            ThreadNodeLabel(page: page, current: state.current == node.id,
+                                            highlighted: hoveredID == node.id || state.cited == node.id, noted: state.hasNote(page))
                         }
+                        .buttonStyle(.plain)
+                        .onHover { inside in if inside { hoveredID = node.id } else if hoveredID == node.id { hoveredID = nil } }
+                        .contextMenu { ThreadNodeMenu(id: node.id, thread: thread) }
+                        .help(page.url)
+                        .padding(.leading, CGFloat(node.column) * ShellLayout.threadIndent)
+                        .frame(height: ShellLayout.rowHeight)
+                        .accessibilityLabel("Branch level \(node.column + 1): \(page.title)")
+                        .accessibilityIdentifier("thread.branch.\(node.id)")
                     }
-                    ForEach(thread.nodes) { node in
-                        Button { if let url = URL(string: node.url) { app.openTab(url: url, parent: nil, activate: true) } } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(node.host).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
-                                Text(node.title).font(ShellType.secondary).lineLimit(2).multilineTextAlignment(.leading)
-                            }.padding(12).frame(width: 150, height: 80, alignment: .leading)
-                                .background(app.pal.pageBg, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-                                .overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(app.pal.hairline))
-                        }.buttonStyle(.plain).offset(positions[node.id].map { CGSize(width: $0.x, height: $0.y) } ?? .zero)
+                }
+                if !notes.isEmpty {
+                    Text("Saved notes").font(ShellType.label).foregroundStyle(app.pal.ink3).padding(.top, ShellLayout.newTabGap).padding(.bottom, 6)
+                    ForEach(notes) { note in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(note.text.isEmpty ? note.title : note.text).font(ShellType.quote)
+                                .lineSpacing(ShellType.quoteLineSpacing).textSelection(.enabled)
+                            if !note.note.isEmpty { Text(note.note).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
+                            Text(URL(string: note.url)?.host ?? "Saved note").font(ShellType.caption).foregroundStyle(app.pal.ink3)
+                        }.padding(.vertical, 14)
+                        Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
                     }
-                }.frame(width: width, height: height)
-            }.frame(height: min(height, 320))
-            Text("The first path to each page. Select a source to reopen it.").font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                .padding(.horizontal, 16).padding(.bottom, 14)
-        }.background(app.pal.tileFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                }
+            }.padding(.horizontal, ShellLayout.newTabGap - ShellLayout.rowInsetLeading).padding(.bottom, ShellLayout.newTabGap)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -329,28 +479,34 @@ struct LibraryBar<Actions: View>: View {
 }
 
 /// A library bar action: 15pt medium glyph in `ink3` on a `controlSize` target, 25% when disabled.
+/// `selected` marks the active one of a pair of mode glyphs (Threads' List and Map): `ink` on `rowHover`.
 struct LibraryBarButton: View {
     let title: String
     let system: String
+    var selected = false
     let action: () -> Void
-    init(_ title: String, system: String, action: @escaping () -> Void) { self.title = title; self.system = system; self.action = action }
+    init(_ title: String, system: String, selected: Bool = false, action: @escaping () -> Void) {
+        self.title = title; self.system = system; self.selected = selected; self.action = action
+    }
     var body: some View {
         Button(action: action) {
             Image(systemName: system).font(ShellType.glyph).frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
-        }.buttonStyle(LibraryGlyphStyle())
-            .help(title).accessibilityLabel(title).accessibilityIdentifier("library.\(system).\(title)").accessibilityAddTraits(.isButton)
+        }.buttonStyle(LibraryGlyphStyle(selected: selected))
+            .help(title).accessibilityLabel(title).accessibilityIdentifier("library.\(system).\(title)").accessibilityAddTraits(selected ? [.isButton, .isSelected] : [.isButton])
     }
 }
 
-/// `ink3` glyph (`inkDisabled` when disabled) with `rowHover` behind it on hover or press.
+/// `ink3` glyph (`inkDisabled` when disabled) with `rowHover` behind it on hover or press;
+/// a selected glyph is `ink` on `rowHover`.
 struct LibraryGlyphStyle: ButtonStyle {
+    var selected = false
     @EnvironmentObject var app: AppState
     @Environment(\.isEnabled) private var enabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovered = false
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.foregroundStyle(enabled ? app.pal.ink3 : app.pal.inkDisabled)
-            .background(enabled && (hovered || configuration.isPressed) ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        configuration.label.foregroundStyle(enabled ? (selected ? app.pal.ink : app.pal.ink3) : app.pal.inkDisabled)
+            .background(enabled && (selected || hovered || configuration.isPressed) ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             .contentShape(Rectangle()).onHover { hovered = $0 }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: hovered)
     }
