@@ -1,0 +1,47 @@
+# Task: verify Graphene's Arc-look rebuild on the real app
+
+You are working on macOS with real computer use. Do the work synchronously yourself. Do not delegate, do not schedule jobs, do not ask questions; if something is blocked, record it and move on. Never use `GRAPHENE_DEBUG`, the `cmd.txt` debug driver, or any scripted UI automation inside the app: every interaction is a real click, key press or drag through computer use, exactly as a user would do it.
+
+## Goal
+Build the current `master` of this repository, run it on an isolated profile, exercise the surfaces in `docs/design/arc-look.md` section 6 (Acceptance), capture evidence, and write a report that says plainly which acceptance items pass, which fail, and what looks wrong compared with Arc. Output goes in `docs/parity/shots/arc-look/` (PNGs plus `report.md`). Do not commit.
+
+## Build and launch
+1. `git status` must be clean apart from `docs/parity/shots/arc-look/`. Note the HEAD hash in the report.
+2. Build with `GRAPHENE_APP_DIR=$PWD/.build/Graphene-verify.app ./scripts/build-app.sh`. Never build into or touch `~/Applications/Graphene.app`, and never quit a Graphene process you did not start.
+3. Launch: `GRAPHENE_DATA_DIR=/tmp/graphene-arc-look-verify .build/Graphene-verify.app/Contents/MacOS/Graphene &` (fresh directory; delete it first if it exists). Record the PID. Complete onboarding with default choices. Resize the window to 1280×820 points.
+
+## Seed through the UI (public pages only)
+- Open tabs with ⌘T: https://en.wikipedia.org/wiki/Graphene, https://github.com/apple/swift, https://developer.apple.com, https://news.ycombinator.com, https://example.com, https://www.apple.com, https://forums.swift.org.
+- Make four of them Favorites (tab context menu → Add to Favorites, or drag to the favorites area).
+- Pin three others (context menu → Pin); create a folder (context menu → New Folder) named `Reading` and move one pinned tab into it.
+- Leave four Today tabs. Create a second space with ⌘⌥N named `Personal`, then return to the first space.
+- Set the first space's theme to a dark blue-violet (space label → … → theme; hue near 243°) and confirm Appearance is Dark for the dark captures, then Light for the light captures (Settings → Appearance, or ⇧⌘L).
+
+## Captures (window-only, Retina, `screencapture -l <windowid> -o`)
+All at 1280×820. Verify each PNG with `sips -g pixelWidth -g pixelHeight` and by viewing it.
+1. `main-dark.png`, `main-light.png`: Wikipedia tab active, sidebar open, page loaded.
+2. `row-hover-dark.png`: pointer over an unselected Today row (hover fill and close glyph must show).
+3. `today-hairline-hover.png`: pointer over the hairline between pinned and Today (the "Clear" label must appear).
+4. `favorite-hover.png` and `favorite-selected.png`.
+5. `folder-open.png` / `folder-collapsed.png`.
+6. `command-bar-cmdt.png`: ⌘T, nothing typed. `command-bar-url.png`: click the URL in the page toolbar (the bar must open with the URL prefilled and selected). `command-bar-cmdl.png`: ⌘L. `command-bar-query.png`: type `swift`.
+7. `toolbar-zoom.png`: `screencapture -R` crop of the page card's top-left 400×60 at 2x showing nav buttons, the URL and the card corner.
+8. `page-corner-zoom.png`: crop of the page card's bottom-right corner showing the gap to the window edge.
+9. `sidebar-collapsed.png` (⌘S) and `sidebar-peek.png` (pointer at the left window edge while collapsed). Then ⌘S again.
+10. `space-switch.png`: capture mid-way through switching to `Personal` if you can, else after; then `space-personal.png`.
+11. `split.png`: open a split (⇧⌥⌘→ or context menu → Open in Split View).
+12. `chat.png`: ⌘K opens the floating chat panel.
+13. `toast.png`: close a Today tab with ⌘W (Undo toast).
+14. `tab-switcher.png`: hold ⌃ and press Tab.
+15. `little-arc.png`: if a Little Arc / transient window shortcut exists in Settings → Shortcuts, use it; otherwise skip and say so.
+16. `settings-appearance.png`, `settings-general.png`, `onboarding.png` (relaunch into a fresh empty `GRAPHENE_DATA_DIR` for the onboarding shot, then quit that instance).
+17. `reduce-motion.png`: enable System Settings → Accessibility → Display → Reduce Motion, collapse/expand the sidebar and switch spaces, capture, then turn Reduce Motion back off. Note whether anything still moved.
+
+## Measurements
+From the PNGs (divide by 2 for points), record in `report.md`: page card gap to window top/right/bottom, page radius, toolbar height, nav button positions, favorites tile width/height/gap and columns, tab row height and pitch, favicon size, space label height, footer height, traffic-light centres, command bar width/radius/input height/row height and its top offset as a fraction of window height, chat panel width and inset. Sample the sidebar RGB at top/middle/bottom and the page border RGB in dark and light. Compare every number with `docs/design/arc-look.md` section 2 and section 6 item 1–2, and with `docs/parity/ref/arc/manifest.md` if it exists (else `docs/parity/ref/arc-main.png`).
+
+## Report
+`report.md` with: HEAD hash, PID, build log tail, a table of the eight acceptance items from section 6 with PASS/FAIL and evidence file names, the measurement table with deltas, a "What still doesn't look like Arc" list ordered by visual impact (be blunt and specific: colours, weights, spacing, alignment, anything that jumps or flickers), and any crash, hang, console error or layout jump you saw. Do not soften failures. Do not claim anything you did not observe.
+
+## Cleanup
+Quit the Graphene instance you launched (⌘Q on it, confirm the PID is gone). Leave `/tmp/graphene-arc-look-verify` in place. Delete `.build/Graphene-verify.app`. Confirm Reduce Motion is back to its original state.
