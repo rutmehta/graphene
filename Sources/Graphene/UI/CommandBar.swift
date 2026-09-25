@@ -128,19 +128,21 @@ struct CommandBar: View {
         return matches
     }
 
+    private var cornerRadius: CGFloat { integrated ? ShellLayout.rowRadius : ShellLayout.commandRadius }
+
     var body: some View {
         let rows = results
         VStack(spacing: 0) {
             HStack(spacing: 13) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: integrated ? 13 : 19, weight: .regular))
+                    .font(integrated ? ShellType.row : ShellType.input)
                     .foregroundStyle(app.pal.ink3)
                 CommandInput(text: $app.commandBarDraft,
                              focusRequest: app.commandBarFocusRequest,
                              selectAllOnFocus: !app.commandBarCreatesTab,
                              color: NSColor(app.pal.ink),
                              placeholderColor: NSColor(app.pal.ink3),
-                             fontSize: integrated ? 13 : 22,
+                             fontSize: integrated ? ShellType.rowSize : ShellType.inputSize,
                              onMove: moveSelection,
                              onSubmit: submitSelection,
                              onCancel: { app.dismissCommandBar() }, completion: completion,
@@ -150,15 +152,15 @@ struct CommandBar: View {
                     .frame(height: integrated ? 28 : 30)
                     .accessibilityIdentifier("commandBarInput")
                 Button(asking ? "Ask ⇥" : "Search ⇥") { askOverride = !asking }
-                    .buttonStyle(.plain).font(.system(size: 11, weight: .medium))
+                    .buttonStyle(.plain).font(ShellType.label)
                     .foregroundStyle(app.pal.accentText).padding(7)
                     .background(app.pal.accentSoft, in: Capsule()).disabled(app.isPrivate)
                     .accessibilityIdentifier("command.mode").accessibilityLabel(asking ? "Switch to Search" : "Switch to Ask").accessibilityAddTraits(.isButton)
                 Button { app.dismissCommandBar() } label: {
-                    Text("esc").font(.system(size: 10, weight: .medium))
+                    Text("esc").font(ShellType.label)
                         .foregroundStyle(app.pal.ink3)
                         .padding(.horizontal, 6).padding(.vertical, 4)
-                        .background(app.pal.hover, in: RoundedRectangle(cornerRadius: 4))
+                        .background(app.pal.hover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
                 }
                 .buttonStyle(.plain)
                 .help("Close")
@@ -166,9 +168,9 @@ struct CommandBar: View {
                 .accessibilityIdentifier("command.close").accessibilityAddTraits(.isButton)
             }
             .padding(.horizontal, integrated ? 12 : 20)
-            .frame(height: integrated ? 32 : 56)
+            .frame(height: integrated ? ShellLayout.pageToolbarHeight : ShellLayout.commandInputHeight)
 
-            Rectangle().fill(app.pal.hairline.opacity(0.8)).frame(height: 1)
+            Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
 
             if !app.commandContextIDs.isEmpty {
                 ScrollView(.horizontal) {
@@ -176,7 +178,7 @@ struct CommandBar: View {
                         ForEach(app.commandContextIDs, id: \.self) { id in
                             Button { app.commandContextIDs.removeAll { $0 == id } } label: {
                                 Label(app.tabs.first { $0.id == id }?.displayTitle ?? "Closed tab", systemImage: "xmark.circle")
-                                    .font(.system(size: 11)).padding(7).background(app.pal.accentSoft, in: Capsule())
+                                    .font(ShellType.caption).padding(7).background(app.pal.accentSoft, in: Capsule())
                             }.buttonStyle(.plain)
                                 .accessibilityIdentifier("command.removeContext.\(id)").accessibilityLabel("Remove attached tab").accessibilityAddTraits(.isButton)
                         }
@@ -186,7 +188,7 @@ struct CommandBar: View {
 
             if rows.isEmpty {
                 Text("Your open tabs and recent pages will appear here.")
-                    .font(.system(size: 12)).foregroundStyle(app.pal.ink3)
+                    .font(ShellType.secondary).foregroundStyle(app.pal.ink3)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20).padding(.vertical, 23)
             } else {
@@ -195,7 +197,7 @@ struct CommandBar: View {
                         LazyVStack(spacing: 2) {
                             ForEach(Array(rows.enumerated()), id: \.element.id) { index, result in
                                 if index == 0 || rows[index - 1].kind != result.kind {
-                                    Text(result.kind).font(.system(size: 10, weight: .semibold)).foregroundStyle(app.pal.ink3)
+                                    Text(result.kind).font(ShellType.label).foregroundStyle(app.pal.ink3)
                                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 11).frame(height: 22)
                                 }
                                 resultRow(result, selected: index == selectedIndex).id(result.id)
@@ -211,8 +213,7 @@ struct CommandBar: View {
             }
 
             HStack(spacing: 6) {
-                Image(systemName: "circle.fill")
-                    .font(.system(size: 5)).foregroundStyle(app.pal.accentText)
+                Circle().fill(app.pal.accentText).frame(width: 5, height: 5)
                 Text(app.activeSpace.name).lineLimit(1)
                 Spacer()
                 Text("↑ ↓").fontWeight(.medium)
@@ -220,15 +221,15 @@ struct CommandBar: View {
                 Text("↵").fontWeight(.medium).padding(.leading, 8)
                 Text("open · ⌘↵ new tab · ⇧↵ split · → complete")
             }
-            .font(.system(size: 10))
+            .font(ShellType.caption)
             .foregroundStyle(app.pal.ink3)
             .padding(.horizontal, 17).padding(.vertical, 11)
-            .background(app.pal.hover.opacity(0.55))
+            .background(app.pal.hover)
         }
-        .frame(maxWidth: integrated ? .infinity : 640)
-        .background(app.pal.elev, in: RoundedRectangle(cornerRadius: integrated ? 10 : 16))
-        .clipShape(RoundedRectangle(cornerRadius: integrated ? 10 : 16))
-        .overlay(RoundedRectangle(cornerRadius: integrated ? 10 : 16).strokeBorder(app.pal.hairline.opacity(0.9), lineWidth: 1))
+        .frame(maxWidth: integrated ? .infinity : ShellLayout.commandWidth)
+        .background(app.pal.elev, in: RoundedRectangle(cornerRadius: cornerRadius))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
         .shadow(color: app.pal.shadow, radius: integrated ? 16 : 32, x: 0, y: integrated ? 8 : 16)
         .onChange(of: app.commandBarDraft) { selectedIndex = 0 }
         .task(id: "\(query)|\(app.searchEngine.rawValue)|\(app.searchSuggestions)|\(asking)") {
@@ -250,7 +251,7 @@ struct CommandBar: View {
             Group {
                 if let symbol = result.symbol {
                     Image(systemName: symbol)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(ShellType.glyph)
                         .foregroundStyle(app.pal.ink2)
                         .frame(width: 26, height: 26)
                 } else {
@@ -258,27 +259,27 @@ struct CommandBar: View {
                 }
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(result.title).font(.system(size: integrated ? 13 : 14, weight: .medium))
+                Text(result.title).font(ShellType.rowSelected)
                     .foregroundStyle(app.pal.ink).lineLimit(1)
                 if !result.detail.isEmpty {
-                    Text(result.detail).font(.system(size: integrated ? 11 : 12))
+                    Text(result.detail).font(integrated ? ShellType.caption : ShellType.secondary)
                         .foregroundStyle(app.pal.ink3).lineLimit(1)
                 }
             }
             Spacer(minLength: 8)
             if !result.kind.isEmpty {
-                Text(rowHint(result)).font(.system(size: 10, weight: .medium))
+                Text(rowHint(result)).font(ShellType.label)
                     .foregroundStyle(selected ? app.pal.accentText : app.pal.ink3)
             }
             if selected {
-                Image(systemName: "return").font(.system(size: 11))
+                Image(systemName: "return").font(ShellType.caption)
                     .foregroundStyle(app.pal.ink3).frame(width: 14)
             }
         }
-        .padding(.horizontal, 11).frame(height: integrated ? (result.detail.isEmpty ? 36 : 50) : 44)
+        .padding(.horizontal, 11).frame(height: integrated ? (result.detail.isEmpty ? 36 : 50) : ShellLayout.commandRowHeight)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(selected ? app.pal.accentSoft : .clear, in: RoundedRectangle(cornerRadius: 9))
-        .contentShape(RoundedRectangle(cornerRadius: 9))
+        .background(selected ? app.pal.accentSoft : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        .contentShape(RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("command.result.\(result.id)")
         .accessibilityLabel(result.title)

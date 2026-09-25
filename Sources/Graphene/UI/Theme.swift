@@ -29,28 +29,79 @@ extension Color {
 
 enum ThemeMode: String, Codable, CaseIterable { case light, dark, automatic }
 
+/// Layout tokens, in points. `docs/design/arc-look.md` §2.1 is the source of truth.
 enum ShellLayout {
+    // Window and page card
+    static let windowGap: CGFloat = 8
+    static let windowOutline: CGFloat = 1
     static let pageRadius: CGFloat = 10
-    static let rowRadius: CGFloat = 8
-    static let popoverRadius: CGFloat = 12
-    static let commandRadius: CGFloat = 16
-    static let toolbarHeight: CGFloat = 36
-    static let rowHeight: CGFloat = 37
-    static let rowPitch: CGFloat = 41
-    static let favoriteHeight: CGFloat = 56
-    static let favoriteGap: CGFloat = 8
-    static func favoriteColumns(width: CGFloat) -> Int { width >= 280 ? 4 : 3 }
-    static let footerHeight: CGFloat = 36
-    static let trafficBandHeight: CGFloat = 48
-    static let topTabHeight: CGFloat = 40
-    static let sidebarDefault: CGFloat = 224
-    // The WP1 brief explicitly extends the matrix's 320pt maximum to 360pt.
-    static let sidebarRange: ClosedRange<CGFloat> = 200...360
-    static let collapseThreshold: CGFloat = 176
+    static let pageToolbarHeight: CGFloat = 32
     static let minimumPageWidth: CGFloat = 480
+    // Sidebar
+    static let sidebarDefault: CGFloat = 224
+    static let sidebarRange: ClosedRange<CGFloat> = 180...360
+    static let collapseThreshold: CGFloat = 160
+    static let trafficBandHeight: CGFloat = 44
+    /// Traffic lights sit centred at y = 22, first centre at x = 20, 20pt apart.
+    static let trafficLightCenterY: CGFloat = 22
+    static let trafficLightLeading: CGFloat = 20
+    static let trafficLightSpacing: CGFloat = 20
+    /// Clearance from the window's left edge kept free for the traffic lights.
+    static let trafficReserve: CGFloat = 84
+    static func favoriteColumns(width contentWidth: CGFloat) -> Int { contentWidth >= 300 ? 4 : 3 }
+    static let favoriteGap: CGFloat = 10
+    static let favoriteHeight: CGFloat = 44
+    static let favoriteRadius: CGFloat = 10
+    static let rowHeight: CGFloat = 36
+    static let rowPitch: CGFloat = 40
+    static let rowRadius: CGFloat = 8
+    static let rowInsetLeading: CGFloat = 8
+    static let iconSize: CGFloat = 16
+    static let favoriteIconSize: CGFloat = 20
+    static let controlSize: CGFloat = 28
+    static let footerHeight: CGFloat = 36
+    static let sectionGap: CGFloat = 12
+    static let hairline: CGFloat = 1
+    /// Small inline key-hint chips ("esc", "⌘T").
+    static let chipRadius: CGFloat = 4
+    // Top-tabs layout strip
+    static let topTabHeight: CGFloat = 40
+    // Command bar
+    static let commandWidth: CGFloat = 640
+    static let commandRadius: CGFloat = 16
+    static let commandInputHeight: CGFloat = 56
+    static let commandRowHeight: CGFloat = 44
+    /// Fraction of the window height from the top to the command bar's top edge.
+    static let commandTop: CGFloat = 0.18
+    // Popovers and panels
+    static let popoverRadius: CGFloat = 12
+    static let chatWidth: CGFloat = 420
+    static let chatWidthRange: ClosedRange<CGFloat> = 360...560
     static func clampedSidebarWidth(_ width: CGFloat) -> CGFloat {
         min(sidebarRange.upperBound, max(sidebarRange.lowerBound, width))
     }
+}
+
+/// The shell's type scale (arc-look.md §2.2): system face, default design, nothing above 22.
+enum ShellType {
+    static let label = Font.system(size: 11, weight: .semibold)
+    static let caption = Font.system(size: 11, weight: .regular)
+    static let secondary = Font.system(size: 12, weight: .regular)
+    static let row = Font.system(size: rowSize, weight: .regular)
+    static let rowSelected = Font.system(size: 13, weight: .medium)
+    static let body = Font.system(size: 13, weight: .regular)
+    static let title = Font.system(size: 15, weight: .semibold)
+    static let input = Font.system(size: inputSize, weight: .regular)
+    static let display = Font.system(size: 22, weight: .semibold)
+    /// Toolbar and footer glyphs.
+    static let glyph = Font.system(size: 15, weight: .medium)
+    /// Close glyphs and space glyphs.
+    static let glyphSmall = Font.system(size: 12, weight: .regular)
+    /// Folder chevrons and inline status badges.
+    static let glyphMini = Font.system(size: 10, weight: .regular)
+    /// Point sizes for AppKit text fields that take an `NSFont` (the command bar input).
+    static let rowSize: CGFloat = 13
+    static let inputSize: CGFloat = 18
 }
 
 /// A grounded space color: two gradient stops + a readable accent. Not neon.
@@ -93,10 +144,11 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
 enum Surface: String, CaseIterable { case web, threads, mail, vault, board }
 
 
-/// The resolved color system for the current (mode, space). Recomputed cheaply
-/// from AppState's published knobs, so any view that reads it updates on change.
-/// Boldness is spent in one place — `accent`; everything else is quiet neutrals,
-/// faintly tinted by the space color the way Arc floods its chrome.
+/// The resolved color system for the current (mode, space), per arc-look.md §2.3.
+/// Recomputed cheaply from AppState's published knobs, so any view that reads it
+/// updates on change. The window is flooded with the space's two-stop chrome
+/// gradient; every fill on top of it is translucent ink, and colour otherwise
+/// comes only from `accent`.
 struct Palette {
     let mode: ThemeMode
     let space: SpaceColor
@@ -105,55 +157,102 @@ struct Palette {
     var isDark: Bool {
         mode == .dark || (mode == .automatic && NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua)
     }
-    private var tintColor: Color {
-        guard let theme else { return space.accent }
-        return Color(hue: min(1, max(0, theme.hue)), saturation: min(1, max(0, theme.saturation)), brightness: 0.65)
+
+    // MARK: space input
+
+    /// Hue and saturation (0…1) of the space: its custom theme, else the preset's first stop.
+    private var spaceHS: (hue: Double, saturation: Double) {
+        if let theme { return (min(1, max(0, theme.hue)), min(1, max(0, theme.saturation))) }
+        let color = NSColor(space.c1).usingColorSpace(.sRGB) ?? .systemBlue
+        return (Double(color.hueComponent), Double(color.saturationComponent))
     }
-    private var intensity: Double { neutralChrome ? 0 : min(0.65, max(0, theme?.intensity ?? 0.25) * 1.8) }
+    /// `s′ = 0.5 + 0.5·s`, so a tinted space never turns grey; a neutral space (s = 0)
+    /// and the top-tabs layout (`neutralChrome`) get `s′ = 0`.
+    var chromeSaturation: Double {
+        let s = spaceHS.saturation
+        return neutralChrome || s <= 0 ? 0 : 0.5 + 0.5 * s
+    }
+    private static func hsb(_ hue: Double, _ saturation: Double, _ brightness: Double) -> Color {
+        let wrapped = hue.truncatingRemainder(dividingBy: 1)
+        return Color(hue: wrapped < 0 ? wrapped + 1 : wrapped, saturation: min(1, max(0, saturation)), brightness: brightness)
+    }
+
+    // MARK: chrome plane
+
+    /// Dark coefficients are calibrated to the Arc capture (#0E0D26 → #200A26 at h = 243°, s = 0.6).
+    var chromeTop: Color {
+        isDark ? Self.hsb(spaceHS.hue, 0.82 * chromeSaturation, 0.15)
+               : Self.hsb(spaceHS.hue, 0.22 * chromeSaturation, 0.95)
+    }
+    var chromeBottom: Color {
+        isDark ? Self.hsb(spaceHS.hue + 44.0 / 360, 0.92 * chromeSaturation, 0.15)
+               : Self.hsb(spaceHS.hue + 25.0 / 360, 0.26 * chromeSaturation, 0.92)
+    }
+    var grainOpacity: Double { isDark ? 0.03 : 0.025 }
+    var chromeGrain: Color { (isDark ? Color.white : Color.black).opacity(grainOpacity) }
+
+    // MARK: ink and translucent fills
+
+    var ink: Color { isDark ? .white : Color(hex: "1B1B22") }
+    var ink2: Color { ink.opacity(isDark ? 0.72 : 0.75) }
+    var ink3: Color { ink.opacity(isDark ? 0.48 : 0.50) }
+    /// Disabled glyphs and labels.
+    var inkDisabled: Color { ink.opacity(0.25) }
+    var fill: Color { Color.white.opacity(isDark ? 0.09 : 0.45) }
+    var fillHover: Color { Color.white.opacity(isDark ? 0.14 : 0.60) }
+    var fillSelected: Color { Color.white.opacity(isDark ? 0.22 : 0.85) }
+    var fillSelectedStroke: Color { isDark ? Color.white.opacity(0.25) : Color.black.opacity(0.08) }
+    var rowHover: Color { isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.04) }
+    var rowSelected: Color { Color.white.opacity(isDark ? 0.12 : 0.60) }
+    var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
+    /// A practically invisible fill that still receives hover and drops.
+    var hitTarget: Color { Color.black.opacity(0.001) }
+
+    // MARK: page card and elevated surfaces
+
+    /// Native surfaces on the card follow the chrome's scheme; web content paints its own background.
+    var pageBg: Color { isDark ? Color(hex: "1E1E22") : .white }
+    var pageBorder: Color { isDark ? Color.white.opacity(0.12) : Color.black.opacity(0.08) }
+    var pageShadow: Color { Color.black.opacity(isDark ? 0.35 : 0.10) }
+    var pageShadowRadius: CGFloat { isDark ? 12 : 10 }
+    var pageShadowY: CGFloat { isDark ? 2 : 1 }
+    var windowOutline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.06) }
+    var elev: Color { isDark ? Color(hex: "26262C") : .white }
+    var scrim: Color { Color.black.opacity(isDark ? 0.30 : 0.13) }
+    /// The light dimming behind the top-tabs integrated command bar.
+    var scrimSubtle: Color { Color.black.opacity(isDark ? 0.075 : 0.035) }
+
+    var accent: Color {
+        isDark ? Self.hsb(spaceHS.hue, 0.45, 0.85) : Self.hsb(spaceHS.hue, 0.55, 0.62)
+    }
+    /// The focused split pane's border.
+    var focusBorder: Color { accent.opacity(0.6) }
+
+    // MARK: aliases kept for existing views
+
+    var sidebarBg: Color { chromeTop }
+    var chromeBg: Color { chromeTop }
+    var ground: Color { pageBg }
+    var selection: Color { rowSelected }
+    var hover: Color { rowHover }
+    var active: Color { fillHover }
+    var shadow: Color { pageShadow }
+    var accentText: Color { accent }
+    var accentSoft: Color { accent.opacity(0.15) }
+    var sidebarGradient: LinearGradient {
+        LinearGradient(colors: [chromeTop, chromeBottom], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
     static func luminance(_ color: Color) -> Double {
         let c = NSColor(color).usingColorSpace(.sRGB) ?? .black
         func linear(_ v: CGFloat) -> Double { v <= 0.04045 ? Double(v / 12.92) : pow(Double((v + 0.055) / 1.055), 2.4) }
         return 0.2126 * linear(c.redComponent) + 0.7152 * linear(c.greenComponent) + 0.0722 * linear(c.blueComponent)
     }
+    /// WCAG contrast of `ink` against the chrome's top stop.
     var inkContrast: Double {
-        let a = Self.luminance(ink), b = Self.luminance(sidebarBg)
+        let a = Self.luminance(ink), b = Self.luminance(chromeTop)
         return (max(a, b) + 0.05) / (min(a, b) + 0.05)
     }
-
-    private var chromeBase: Color { isDark ? Color(hex: "29292F") : Color(hex: "ECECEE") }
-    private var chromeTint: Color {
-        guard isDark else { return tintColor }
-        let color = NSColor(tintColor).usingColorSpace(.sRGB) ?? .systemBlue
-        return Color(hue: color.hueComponent, saturation: min(0.8, color.saturationComponent * 1.15), brightness: 0.29)
-    }
-    private var groundBase: Color { isDark ? Color(hex: "181A20") : Color(hex: "F8F9FC") }
-
-    var ink: Color  { Self.luminance(sidebarBg) < 0.179 ? .white : .black }
-    var ink2: Color { ink.mixed(with: sidebarBg, by: 0.22) }
-    var ink3: Color { ink.mixed(with: sidebarBg, by: 0.35) }
-    var hairline: Color { ink.opacity(isDark ? 0.08 : 0.10) }
-    var pageBorder: Color { ink.opacity(isDark ? 0 : 0.10) }
-    var elev: Color { isDark ? Color(hex: "212227") : Color(hex: "FFFFFF") }
-    var selection: Color { Color.white.opacity(isDark ? 0.13 : 0.46) }
-    var scrim: Color { Color.black.opacity(isDark ? 0.30 : 0.13) }
-
-    var accent: Color { tintColor }
-    var accentText: Color { tintColor.mixed(with: ink, by: 0.4) }
-    var accentSoft: Color { tintColor.opacity(isDark ? 0.22 : 0.13) }
-
-    private var chromeMix: Double { isDark ? min(1, intensity * 1.7) : intensity }
-    var chromeBg: Color  { chromeBase.mixed(with: chromeTint, by: chromeMix * 0.8) }
-    var sidebarBg: Color { chromeBase.mixed(with: chromeTint, by: chromeMix) }
-    var sidebarGradient: LinearGradient {
-        let preset = NSColor(space.c1).usingColorSpace(.deviceRGB) ?? .systemBlue
-        let second = Color(hue: ((theme?.hue ?? preset.hueComponent) + 0.08).truncatingRemainder(dividingBy: 1), saturation: theme?.saturation ?? preset.saturationComponent, brightness: isDark ? 0.29 : 0.65)
-        return LinearGradient(colors: [sidebarBg, chromeBase.mixed(with: second, by: chromeMix * 0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-    var shadow: Color { Color.black.opacity(isDark ? 0.18 : 0.08) }
-    var ground: Color { groundBase }
-
-    var hover: Color  { (isDark ? Color.white : Color.black).opacity(isDark ? 0.06 : 0.05) }
-    var active: Color { (isDark ? Color.white : Color.black).opacity(isDark ? 0.11 : 0.09) }
 
     // reading tokens — a clean, cool near-white sheet (a web page doesn't invert)
     var rdBg: Color   { Color(hex: "FCFCFD") }
@@ -161,8 +260,4 @@ struct Palette {
     var rdInk2: Color { Color(hex: "626875") }
     var rdInk3: Color { Color(hex: "727987") }
     var rdHair: Color { Color(hex: "E8ECF2") }
-    var wash: Color   { space.accent.opacity(0.16) }
-
-    var c1: Color { space.c1 }
-    var c2: Color { space.c2 }
 }

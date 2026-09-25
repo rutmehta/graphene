@@ -6,11 +6,11 @@ struct PeekOverlay: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                app.pal.ink.opacity(0.18).onTapGesture { app.closePeek() }
+                app.pal.scrim.onTapGesture { app.closePeek() }
                 TransientBrowser(tab: tab, close: { app.closePeek() })
                     .frame(width: min(900, geo.size.width - 80), height: max(200, geo.size.height - 100))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(app.pal.hairline))
+                    .clipShape(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                    .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline))
                     .shadow(color: app.pal.shadow, radius: 24)
             }
         }

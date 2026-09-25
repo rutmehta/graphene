@@ -13,9 +13,9 @@ struct ToastOverlay: View {
                         Button(title) { toast.action?(); app.toasts.dismiss(toast.id) }.buttonStyle(.borderless)
                     }
                     Button { app.toasts.dismiss(toast.id) } label: { Image(systemName: "xmark") }.buttonStyle(.plain).accessibilityLabel("Dismiss notification")
-                }.font(.system(size: 13)).padding(12).frame(maxWidth: 460)
-                    .background(app.pal.elev, in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(app.pal.hairline))
+                }.font(ShellType.row).padding(12).frame(maxWidth: 460)
+                    .background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                    .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline))
                     .shadow(color: app.pal.shadow, radius: 8, y: 3)
                     .onHover { app.toasts.isPaused = $0 }
                     .id(toast.id)

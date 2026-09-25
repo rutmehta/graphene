@@ -3,12 +3,37 @@ import AppKit
 @testable import Graphene
 
 final class ShellPolishTests: XCTestCase {
-    func testFavoritesRespondToSidebarWidth() {
-        XCTAssertEqual(ShellLayout.favoriteColumns(width: 224), 3)
-        XCTAssertEqual(ShellLayout.favoriteColumns(width: 279), 3)
-        XCTAssertEqual(ShellLayout.favoriteColumns(width: 280), 4)
-        XCTAssertEqual(ShellLayout.favoriteHeight, 56)
-        XCTAssertEqual(ShellLayout.favoriteGap, 8)
+    func testFavoritesRespondToSidebarContentWidth() {
+        let defaultContent = ShellLayout.sidebarDefault - 2 * ShellLayout.windowGap
+        XCTAssertEqual(defaultContent, 208)
+        XCTAssertEqual(ShellLayout.favoriteColumns(width: defaultContent), 3)
+        XCTAssertEqual(ShellLayout.favoriteColumns(width: 299), 3)
+        XCTAssertEqual(ShellLayout.favoriteColumns(width: 300), 4)
+        XCTAssertEqual(ShellLayout.favoriteHeight, 44)
+        XCTAssertEqual(ShellLayout.favoriteGap, 10)
+        XCTAssertEqual(ShellLayout.favoriteRadius, 10)
+        let tileWidth = (defaultContent - 2 * ShellLayout.favoriteGap) / 3
+        XCTAssertEqual(tileWidth, 62.67, accuracy: 0.01)
+    }
+
+    func testLayoutTokensMatchArcLookSpec() {
+        XCTAssertEqual(ShellLayout.windowGap, 8)
+        XCTAssertEqual(ShellLayout.pageToolbarHeight, 32)
+        XCTAssertEqual(ShellLayout.sidebarRange, 180...360)
+        XCTAssertEqual(ShellLayout.collapseThreshold, 160)
+        XCTAssertEqual(ShellLayout.trafficBandHeight, 44)
+        XCTAssertEqual(ShellLayout.trafficLightCenterY, ShellLayout.trafficBandHeight / 2)
+        XCTAssertEqual(ShellLayout.trafficLightLeading + 2 * ShellLayout.trafficLightSpacing, 60)
+        XCTAssertEqual(ShellLayout.trafficReserve, 84)
+        XCTAssertEqual(ShellLayout.rowPitch - ShellLayout.rowHeight, 4)
+        XCTAssertEqual(ShellLayout.controlSize, 28)
+        XCTAssertEqual(ShellLayout.commandWidth, 640)
+        XCTAssertEqual(ShellLayout.commandRadius, 16)
+        XCTAssertEqual(ShellLayout.popoverRadius, 12)
+        XCTAssertEqual(ShellLayout.chatWidthRange, 360...560)
+        XCTAssertEqual(ShellLayout.topTabHeight, 40)
+        XCTAssertEqual(ShellType.inputSize, 18)
+        XCTAssertEqual(ShellType.rowSize, 13)
     }
     func testChatWidthClampsAndSkillsShareQuestionBuilder() {
         var settings = Settings()
@@ -67,9 +92,9 @@ final class ShellPolishTests: XCTestCase {
     }
 
     @MainActor
-    func testSidebarDensityAndTintFollowWP10Brief() throws {
-        XCTAssertEqual(ShellLayout.rowHeight, 37)
-        XCTAssertEqual(ShellLayout.rowPitch, 41)
+    func testSidebarDensityAndTintFollowArcLook() throws {
+        XCTAssertEqual(ShellLayout.rowHeight, 36)
+        XCTAssertEqual(ShellLayout.rowPitch, 40)
         XCTAssertEqual(ShellLayout.pageRadius, 10)
         let color = try XCTUnwrap(NSColor(Palette(mode: .dark, space: .iris).sidebarBg).usingColorSpace(.sRGB))
         XCTAssertLessThan(color.brightnessComponent, 0.32)

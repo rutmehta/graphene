@@ -57,7 +57,7 @@ final class ShellTests: XCTestCase {
         XCTAssertEqual(restored.activeSpace.icon, "leaf")
         XCTAssertEqual(restored.sidebarWidth, 340)
         XCTAssertEqual(restored.mode, .automatic)
-        XCTAssertEqual(ShellLayout.clampedSidebarWidth(100), 200)
+        XCTAssertEqual(ShellLayout.clampedSidebarWidth(100), 180)
         XCTAssertEqual(ShellLayout.clampedSidebarWidth(500), 360)
         let legacy = Data("{\"tabs\":[{\"pinned\":true,\"url\":\"https://example.com\"}],\"activeIndex\":0}".utf8)
         let decoded = try JSONDecoder().decode(AppState.SessionData.self, from: legacy)

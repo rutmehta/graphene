@@ -50,9 +50,8 @@ struct TransientBrowser: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                if little { Spacer().frame(width: 64) }
                 IconButton("Back", system: "chevron.left") { tab.goBack() }.disabled(!tab.canGoBack)
-                Text(tab.url?.absoluteString ?? "").font(.system(size: 11)).lineLimit(1).textSelection(.enabled)
+                Text(tab.url?.absoluteString ?? "").font(ShellType.caption).lineLimit(1).textSelection(.enabled)
                     .padding(.horizontal, 10).frame(maxWidth: .infinity, minHeight: 26)
                     .background(app.pal.hover, in: Capsule())
                 if little {
@@ -63,7 +62,8 @@ struct TransientBrowser: View {
                     }.fixedSize()
                 } else { Button("Open as tab") { promote(app.activeSpaceID) }.buttonStyle(.bordered) }
                 IconButton("Close preview", system: "xmark", action: close)
-            }.padding(8).background(app.pal.chromeBg)
+            }.padding(.vertical, 8).padding(.trailing, 8).padding(.leading, little ? ShellLayout.trafficReserve : 8)
+                .background(app.pal.chromeBg)
             WebContainer(tab: tab)
         }.background(app.pal.ground).foregroundStyle(app.pal.ink).tint(app.pal.accentText)
             .onExitCommand(perform: close)

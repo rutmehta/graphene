@@ -13,20 +13,31 @@ struct RootView: View {
     @State private var addressHovered = false
     @SceneStorage("shell.windowID") private var windowID = UUID().uuidString
     private var sidebarWidth: CGFloat { app.sidebarWidths[windowID].map { CGFloat($0) } ?? app.sidebarWidth }
+    private var sidebarLayout: Bool { app.layout == .sidebar }
+    private var showsSidebar: Bool { sidebarLayout && !app.sidebarCollapsed }
+    /// The page card's inset from the window's top, right and bottom (and left when collapsed).
+    private var cardGap: CGFloat { sidebarLayout && app.settings.pageGutter ? ShellLayout.windowGap : 0 }
+    private var cardShape: RoundedRectangle { RoundedRectangle(cornerRadius: sidebarLayout ? ShellLayout.pageRadius : 0) }
+    /// Sidebar collapse: a short spring; Reduce Motion fades only.
+    private var collapseAnimation: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.30, dampingFraction: 0.75)
+    }
     var body: some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
-                if app.layout == .sidebar && !app.sidebarCollapsed {
+                if showsSidebar {
                     Sidebar(width: sidebarWidth).frame(width: sidebarWidth)
-                        .transition(.move(edge: .leading).combined(with: .opacity))
-                    SidebarResizeHandle(width: Binding(get: { sidebarWidth }, set: { app.resizeSidebar($0, windowID: windowID) }))
+                        .overlay(alignment: .trailing) {
+                            SidebarResizeHandle(width: Binding(get: { sidebarWidth }, set: { app.resizeSidebar($0, windowID: windowID) }))
+                        }
+                        .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
                 }
-                ShellContentLayout(overlayAsk: geometry.size.width - (app.sidebarCollapsed || app.layout == .topTabs ? 0 : sidebarWidth + 4) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth, showAsk: app.knowledgeSearchPresented, preferredAskWidth: app.settings.askWidth, floating: app.settings.chatPanelMode == .floating) {
+                ShellContentLayout(overlayAsk: geometry.size.width - (showsSidebar ? sidebarWidth : 0) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth, showAsk: app.knowledgeSearchPresented, preferredAskWidth: app.settings.askWidth, floating: app.settings.chatPanelMode == .floating) {
                     VStack(spacing: 0) {
                         if app.layout == .topTabs { TopTabBar(); TopBrowserToolbar().zIndex(10) }
                         else if app.sidebarCollapsed { WorkspaceToolbar() }
                         if let error = app.graph.errorText ?? app.sessionError {
-                            Text(error).font(.system(size: 12)).foregroundStyle(app.pal.ink2)
+                            Text(error).font(ShellType.secondary).foregroundStyle(app.pal.ink2)
                                 .padding(12).frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Group {
@@ -44,30 +55,30 @@ struct RootView: View {
                             .padding(app.layout == .topTabs && app.settings.pageGutter ? 6 : 0)
                             .overlay {
                                 if app.layout == .topTabs && app.commandBarPresented {
-                                    app.pal.scrim.opacity(0.25).contentShape(Rectangle())
+                                    app.pal.scrimSubtle.contentShape(Rectangle())
                                         .onTapGesture { app.dismissCommandBar() }
                                 }
                             }
                     }
-                    .background(app.layout == .topTabs ? app.pal.chromeBg : app.pal.ground)
-                    .clipShape(RoundedRectangle(cornerRadius: app.sidebarCollapsed ? 0 : 10))
-                    .overlay(RoundedRectangle(cornerRadius: app.sidebarCollapsed ? 0 : 10).strokeBorder(app.pal.pageBorder, lineWidth: 0.5))
-                    .shadow(color: app.pal.shadow, radius: 4, y: 1)
+                    .background(sidebarLayout ? app.pal.pageBg : app.pal.chromeBg)
+                    .clipShape(cardShape)
+                    .overlay(cardShape.strokeBorder(sidebarLayout ? app.pal.pageBorder : .clear, lineWidth: ShellLayout.hairline))
+                    .shadow(color: sidebarLayout ? app.pal.pageShadow : .clear, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
 
                     if app.knowledgeSearchPresented {
                         KnowledgeSearchView(scopedNodes: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.nodes,
                                             threadTitle: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.title, embedded: true)
                             .id(app.knowledgeThreadID)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(app.pal.ground, in: RoundedRectangle(cornerRadius: 12))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(app.pal.ink.opacity(0.07)))
+                            .background(app.pal.ground, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline))
                             .shadow(color: app.pal.shadow, radius: 16, x: -4, y: 6)
                             .overlay(alignment: .leading) {
                                 Rectangle().fill(app.pal.hairline).frame(width: 4).contentShape(Rectangle())
                                     .gesture(DragGesture().onChanged { value in
                                         if askResizeStart == nil { askResizeStart = app.settings.askWidth }
-                                        app.settings.askWidth = (askResizeStart ?? 420) - value.translation.width
+                                        app.settings.askWidth = (askResizeStart ?? Double(ShellLayout.chatWidth)) - value.translation.width
                                     }.onEnded { _ in askResizeStart = nil; app.persist() })
                                     .accessibilityLabel("Resize Ask panel")
                                     .accessibilityIdentifier("chat.resize")
@@ -78,19 +89,20 @@ struct RootView: View {
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
                 }
-                .padding(app.layout == .topTabs || app.sidebarCollapsed || !app.settings.pageGutter ? 0 : 8).padding(.top, app.layout == .sidebar && app.sidebarCollapsed ? 6 : 0)
+                .padding(.vertical, cardGap).padding(.trailing, cardGap).padding(.leading, showsSidebar ? 0 : cardGap)
+                .transaction { if reduceMotion { $0.animation = nil } }
             }
-            .background(app.pal.sidebarBg)
+            .background { ChromeBackground() }
             .overlay(alignment: .leading) {
                 if app.layout == .sidebar && app.sidebarCollapsed {
                     if app.sidebarPeek {
-                        Sidebar(width: sidebarWidth).frame(width: sidebarWidth).background(app.pal.sidebarBg)
+                        Sidebar(width: sidebarWidth).frame(width: sidebarWidth).background { ChromeBackground() }
                             .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
                             .shadow(color: app.pal.shadow, radius: 14, x: 6)
                             .onHover { inside in if !inside && !app.spaceEditorPresented { app.sidebarPeek = false } }
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     } else {
-                        Rectangle().fill(app.pal.ink.opacity(0.001)).frame(width: 4).onHover { inside in
+                        Rectangle().fill(app.pal.hitTarget).frame(width: 4).onHover { inside in
                             peekTask?.cancel()
                             if inside { peekTask = Task { try? await Task.sleep(for: .milliseconds(200)); if !Task.isCancelled { app.sidebarPeek = true } } }
                         }
@@ -100,7 +112,7 @@ struct RootView: View {
             .overlay(alignment: .top) {
                 if app.layout == .sidebar && app.sidebarCollapsed {
                     Button { app.focusAddress() } label: {
-                        Text(app.activeTab?.url?.host ?? "Search or enter URL").font(.system(size: 12, weight: .medium))
+                        Text(app.activeTab?.url?.host ?? "Search or enter URL").font(ShellType.caption)
                             .padding(.horizontal, 18).frame(height: 30)
                             .background(app.pal.elev, in: Capsule()).shadow(color: app.pal.shadow, radius: 8)
                     }.buttonStyle(.plain).help("Open location (⌘L)")
@@ -111,11 +123,11 @@ struct RootView: View {
             .overlay {
                 if app.commandBarPresented && app.layout == .sidebar {
                     ZStack(alignment: .top) {
-                        app.pal.scrim.opacity(app.layout == .topTabs ? 0.25 : 1)
+                        app.pal.scrim
                             .contentShape(Rectangle()).onTapGesture { app.dismissCommandBar() }
                         CommandBar()
-                            .frame(width: min(640, geometry.size.width - 64))
-                            .padding(.top, max(70, geometry.size.height * 0.18))
+                            .frame(width: min(ShellLayout.commandWidth, geometry.size.width - 64))
+                            .padding(.top, max(70, geometry.size.height * ShellLayout.commandTop))
                             .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: app.layout == .topTabs ? .top : .center)))
                     }
                     .transition(.opacity)
@@ -124,7 +136,7 @@ struct RootView: View {
             .overlay(alignment: .bottom) {
                 ToastOverlay().padding(.bottom, 24)
             }
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.15), value: app.sidebarCollapsed)
+            .animation(collapseAnimation, value: app.sidebarCollapsed)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.16), value: app.knowledgeSearchPresented)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: app.commandBarPresented)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: app.sidebarPeek)
@@ -134,6 +146,7 @@ struct RootView: View {
         .background(TabKeyboardMonitor(app: app))
         .overlay { if !app.switcherIDs.isEmpty { TabSwitcher() } }
         .overlay { if let tab = app.peekTab { PeekOverlay(tab: tab) } }
+        .overlay { WindowOutline() }
         .onAppear {
             app.focusedWindowID = windowID
             if app.sidebarWidths[windowID] == nil { app.resizeSidebar(app.sidebarWidth, windowID: windowID) }
@@ -163,17 +176,21 @@ private struct WorkspaceToolbar: View {
     var body: some View {
         HStack(spacing: 6) {
             if app.sidebarCollapsed {
-                IconButton("Show sidebar", system: "sidebar.left") { app.toggleSidebar() }.padding(.leading, 70)
+                IconButton("Show sidebar", system: "sidebar.left") { app.toggleSidebar() }
             }
             if app.activeSurface == .web, let tab = app.activeTab { BrowserToolbar(tab: tab) }
             else {
-                Text(app.activeSurface.rawValue.capitalized).font(.system(size: 11, weight: .medium)).foregroundStyle(app.pal.ink2).padding(.leading, 6)
+                Text(app.activeSurface.rawValue.capitalized).font(ShellType.label).foregroundStyle(app.pal.ink2).padding(.leading, 6)
                 Spacer()
                 IconButton("Open location", system: "magnifyingglass") { app.openCommandBar(newTab: true) }
                 IconButton("Ask Graphene", system: "sidebar.right") { app.toggleKnowledge() }
             }
-        }.padding(.horizontal, 7).frame(height: ShellLayout.toolbarHeight)
-            .background(app.pal.chromeBg)
+        }
+        // The card starts at `windowGap` when collapsed, so this keeps the controls clear of the traffic lights.
+        .padding(.leading, app.sidebarCollapsed ? ShellLayout.trafficReserve - ShellLayout.windowGap : ShellLayout.windowGap)
+        .padding(.trailing, ShellLayout.windowGap)
+        .frame(height: ShellLayout.pageToolbarHeight)
+            .background(app.pal.pageBg)
     }
 }
 
@@ -190,11 +207,11 @@ private struct BrowserToolbar: View {
         Spacer(minLength: 4)
         Button { app.openCommandBar(newTab: false) } label: {
             HStack(spacing: 6) {
-                Image(systemName: tab.url?.scheme == "https" ? "lock" : "magnifyingglass").font(.system(size: 9))
+                Image(systemName: tab.url?.scheme == "https" ? "lock" : "magnifyingglass").font(ShellType.caption)
                 Text(tab.url?.host?.replacingOccurrences(of: "www.", with: "") ?? "Search or enter URL")
-                    .font(.system(size: 11, weight: .medium)).lineLimit(1)
+                    .font(ShellType.caption).lineLimit(1)
             }.foregroundStyle(app.pal.ink2).padding(.horizontal, 12).frame(height: 26)
-                .background(addressHovered ? app.pal.hover : .clear, in: RoundedRectangle(cornerRadius: 6))
+                .background(addressHovered ? app.pal.hover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
         }.buttonStyle(.plain).onHover { addressHovered = $0 }.help(tab.url?.absoluteString ?? "Open location (⌘L)")
             .accessibilityLabel("Open location")
             .accessibilityIdentifier("collapsed.location").accessibilityAddTraits(.isButton)
@@ -214,14 +231,14 @@ private struct BrowserToolbar: View {
 struct IconButton: View {
     let title: String
     let system: String
-    var size: CGFloat
+    var font: Font
     var action: () -> Void
     @EnvironmentObject var app: AppState
     @FocusState private var focused: Bool
-    init(_ title: String, system: String, size: CGFloat = 14, action: @escaping () -> Void) { self.title = title; self.system = system; self.size = size; self.action = action }
+    init(_ title: String, system: String, font: Font = ShellType.glyph, action: @escaping () -> Void) { self.title = title; self.system = system; self.font = font; self.action = action }
     var body: some View {
         Button(action: action) {
-            Image(systemName: system).font(.system(size: size, weight: .medium)).frame(width: 26, height: 26)
+            Image(systemName: system).font(font).frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize)
                 .contentShape(Rectangle())
         }.buttonStyle(ShellButtonStyle()).focused($focused)
             .overlay { RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(focused ? app.pal.accentText : .clear, lineWidth: 2).allowsHitTesting(false) }
@@ -243,7 +260,7 @@ struct BrowserPage: View {
             } else { WebContainer(tab: tab) }
             if tab.signInBlocked, let url = tab.url {
                 HStack { Text("This site rejects embedded browser sign-in."); Button("Open in default browser") { app.openInSystemBrowser(url) } }
-                    .font(.system(size: 12)).padding(12).background(app.pal.elev).foregroundStyle(app.pal.ink)
+                    .font(ShellType.secondary).padding(12).background(app.pal.elev).foregroundStyle(app.pal.ink)
             }
             if app.findPresented && tab.url != nil { FindBar(tab: tab).frame(maxWidth: .infinity, alignment: .trailing).padding(12) }
             if tab.isLoading {
@@ -269,29 +286,29 @@ private struct NewTabView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Button { app.openCommandBar(newTab: true) } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: "magnifyingglass").font(.system(size: 14))
-                            Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(.system(size: 14))
+                            Image(systemName: "magnifyingglass").font(ShellType.row)
+                            Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(ShellType.row)
                             Spacer()
-                            Text("⌘T").font(.system(size: 12)).padding(5).background(app.pal.hover, in: RoundedRectangle(cornerRadius: 5))
+                            Text("⌘T").font(ShellType.label).padding(5).background(app.pal.hover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
                         }.foregroundStyle(app.pal.ink3).padding(.horizontal, 14).frame(height: 44)
-                            .background(app.pal.hover.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                            .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
                     }.buttonStyle(.plain).accessibilityIdentifier("newTab.search")
                         .accessibilityLabel("Search or enter a URL").accessibilityAddTraits(.isButton)
 
                     if !app.currentThreads.isEmpty {
                         HStack {
-                            Text("Recent threads").font(.system(size: 11, weight: .medium))
+                            Text("Recent threads").font(ShellType.label)
                             Spacer()
-                            Button("All threads") { app.show(.threads) }.font(.system(size: 11)).buttonStyle(.plain)
+                            Button("All threads") { app.show(.threads) }.font(ShellType.caption).buttonStyle(.plain)
                                 .accessibilityIdentifier("newTab.threads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
                         }.foregroundStyle(app.pal.ink3).padding(.top, 32).padding(.bottom, 13)
                         ForEach(app.currentThreads.prefix(3)) { thread in
                             Button { app.openThread(thread) } label: {
                                 HStack(spacing: 11) {
                                     Favicon(host: thread.hosts.first, size: 14)
-                                    Text(thread.title).font(.system(size: 13)).foregroundStyle(app.pal.ink2).lineLimit(1)
+                                    Text(thread.title).font(ShellType.row).foregroundStyle(app.pal.ink2).lineLimit(1)
                                     Spacer()
-                                    Text(thread.end, format: .relative(presentation: .named, unitsStyle: .abbreviated)).font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+                                    Text(thread.end, format: .relative(presentation: .named, unitsStyle: .abbreviated)).font(ShellType.caption).foregroundStyle(app.pal.ink3)
                                 }.frame(height: 32).contentShape(Rectangle())
                             }.buttonStyle(.plain)
                                 .accessibilityIdentifier("newTab.thread.\(thread.id)").accessibilityLabel(thread.title).accessibilityAddTraits(.isButton)
@@ -319,14 +336,14 @@ private struct FindBar: View {
     @FocusState private var focused: Bool
     var body: some View {
         HStack(spacing: 8) {
-            TextField("Find in page", text: $app.findQuery).textFieldStyle(.plain).font(.system(size: 12)).focused($focused).frame(minWidth: 70, idealWidth: 180, maxWidth: 180).onSubmit { find() }
+            TextField("Find in page", text: $app.findQuery).textFieldStyle(.plain).font(ShellType.secondary).focused($focused).frame(minWidth: 70, idealWidth: 180, maxWidth: 180).onSubmit { find() }
                 .accessibilityIdentifier("page.find").accessibilityLabel("Find in page")
-            if !query.isEmpty { Text(found ? "\(counter.current) of \(counter.total)" : "No matches").font(.system(size: 10)).foregroundStyle(app.pal.ink3).help("Matches in the main document; embedded frames are not searched.").accessibilityIdentifier("page.findCount") }
+            if !query.isEmpty { Text(found ? "\(counter.current) of \(counter.total)" : "No matches").font(ShellType.caption).foregroundStyle(app.pal.ink3).help("Matches in the main document; embedded frames are not searched.").accessibilityIdentifier("page.findCount") }
             IconButton("Previous match", system: "chevron.up") { find(backwards: true) }
             IconButton("Next match", system: "chevron.down") { find() }
             IconButton("Close find", system: "xmark") { app.findPresented = false }
-        }.padding(8).background(app.pal.elev, in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(app.pal.hairline))
-            .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
+        }.padding(8).background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius)).overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(app.pal.hairline))
+            .shadow(color: app.pal.shadow, radius: 12, y: 4)
             .task { try? await Task.sleep(for: .milliseconds(100)); if !Task.isCancelled && !app.commandBarPresented { focused = true } }.onExitCommand { app.findPresented = false }
             .onChange(of: query) { find() }
             .onChange(of: app.findRequest) { _, _ in find(backwards: app.findBackwards) }

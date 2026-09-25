@@ -10,7 +10,7 @@ struct SplitBrowserView: View {
                 SplitBranch(group: group, tabs: app.splitTabs, index: 0)
             } else if let tab = app.activeTab { BrowserPage(tab: tab).id(tab.id) }
         }.overlay(alignment: .trailing) {
-            Rectangle().fill(dropTarget ? app.pal.accent.opacity(0.2) : app.pal.ink.opacity(0.001)).frame(width: 24)
+            Rectangle().fill(dropTarget ? app.pal.accentSoft : app.pal.hitTarget).frame(width: 24)
                 .onDrop(of: [.utf8PlainText], isTargeted: $dropTarget) { providers in
                     guard let provider = providers.first else { return false }
                     provider.loadObject(ofClass: NSString.self) { value, _ in
@@ -61,14 +61,14 @@ private struct SplitBranch: View {
                         Favicon(host: tab.url?.host, size: 14)
                         Text(tab.displayTitle).lineLimit(1)
                         Spacer()
-                    }.font(.system(size: 11)).contentShape(Rectangle())
+                    }.font(ShellType.caption).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("split.focus.\(tab.id)")
                     .accessibilityLabel("Focus \(tab.displayTitle)").accessibilityAddTraits(.isButton)
                 IconButton("Close pane: \(tab.displayTitle)", system: "xmark") { app.requestCloseTab(tab.id) }
             }.padding(.horizontal, 10).frame(height: 28).foregroundStyle(app.pal.ink2)
                 .background(app.activeTabID == tab.id ? app.pal.selection : app.pal.hover)
             BrowserPage(tab: tab)
-        }.clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(app.activeTabID == tab.id ? app.pal.accentText.opacity(0.35) : app.pal.hairline, lineWidth: 1))
+        }.clipShape(RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+            .overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(app.activeTabID == tab.id ? app.pal.focusBorder : app.pal.hairline, lineWidth: ShellLayout.hairline))
     }
 }

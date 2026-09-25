@@ -42,7 +42,7 @@ struct SidebarResizeHandle: View {
     @State private var origin: CGFloat?
     @State private var hovered = false
     var body: some View {
-        Rectangle().fill(hovered ? app.pal.hairline : app.pal.ink.opacity(0.001)).frame(width: 4)
+        Rectangle().fill(hovered ? app.pal.hairline : app.pal.hitTarget).frame(width: 4)
             .contentShape(Rectangle()).onHover { hovered = $0; if $0 { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
             .gesture(DragGesture(minimumDistance: 0).onChanged { value in
                 if origin == nil { origin = width }
