@@ -12,12 +12,19 @@ enum PageContext {
         let unique = input.filter { seen.insert($0.id).inserted }
         let readable = unique.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         let share = max(0, limit) / max(1, readable.count)
-        var notices = unique.filter { $0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.map { "Unreadable: \($0.title)" }
+        var notices = unique.filter { $0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.map { "Couldn't read \($0.title)" }
         let sources = readable.map { source in
-            if source.text.count > share { notices.append("Trimmed: \(source.title) (\(source.text.count) → \(share) characters)") }
+            if source.text.count > share { notices.append(trimmedNotice(source, share: share, alone: unique.count == 1)) }
             return KnowledgeSource(id: source.id, title: String(source.title.prefix(160)), url: source.url, text: String(source.text.prefix(share)), kind: source.kind)
         }
         return Budget(sources: sources, notices: notices, limit: max(0, limit))
+    }
+    /// A plain line for a source cut to fit the budget: "Page text trimmed to 6,000 characters"
+    /// when it is the only source, else named by its title.
+    static func trimmedNotice(_ source: KnowledgeSource, share: Int, alone: Bool) -> String {
+        let count = share.formatted()
+        let subject = !alone ? source.title : source.kind == "Tab" || source.kind == "Visited page" ? "Page text" : source.isNote ? "Note text" : "Source text"
+        return "\(subject) trimmed to \(count) characters"
     }
     static func prompt(_ sources: [KnowledgeSource]) -> String {
         sources.enumerated().map { index, source in

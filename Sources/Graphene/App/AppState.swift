@@ -133,6 +133,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
     @Published var commandBarPresented = false
     @Published var commandBarCreatesTab = true
     @Published var commandBarDraft = ""
+    /// Bumped when a Resume page should take the keyboard (a new blank tab from "+ New Tab").
+    @Published var resumeFocusRequest = 0
     private var pendingNewTabDraft = ""
     private var lastActiveTabs: [UUID: UUID] = [:]
     var archivedTabs: [SessionTab] { get { library.archivedTabs } set { library.archivedTabs = newValue } }
@@ -426,6 +428,14 @@ final class AppState: ObservableObject, BrowserCoordinator {
         commandBarPresented = true
     }
 
+    /// The sidebar's "+ New Tab" row, the footer "+" and the command bar's New Tab action: a
+    /// blank Today tab showing the Resume page, with its search row taking the keyboard.
+    /// ⌘T keeps opening the command bar instead (Arc). An already blank selected tab is reused.
+    func openResumeTab() {
+        if commandBarPresented { commandBarPresented = false }
+        if let tab = activeTab, tab.url == nil, tab.section == .today { show(.web) } else { newTab() }
+        resumeFocusRequest += 1
+    }
     func dismissCommandBar() {
         if commandBarCreatesTab { pendingNewTabDraft = commandBarDraft }
         commandBarPresented = false
@@ -834,6 +844,21 @@ final class AppState: ObservableObject, BrowserCoordinator {
     func setBranch(_ id: UUID, collapsed: Bool) {
         guard !branchChildren(of: id).isEmpty else { return }
         if collapsed { collapsedBranchIDs.insert(id) } else { collapsedBranchIDs.remove(id) }
+    }
+
+    /// The branch "Collapse Branch" / "Expand Branch" act on: the selected tab when it has
+    /// children, else the parent it hangs from. `nil` when the selected tab is in no branch.
+    var selectedBranchID: UUID? {
+        guard let id = activeTabID else { return nil }
+        if !branchChildren(of: id).isEmpty { return id }
+        return branchParent(of: id)?.id
+    }
+    /// Collapses or expands the selected tab's branch, whatever has focus (⌃⌥⌘← / ⌃⌥⌘→).
+    /// Collapsing from a child selects the parent, so the selection stays visible.
+    func setSelectedBranch(collapsed: Bool) {
+        guard let id = selectedBranchID else { return }
+        setBranch(id, collapsed: collapsed)
+        if collapsed, activeTabID != id { activate(id) }
     }
 
     /// Selecting a tab inside a collapsed branch opens the branches above it.

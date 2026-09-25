@@ -66,6 +66,22 @@ struct ResumeSections: Equatable {
     }
 }
 
+extension AppState {
+    /// A key typed on the Resume page: printable characters without ⌘, ⌃ or ⌥ open the command
+    /// bar in new-tab mode, starting with that text. Returns whether the key was taken.
+    @discardableResult
+    func resumeTyped(_ characters: String, modifiers: EventModifiers = []) -> Bool {
+        guard !commandBarPresented, modifiers.isDisjoint(with: [.command, .control, .option]),
+              let scalar = characters.unicodeScalars.first, !CharacterSet.controlCharacters.contains(scalar),
+              // Arrow and function keys arrive as private-use scalars.
+              !(0xF700...0xF8FF).contains(scalar.value),
+              !characters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        openCommandBar(newTab: true)
+        commandBarDraft = characters
+        return true
+    }
+}
+
 /// The new-tab page: the place a thread is picked up. Search, Continue, Saved here and
 /// (with the sidebar collapsed) the space's favorites; the lattice when all are empty.
 struct ResumePage: View {
@@ -99,15 +115,11 @@ struct ResumePage: View {
         .background(app.pal.pageBg)
         // Typing goes straight to the command bar in new-tab mode, starting with the key pressed.
         .focusable().focusEffectDisabled().focused($focused)
-        .onKeyPress(phases: .down) { press in
-            guard !app.commandBarPresented, press.modifiers.isDisjoint(with: [.command, .control, .option]),
-                  let scalar = press.characters.unicodeScalars.first, !CharacterSet.controlCharacters.contains(scalar),
-                  !press.characters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .ignored }
-            app.openCommandBar(newTab: true)
-            app.commandBarDraft += press.characters
-            return .handled
-        }
+        .onKeyPress(phases: .down) { press in app.resumeTyped(press.characters, modifiers: press.modifiers) ? .handled : .ignored }
         .task { try? await Task.sleep(for: .milliseconds(100)); if !Task.isCancelled && !app.commandBarPresented { focused = true } }
+        // "+ New Tab" may land on a Resume page already on screen: take the keyboard again.
+        .onChange(of: app.resumeFocusRequest) { _, _ in if !app.commandBarPresented { focused = true } }
+        .onChange(of: app.activeTabID) { _, _ in if !app.commandBarPresented { focused = true } }
     }
 
     private var searchRow: some View {

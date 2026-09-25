@@ -23,6 +23,13 @@ final class VaultShelfTests: XCTestCase {
         XCTAssertEqual(ShellLayout.shelfChipWidth, 96)
         XCTAssertEqual(ShellLayout.shelfChipRadius, 8)
         XCTAssertEqual(VaultShelfLayout.chipHeight, 32)
+        // A 12pt favicon, 6pt padding and a 4pt gap leave the quote most of the chip;
+        // the "Vault" word is a 16pt glyph button.
+        XCTAssertEqual(VaultShelfLayout.chipIconSize, 12)
+        XCTAssertEqual(VaultShelfLayout.chipPadding, 6)
+        XCTAssertEqual(VaultShelfLayout.chipIconGap, 4)
+        XCTAssertEqual(VaultShelfLayout.labelGlyphSize, 16)
+        XCTAssertEqual(VaultShelfLayout.labelWidth, 22)
     }
 
     func testVisibilityRules() {
@@ -57,9 +64,13 @@ final class VaultShelfTests: XCTestCase {
     }
 
     func testChipCountByWidth() {
-        // Chips are 72–96pt; the count is what fits after the "Vault" word, up to four.
+        // Chips are 72–96pt; the count is what fits after the 22pt Vault glyph, up to four.
         XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarDefault)), 2)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 249), 2)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 250), 3, "22 + 3 × 72 + 2 × 6")
         XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 300), 3)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 327), 3)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 328), 4, "22 + 4 × 72 + 3 × 6")
         XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 344), 4)
         XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 400), 4)
         XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarRange.lowerBound)), 1)
@@ -93,6 +104,12 @@ final class VaultShelfTests: XCTestCase {
         XCTAssertEqual(VaultShelfLayout.chipText(note("one two three four five six")), "one two three four five six")
         XCTAssertEqual(VaultShelfLayout.chipText(note(" \n ", note: "My own words")), "My own words", "A page note falls back to the note")
         XCTAssertEqual(VaultShelfLayout.chipText(note("", title: "Page title")), "Page title")
+        // The fragment starts on its first content word: leading articles and prepositions are skipped.
+        XCTAssertEqual(VaultShelfLayout.chipText(note("The Swift Programming Language")), "Swift Programming Language")
+        XCTAssertEqual(VaultShelfLayout.chipText(note("In the lab, graphene is strong")), "lab, graphene is strong")
+        XCTAssertEqual(VaultShelfLayout.chipText(note("\"On a clear day")), "clear day")
+        XCTAssertEqual(VaultShelfLayout.chipText(note("Graphene is an allotrope of carbon")), "Graphene is an allotrope of carbon", "only leading words are skipped")
+        XCTAssertEqual(VaultShelfLayout.chipText(note("To the")), "To the", "a quote of only fillers keeps them")
         XCTAssertEqual(VaultShelfLayout.fullText(note("\n A long quote kept whole  \n")), "A long quote kept whole")
         XCTAssertEqual(VaultShelfLayout.passage(note("  quote  ")), "quote")
         XCTAssertNil(VaultShelfLayout.passage(note(" \n", note: "just a note")))

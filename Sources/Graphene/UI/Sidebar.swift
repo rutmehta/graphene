@@ -369,13 +369,13 @@ private struct TodayDivider: View {
 private struct NewTabRow: View {
     @EnvironmentObject var app: AppState
     var body: some View {
-        Button { app.openCommandBar(newTab: true) } label: {
+        Button { app.openResumeTab() } label: {
             HStack(spacing: ShellLayout.iconGap) {
                 Image(systemName: "plus").font(ShellType.glyph).frame(width: ShellLayout.iconSlot)
                 Text("New Tab").font(ShellType.row)
                 Spacer(minLength: 0)
             }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight).contentShape(Rectangle())
-        }.buttonStyle(SidebarRowButtonStyle()).help("New Tab (⌘T)")
+        }.buttonStyle(SidebarRowButtonStyle()).help("New Tab")
             .accessibilityIdentifier("sidebar.newTab").accessibilityLabel("New Tab").accessibilityAddTraits(.isButton)
     }
 }
@@ -406,7 +406,7 @@ private struct SidebarFooter: View {
         case .downloads:
             DownloadsButton(store: store)
         case .newTab:
-            SidebarGlyphButton("New Tab (⌘T)", system: "plus", identifier: "sidebar.plus") { app.openCommandBar(newTab: true) }
+            SidebarGlyphButton("New Tab", system: "plus", identifier: "sidebar.plus") { app.openResumeTab() }
                 .contextMenu {
                     Button("New Space (⌘⌥N)") { app.createSpace(); app.spaceEditorPresented = true }
                     Button("This space’s Board (⌘⌥5)") { app.show(.board) }.disabled(app.isPrivate)
@@ -489,6 +489,7 @@ private struct SidebarTab: View {
     var tile = false
     /// Set on a collapsed branch's parent: the count shown at the trailing edge.
     var hiddenDescendants: Int? = nil
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovered = false
     @State private var renaming = false
     @State private var name = ""
@@ -566,20 +567,37 @@ private struct SidebarTab: View {
     }
 
     /// Pinned and Today row: 20pt icon slot, title, audio glyph; Today rows add a close glyph.
+    /// A Today row with children: hovering it swaps the favicon for the branch chevron.
+    private var branchParent: Bool { tab.section == .today && tab.folderID == nil && !app.branchChildren(of: tab.id).isEmpty }
+    private var branchCollapsed: Bool { app.collapsedBranchIDs.contains(tab.id) }
+    private func toggleBranch() {
+        withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { app.setBranch(tab.id, collapsed: !branchCollapsed) }
+    }
+
     private var rowContent: some View {
-        HStack(spacing: ShellLayout.iconGap) {
-            Button { app.sidebarClick(tab, reset: offBase) } label: {
-                icon(size: ShellLayout.iconSize)
-                    .overlay(alignment: .bottomTrailing) {
-                        if offBase {
-                            Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
-                                .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
-                        }
+        let chevron = hovered && branchParent
+        return HStack(spacing: ShellLayout.iconGap) {
+            Button { if chevron { toggleBranch() } else { app.sidebarClick(tab, reset: offBase) } } label: {
+                Group {
+                    if chevron {
+                        // Like a folder row's: down while open, turned to point right when collapsed.
+                        Image(systemName: "chevron.down").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
+                            .rotationEffect(.degrees(branchCollapsed ? -90 : 0))
+                            .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+                    } else {
+                        icon(size: ShellLayout.iconSize)
+                            .overlay(alignment: .bottomTrailing) {
+                                if offBase {
+                                    Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                                        .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
+                                }
+                            }
                     }
-                    .frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
-            }.buttonStyle(.plain).help(offBase ? "Return to pinned page" : "Open tab")
+                }.frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
+            }.buttonStyle(.plain).help(chevron ? (branchCollapsed ? "Expand branch (⌃⌥⌘→)" : "Collapse branch (⌃⌥⌘←)") : (offBase ? "Return to pinned page" : "Open tab"))
                 .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)")
                 .accessibilityLabel(offBase ? "Return \(tab.displayTitle) to pinned page" : "Open \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+                .accessibilityActions { if branchParent { Button(branchCollapsed ? "Expand branch" : "Collapse branch") { toggleBranch() } } }
                 .modifier(BranchDropTarget(enabled: tab.section == .today && tab.folderID == nil) { payload in
                     if let id = payloadID(payload, prefix: "tab:") { app.adoptTab(id, under: tab.id) }
                 })

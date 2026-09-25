@@ -85,7 +85,7 @@ struct GrapheneCommands: Commands {
             Divider()
             buttons(["pin", "favorite", "rename", "new-folder", "pinned-folder", "tidy-tabs", "archive-all", "copy-url", "copy-markdown", "pip", "peek"])
             Menu("Split View") { buttons(["split", "split-vertical", "split-horizontal", "separate"]) }
-            buttons(["move-up", "move-down"])
+            buttons(["move-up", "move-down", "collapse-branch", "expand-branch"])
             Menu("Move Tab to Space") {
                 ForEach(app.spaces.filter { $0.id != app.activeTab?.spaceID }) { space in
                     Button(space.name) { if let tab = app.activeTab { app.placeTab(tab.id, section: tab.section, spaceID: space.id) } }

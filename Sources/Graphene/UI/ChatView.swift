@@ -142,6 +142,21 @@ struct ChatView: View {
             .accessibilityAddTraits(.isButton)
     }
     private var contextBar: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sourcesStrip
+            if !budget.notices.isEmpty {
+                // A quiet note, not an alert: the budget details stay one click away.
+                Button { contextDetails = true } label: {
+                    Text(budget.notices.joined(separator: " · ")).font(ShellType.caption).foregroundStyle(app.pal.ink3)
+                        .lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .padding(.horizontal, ShellLayout.windowGap * 2).padding(.bottom, ShellLayout.windowGap)
+                    .help(budget.notices.joined(separator: "\n"))
+                    .accessibilityIdentifier("chat.sourceWarnings").accessibilityAddTraits(.isButton)
+            }
+        }
+    }
+    private var sourcesStrip: some View {
         HStack(spacing: 4) {
             glyphButton("Context and source budget", system: "slider.horizontal.3") { contextDetails.toggle() }
                 .accessibilityIdentifier("chat.contextDetails")
@@ -167,14 +182,6 @@ struct ChatView: View {
             glyphButton(search ? "Hide source search" : "Search sources", system: "magnifyingglass") { search.toggle() }
                 .accessibilityIdentifier("chat.searchSources")
         }.padding(.horizontal, ShellLayout.windowGap).frame(height: ShellLayout.chatHeaderHeight - ShellLayout.windowGap)
-            .overlay(alignment: .bottom) {
-                if !budget.notices.isEmpty {
-                    Button("\(budget.notices.count) source warnings") { contextDetails = true }
-                        .buttonStyle(.plain).font(ShellType.caption).foregroundStyle(app.pal.accentText)
-                        .offset(y: 16).accessibilityIdentifier("chat.sourceWarnings")
-                }
-            }
-            .padding(.bottom, budget.notices.isEmpty ? 0 : 20)
     }
     private var contextOptions: some View {
         VStack(alignment: .leading, spacing: 7) {

@@ -61,6 +61,84 @@ final class CitationTests: XCTestCase {
         XCTAssertTrue(long.hasPrefix(PageContext.clip(long)))
     }
 
+    // MARK: fallback for an answer without markers
+
+    private let wiki = "Graphene is an allotrope of carbon consisting of a single layer of atoms arranged in a honeycomb lattice. "
+        + "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa. "
+        + "In 1947, Philip Wallace first theorized the electronic band structure of graphite. "
+        + "Graphene conducts heat and electricity very efficiently along its plane."
+
+    func testUncitedSentencesAreMatchedToExactSourceSentences() throws {
+        let page = source("Graphene - Wikipedia", wiki)
+        let message = UUID()
+        let answer = "Graphene has a tensile strength of 130 GPa. It was first theorized in 1947 by Philip Wallace."
+        let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: message)
+        // One citation per source per answer, numbered from 1, its passage the first matched sentence verbatim.
+        XCTAssertEqual(citations.count, 1)
+        let citation = try XCTUnwrap(citations.first)
+        XCTAssertEqual(citation.index, 1)
+        XCTAssertEqual(citation.sourceNumber, 1)
+        XCTAssertEqual(citation.sourceID, page.id)
+        XCTAssertEqual(citation.citationID, ChatCitation.citationID(messageID: message, index: 1))
+        XCTAssertEqual(citation.passage, "Graphene is the strongest material ever tested, with an intrinsic tensile strength of 130 GPa and a Young's modulus of 1 TPa.")
+        XCTAssertTrue(page.text.contains(try XCTUnwrap(citation.passage)))
+        XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa.", "It was first theorized in 1947 by Philip Wallace."])
+        // The inline chip is drawn after each matched sentence.
+        let shown = ChatMarkdown.anchored(answer, citations: citations)
+        XCTAssertEqual(ChatMarkdown.segments(shown), [.text("Graphene has a tensile strength of 130 GPa. "), .anchored(1), .text(" It was first theorized in 1947 by Philip Wallace. "), .anchored(1)])
+        XCTAssertTrue(ChatMarkdown.hasMarkers(shown))
+        // Streaming and older chats derive no fallback: only a finished answer is matched.
+        XCTAssertTrue(ChatCitation.assign(answer: answer, sources: [page], messageID: message, passages: false).isEmpty)
+
+        // Two sources, numbered in order of first use.
+        let other = source("Swift", "Swift is a general-purpose programming language developed by Apple. Swift compiles to native code with LLVM.")
+        let mixed = ChatCitation.assign(answer: "Swift compiles to native code using LLVM. Graphene has a tensile strength of 130 GPa.", sources: [page, other], messageID: message)
+        XCTAssertEqual(mixed.map(\.sourceNumber), [2, 1])
+        XCTAssertEqual(mixed.map(\.index), [1, 2])
+        XCTAssertEqual(mixed.first?.passage, "Swift compiles to native code with LLVM.")
+    }
+
+    func testAParaphraseBelowTheThresholdIsNotCited() {
+        let page = source("Graphene - Wikipedia", wiki)
+        // Shares only "graphene" and "carbon" (2 of 6 content words): below 60% and below 3.
+        XCTAssertTrue(ChatCitation.assign(answer: "Graphene is a remarkable carbon wonder material for batteries.", sources: [page], messageID: UUID()).isEmpty)
+        // Three shared words, but only 3 of 7: below 60%.
+        XCTAssertNil(ChatCitation.fallbackMatch("Graphene tensile strength matters for aircraft wings today.", sources: [page]))
+        // Too few content words to match at all.
+        XCTAssertNil(ChatCitation.fallbackMatch("Graphene is strong.", sources: [page]))
+        XCTAssertEqual(ChatCitation.fallbackCoverage, 0.6)
+        XCTAssertEqual(ChatCitation.fallbackMinimumShared, 3)
+        XCTAssertTrue(ChatCitation.assign(answer: "Peru is a country in South America.", sources: [page], messageID: UUID()).isEmpty)
+    }
+
+    func testExplicitMarkersWinOverTheFallback() throws {
+        let page = source("Graphene - Wikipedia", wiki)
+        // The marked sentence keeps the model's citation and its passage; it is never re-matched.
+        let answer = "Graphene conducts heat and electricity very efficiently [1]. Graphene has a tensile strength of 130 GPa."
+        let citations = ChatCitation.assign(answer: answer, sources: [page], messageID: UUID())
+        XCTAssertEqual(citations.count, 1, "the uncited sentence joins the source's existing citation")
+        let citation = try XCTUnwrap(citations.first)
+        XCTAssertEqual(citation.passage, "Graphene conducts heat and electricity very efficiently along its plane.")
+        XCTAssertEqual(citation.anchors, ["Graphene has a tensile strength of 130 GPa."])
+        // A bare marker after the full stop cites the sentence before it, so that sentence is not a fallback.
+        let trailing = ChatCitation.assign(answer: "Graphene has a tensile strength of 130 GPa. [1]", sources: [page], messageID: UUID())
+        XCTAssertEqual(trailing.count, 1)
+        XCTAssertNil(trailing.first?.anchors)
+        // An explicit citation to another source keeps its number first.
+        let other = source("Notes", "Carbon allotropes include diamond and graphite.")
+        let both = ChatCitation.assign(answer: "Carbon has several allotropes [2]. Graphene has a tensile strength of 130 GPa.", sources: [page, other], messageID: UUID())
+        XCTAssertEqual(both.map(\.sourceNumber), [2, 1])
+        XCTAssertNil(both[0].anchors)
+        XCTAssertEqual(both[1].anchors, ["Graphene has a tensile strength of 130 GPa."])
+    }
+
+    func testBudgetNoticesArePlain() {
+        let page = KnowledgeSource(id: UUID(), title: "Graphene - Wikipedia", url: "https://en.wikipedia.org/wiki/Graphene", text: String(repeating: "Graphene is strong. ", count: 900), kind: "Tab")
+        XCTAssertEqual(PageContext.budget([page], limit: 6000).notices, ["Page text trimmed to \(6000.formatted()) characters"])
+        let empty = KnowledgeSource(id: UUID(), title: "Blank", url: "https://example.com", text: " ", kind: "Tab")
+        XCTAssertEqual(PageContext.budget([page, empty], limit: 6000).notices, ["Couldn't read Blank", "Graphene - Wikipedia trimmed to \(6000.formatted()) characters"])
+    }
+
     func testPassagesComeFromTheRequestBuildersSourceBudget() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

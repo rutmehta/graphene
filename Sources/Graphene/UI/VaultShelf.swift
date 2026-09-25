@@ -8,11 +8,20 @@ enum VaultShelfLayout {
     static let maxChips = 4
     /// A chip never shrinks below this; the count is whatever fits between the "Vault" word and the trailing edge.
     static let minChipWidth: CGFloat = 72
-    /// Width reserved for the "Vault" word and its gap.
-    static let labelWidth: CGFloat = 36
+    /// The Vault glyph button at the shelf's leading edge.
+    static let labelGlyphSize: CGFloat = 16
+    /// Width reserved for the Vault glyph and its gap to the first chip.
+    static let labelWidth: CGFloat = labelGlyphSize + chipGap
     static let chipHeight: CGFloat = 32
-    /// Gap between chips, and between a chip's favicon and its text.
+    /// Gap between chips.
     static let chipGap: CGFloat = 6
+    /// A chip's favicon: the size of a `glyphSmall` glyph, so the quote keeps the room.
+    static let chipIconSize: CGFloat = 12
+    /// A chip's horizontal padding, and the gap between its favicon and its text.
+    static let chipPadding: CGFloat = 6
+    static let chipIconGap: CGFloat = 4
+    /// Leading words a chip skips so its few visible characters start on a content word.
+    static let leadingFillers: Set<String> = ["the", "a", "an", "on", "in", "of", "at", "to"]
     /// Words of the quote a chip carries before it is cut with an ellipsis.
     static let chipWordLimit = 6
     /// Width of the hover card, as `TabPreview`.
@@ -35,10 +44,12 @@ enum VaultShelfLayout {
             .first { !$0.isEmpty } ?? (URL(string: note.url)?.host ?? "")
     }
 
-    /// The first words of `fullText` on one line: whitespace and newlines collapse to single
-    /// spaces, and an ellipsis marks words left out.
+    /// The first words of `fullText` on one line, from its first content word: whitespace and
+    /// newlines collapse to single spaces, and an ellipsis marks words left out at the end.
     static func chipText(_ note: Annotation) -> String {
-        let words = fullText(note).split(whereSeparator: \.isWhitespace)
+        let all = fullText(note).split(whereSeparator: \.isWhitespace)
+        let skipped = all.drop { leadingFillers.contains($0.lowercased().trimmingCharacters(in: .punctuationCharacters)) }
+        let words = skipped.isEmpty ? all[...] : skipped
         let head = words.prefix(chipWordLimit).joined(separator: " ")
         return words.count > chipWordLimit ? head + "…" : head
     }
@@ -97,13 +108,8 @@ struct VaultShelf: View {
 
     private func row(contentWidth: CGFloat) -> some View {
         HStack(spacing: VaultShelfLayout.chipGap) {
-            Text("Vault").font(ShellType.label).foregroundStyle(app.pal.ink3)
-                .fixedSize().contentShape(Rectangle())
-                .onTapGesture { app.show(.vault) }
-                .help("Open Vault")
-                .accessibilityAddTraits(.isButton).accessibilityLabel("Open Vault")
-                .accessibilityIdentifier("sidebar.shelf.vault")
-                .accessibilityAction { app.show(.vault) }
+            SidebarGlyphButton("Vault", system: "tray", font: ShellType.glyphSmall, size: VaultShelfLayout.labelGlyphSize,
+                               identifier: "sidebar.shelf.vault") { app.show(.vault) }
             ForEach(app.shelfNotes(contentWidth: contentWidth)) { note in
                 ShelfChip(note: note)
             }
@@ -142,11 +148,11 @@ private struct ShelfChip: View {
     private var host: String? { URL(string: note.url)?.host }
 
     var body: some View {
-        HStack(spacing: VaultShelfLayout.chipGap) {
-            Favicon(host: host, size: ShellLayout.iconSize)
+        HStack(spacing: VaultShelfLayout.chipIconGap) {
+            Favicon(host: host, size: VaultShelfLayout.chipIconSize)
             Text(VaultShelfLayout.chipText(note)).font(ShellType.quoteSmall).foregroundStyle(app.pal.ink2)
                 .lineLimit(1).truncationMode(.tail)
-        }.padding(.horizontal, ShellLayout.rowInsetLeading)
+        }.padding(.horizontal, VaultShelfLayout.chipPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: VaultShelfLayout.chipHeight)
             .background(hovered ? app.pal.fillHover : app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.shelfChipRadius))

@@ -78,6 +78,9 @@ enum ShellLayout {
     /// x of the connector hairline from the parent row's leading edge, and the deepest indent.
     static let threadIndent: CGFloat = 20
     static let threadLineInset: CGFloat = 17
+    /// A connector tick's run from the vertical's x to the child's icon slot edge
+    /// (`threadLineInset + threadTick == threadIndent + rowInsetLeading`), so it enters the favicon column.
+    static let threadTick: CGFloat = 11
     static let threadMaxDepth = 3
     /// Reset-tab dot on a pinned favicon and footer space dots.
     static let statusDot: CGFloat = 6

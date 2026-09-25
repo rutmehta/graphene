@@ -94,7 +94,6 @@ struct ProvenanceLayout: Equatable {
 
 /// One path per parent: a hairline down the parent's icon column and a tick into each child.
 struct ProvenanceConnector: Equatable {
-    static let tickLength: CGFloat = 6
     let parentID: UUID
     let parentRow: Int
     let parentIndent: Int
@@ -113,10 +112,11 @@ struct ProvenanceConnector: Equatable {
         let bottom = Self.iconCentreY(lastChildRow) + ShellLayout.hairline / 2
         return CGRect(x: x, y: top, width: ShellLayout.hairline, height: max(0, bottom - top))
     }
-    /// Start just right of the vertical so the translucent strokes never overlap.
+    /// Each tick runs `threadTick` from the vertical to the child's icon slot edge. It starts just
+    /// right of the vertical so the translucent strokes never overlap.
     var ticks: [CGRect] {
         childRows.map { CGRect(x: x + ShellLayout.hairline, y: Self.iconCentreY($0) - ShellLayout.hairline / 2,
-                               width: Self.tickLength, height: ShellLayout.hairline) }
+                               width: ShellLayout.threadTick - ShellLayout.hairline, height: ShellLayout.hairline) }
     }
     /// The path while its vertical is drawn from `top` down to `bottom` (the length animates on
     /// collapse and expand): ticks appear once the vertical reaches them.

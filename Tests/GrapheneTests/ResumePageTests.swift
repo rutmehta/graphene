@@ -59,6 +59,51 @@ final class ResumePageTests: XCTestCase {
 
     // MARK: resume page sections
 
+    // MARK: entry
+
+    func testNewTabRowOpensResumeAndTheFirstKeyOpensTheCommandBar() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("graphene-g3-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = AppState(directory: root)
+        app.openTab(url: URL(string: "https://example.com/page")!, parent: nil, activate: true)
+        let page = try XCTUnwrap(app.activeTab)
+        let count = app.tabs.count, request = app.resumeFocusRequest
+
+        // "+ New Tab" (row, footer and the command bar's action): a blank Today tab, not the bar.
+        app.openResumeTab()
+        XCTAssertEqual(app.tabs.count, count + 1)
+        XCTAssertNotEqual(app.activeTabID, page.id)
+        XCTAssertNil(app.activeTab?.url, "a blank tab shows the Resume page")
+        XCTAssertEqual(app.activeTab?.section, .today)
+        XCTAssertFalse(app.commandBarPresented)
+        XCTAssertEqual(app.resumeFocusRequest, request + 1, "the Resume page takes the keyboard")
+        app.openResumeTab()
+        XCTAssertEqual(app.tabs.count, count + 1, "a blank selected tab is reused")
+
+        // The first printable key opens the bar in new-tab mode, starting with that key.
+        XCTAssertFalse(app.resumeTyped("g", modifiers: .command))
+        XCTAssertFalse(app.resumeTyped("\u{F702}"), "arrow keys stay with the page")
+        XCTAssertFalse(app.resumeTyped(" "))
+        XCTAssertFalse(app.commandBarPresented)
+        XCTAssertTrue(app.resumeTyped("g", modifiers: .shift))
+        XCTAssertTrue(app.commandBarPresented)
+        XCTAssertTrue(app.commandBarCreatesTab)
+        XCTAssertEqual(app.commandBarDraft, "g")
+        XCTAssertFalse(app.resumeTyped("h"), "once open, the bar's field takes the keys")
+        let resume = app.activeTabID
+        app.commitCommandBar("example.org")
+        XCTAssertEqual(app.activeTabID, resume, "the typed query loads in the blank tab")
+        XCTAssertEqual(app.tabs.count, count + 1)
+
+        // ⌘T keeps Arc's behaviour: the command bar over the current page.
+        app.activate(page.id)
+        app.commandActions.first { $0.id == "new-tab" }?.run()
+        XCTAssertTrue(app.commandBarPresented)
+        XCTAssertTrue(app.commandBarCreatesTab)
+        XCTAssertEqual(app.activeTabID, page.id)
+        XCTAssertEqual(app.tabs.count, count + 1)
+    }
+
     func testFreshProfileShowsOnlySearchAndLattice() {
         let sections = ResumeSections.build(threads: [], notes: [], spaceID: space, favoriteIDs: [UUID()], sidebarCollapsed: false)
         XCTAssertTrue(sections.isEmpty)

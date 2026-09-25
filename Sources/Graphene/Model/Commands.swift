@@ -96,6 +96,14 @@ extension AppState {
         add("separate", "Separate Split", enabled: activeSplit != nil) { self.separateSplit() }
         add("move-up", "Move Tab Up", .upArrow, [.command, .option, .control], "⌃⌥⌘↑") { self.reorderActiveTab(-1) }
         add("move-down", "Move Tab Down", .downArrow, [.command, .option, .control], "⌃⌥⌘↓") { self.reorderActiveTab(1) }
+        let branch = selectedBranchID, branchCollapsed = branch.map(collapsedBranchIDs.contains) ?? false
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        add("collapse-branch", "Collapse Branch", .leftArrow, [.command, .option, .control], "⌃⌥⌘←", enabled: branch != nil && !branchCollapsed) {
+            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { self.setSelectedBranch(collapsed: true) }
+        }
+        add("expand-branch", "Expand Branch", .rightArrow, [.command, .option, .control], "⌃⌥⌘→", enabled: branch != nil && branchCollapsed) {
+            withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { self.setSelectedBranch(collapsed: false) }
+        }
         add("pinned-folder", "New Pinned Folder") { self.createFolder(section: .pinned) }
         add("peek", "Peek Current Page", enabled: page) { if let url = tab?.url { self.showPeek(url) } }
         add("fullscreen", "Enter / Exit Full Screen", "f", [.command, .control], "⌃⌘F") { NSApp.keyWindow?.toggleFullScreen(nil) }

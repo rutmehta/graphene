@@ -15,12 +15,17 @@ enum NoteDrag {
 
     static func itemProvider(for note: Annotation) -> NSItemProvider {
         let provider = NSItemProvider()
-        let reference = Data(reference(note.id).utf8)
-        provider.registerDataRepresentation(forTypeIdentifier: UTType.grapheneNoteReference.identifier, visibility: .all) { @Sendable completion in
-            completion(reference, nil); return nil
-        }
+        register(Data(reference(note.id).utf8), on: provider)
         provider.registerObject(Vault.markdown(for: note) as NSString, visibility: .all)
         return provider
+    }
+}
+
+/// Registers the note reference outside the main actor, so its loader runs wherever the drop
+/// target asks for the data.
+private func register(_ reference: Data, on provider: NSItemProvider) {
+    provider.registerDataRepresentation(forTypeIdentifier: UTType.grapheneNoteReference.identifier, visibility: .all) { @Sendable completion in
+        completion(reference, nil); return nil
     }
 }
 

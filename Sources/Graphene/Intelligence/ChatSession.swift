@@ -29,6 +29,9 @@ struct ChatCitation: Codable, Equatable, Identifiable {
     var sourceID: UUID
     /// The exact excerpt of the source the model was given that supports the citing sentence.
     var passage: String?
+    /// Answer sentences this citation was matched to without a `[n]` marker (the fallback for a
+    /// model that did not cite); the inline chip is drawn after each. `nil` for marker citations.
+    var anchors: [String]? = nil
     var id: String { citationID }
 
     static func citationID(messageID: UUID, index: Int) -> String { "cite-\(messageID.uuidString.lowercased())-\(index)" }
@@ -37,26 +40,77 @@ struct ChatCitation: Codable, Equatable, Identifiable {
 
     /// Assigns per-answer indices to every valid `[n]` in `answer` (first mention first) and,
     /// with `passages`, picks each source's supporting passage from the text the model received.
+    /// With `passages` (a finished answer), sentences the model left uncited are matched to the
+    /// sources by `fallbackMatch`; explicit markers always take precedence.
     static func assign(answer: String, sources: [KnowledgeSource], messageID: UUID, passages: Bool = true) -> [ChatCitation] {
         guard let regex = try? NSRegularExpression(pattern: marker) else { return [] }
-        var order: [Int] = [], claims: [Int: String] = [:]
+        var order: [Entry] = []
         var previous = ""
+        // The last claim sentence without a marker, settled once we know no bare marker follows it.
+        var pending: String?
         answer.enumerateSubstrings(in: answer.startIndex..., options: [.bySentences, .substringNotRequired]) { _, range, _, _ in
             let sentence = String(answer[range])
             // A marker set off after the full stop ("… 130 GPa. [1]") cites the sentence before it.
             let bare = sentence.replacingOccurrences(of: marker, with: "", options: .regularExpression)
-            let claim = PageContext.terms(bare).isEmpty ? previous : sentence
-            for match in regex.matches(in: sentence, range: NSRange(sentence.startIndex..., in: sentence)) {
-                guard let r = Range(match.range(at: 1), in: sentence), let n = Int(sentence[r]), n > 0, n <= sources.count else { continue }
-                if !order.contains(n) { order.append(n); claims[n] = claim }
+            let hasClaim = !PageContext.terms(bare).isEmpty
+            let claim = hasClaim ? sentence : previous
+            let numbers = regex.matches(in: sentence, range: NSRange(sentence.startIndex..., in: sentence)).compactMap { match -> Int? in
+                guard let r = Range(match.range(at: 1), in: sentence), let n = Int(sentence[r]), n > 0, n <= sources.count else { return nil }
+                return n
             }
-            if !PageContext.terms(bare).isEmpty { previous = sentence }
+            if hasClaim, let waiting = pending { fallback(waiting, sources: sources, into: &order); pending = nil }
+            if !hasClaim, !numbers.isEmpty { pending = nil }
+            for n in numbers where !order.contains(where: { $0.n == n }) { order.append(Entry(n: n, claim: claim)) }
+            if passages, hasClaim, numbers.isEmpty { pending = sentence }
+            if hasClaim { previous = sentence }
         }
-        return order.enumerated().map { offset, n in
-            let source = sources[n - 1]
-            return ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: n, sourceID: source.id,
-                                passage: passages ? PageContext.passage(for: claims[n] ?? "", in: source) : nil)
+        if let waiting = pending { fallback(waiting, sources: sources, into: &order) }
+        return order.enumerated().map { offset, entry in
+            let source = sources[entry.n - 1]
+            let passage = passages ? (entry.passage ?? PageContext.passage(for: entry.claim, in: source)) : nil
+            return ChatCitation(citationID: citationID(messageID: messageID, index: offset + 1), index: offset + 1, sourceNumber: entry.n, sourceID: source.id,
+                                passage: passage, anchors: entry.anchors.isEmpty ? nil : entry.anchors)
         }
+    }
+    /// A citation being assigned: its source number, the claim that picks its passage (or a
+    /// fallback's own passage) and the uncited sentences matched to it.
+    private struct Entry {
+        var n: Int
+        var claim: String
+        var passage: String?
+        var anchors: [String] = []
+    }
+
+    /// Share of an uncited answer sentence's content words its source sentence must contain.
+    static let fallbackCoverage = 0.6
+    /// Fewest content words an uncited sentence must share with its source sentence.
+    static let fallbackMinimumShared = 3
+    /// Words that say where a claim came from rather than what it claims.
+    private static let attributionWords: Set<String> = ["page", "article", "source", "text", "according", "states", "says", "mentions", "notes", "describes"]
+
+    /// The source sentence that best supports `sentence`, by content-word overlap: it must hold at
+    /// least `fallbackCoverage` of the sentence's content words, and at least `fallbackMinimumShared`
+    /// of them. Returns the source's 1-based number and the exact (clipped) source sentence.
+    static func fallbackMatch(_ sentence: String, sources: [KnowledgeSource]) -> (n: Int, passage: String)? {
+        let wanted = PageContext.terms(sentence).subtracting(attributionWords)
+        guard wanted.count >= fallbackMinimumShared else { return nil }
+        var best: (n: Int, passage: String, shared: Int)?
+        for (offset, source) in sources.enumerated() {
+            for candidate in PageContext.sentences(source.text) {
+                let shared = PageContext.terms(candidate).intersection(wanted).count
+                if shared > (best?.shared ?? 0) { best = (offset + 1, candidate, shared) }
+            }
+        }
+        guard let best, best.shared >= fallbackMinimumShared, Double(best.shared) >= fallbackCoverage * Double(wanted.count) else { return nil }
+        return (best.n, PageContext.clip(best.passage))
+    }
+    /// Adds `sentence`'s fallback citation: a new one for a source not yet cited, else an anchor on
+    /// that source's citation (one citation per source per answer).
+    private static func fallback(_ sentence: String, sources: [KnowledgeSource], into order: inout [Entry]) {
+        guard let match = fallbackMatch(sentence, sources: sources) else { return }
+        let anchor = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let existing = order.firstIndex(where: { $0.n == match.n }) { order[existing].anchors.append(anchor) }
+        else { order.append(Entry(n: match.n, claim: sentence, passage: match.passage, anchors: [anchor])) }
     }
 }
 

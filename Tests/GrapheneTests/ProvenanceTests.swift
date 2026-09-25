@@ -120,6 +120,59 @@ final class ProvenanceTests: XCTestCase {
         XCTAssertEqual(app.branchChildren(of: c2.id).map(\.id), [d.id])
     }
 
+    func testBranchCommandsAreRegisteredWithoutConflicts() throws {
+        let (app, a, _, _, _) = makeBranch()
+        app.activate(a.id)
+        let collapse = try XCTUnwrap(app.allCommandActions.first { $0.id == "collapse-branch" })
+        let expand = try XCTUnwrap(app.allCommandActions.first { $0.id == "expand-branch" })
+        XCTAssertEqual(collapse.title, "Collapse Branch")
+        XCTAssertEqual(expand.title, "Expand Branch")
+        XCTAssertEqual(collapse.key, .leftArrow)
+        XCTAssertEqual(expand.key, .rightArrow)
+        XCTAssertEqual(collapse.modifiers, [.command, .option, .control])
+        XCTAssertEqual(expand.modifiers, [.command, .option, .control])
+        XCTAssertEqual([collapse.hint, expand.hint], ["⌃⌥⌘←", "⌃⌥⌘→"])
+        // The ⌃⌥⌘ arrow family: no other command uses these two shortcuts.
+        for action in [collapse, expand] {
+            let shortcut = CommandShortcut(action: action)
+            XCTAssertEqual(app.allCommandActions.filter { CommandShortcut(action: $0) == shortcut }.map(\.id), [action.id])
+        }
+        XCTAssertTrue(collapse.enabled)
+        XCTAssertFalse(expand.enabled, "an open branch has nothing to expand")
+    }
+
+    func testBranchCommandsActOnTheSelectedTabsBranch() throws {
+        let (app, a, c1, c2, d) = makeBranch()
+        func run(_ id: String) { app.commandActions.first { $0.id == id }?.run() }
+        // Selected parent: its branch collapses and expands.
+        app.activate(a.id)
+        XCTAssertEqual(app.selectedBranchID, a.id)
+        run("collapse-branch")
+        XCTAssertEqual(app.collapsedBranchIDs, [a.id])
+        XCTAssertNil(app.commandActions.first { $0.id == "collapse-branch" }, "disabled once collapsed")
+        run("expand-branch")
+        XCTAssertTrue(app.collapsedBranchIDs.isEmpty)
+        // Selected leaf child: the branch it hangs from collapses and the parent takes the selection.
+        app.activate(c1.id)
+        XCTAssertEqual(app.selectedBranchID, a.id)
+        run("collapse-branch")
+        XCTAssertEqual(app.collapsedBranchIDs, [a.id])
+        XCTAssertEqual(app.activeTabID, a.id, "the selection stays visible")
+        run("expand-branch")
+        XCTAssertTrue(app.collapsedBranchIDs.isEmpty)
+        // A child that is itself a parent acts on its own branch.
+        app.activate(c2.id)
+        app.setSelectedBranch(collapsed: true)
+        XCTAssertEqual(app.collapsedBranchIDs, [c2.id])
+        XCTAssertEqual(app.activeTabID, c2.id)
+        XCTAssertFalse(app.todayProvenance().rows.contains { $0.id == d.id })
+        // A tab in no branch: nothing to do.
+        app.setSelectedBranch(collapsed: false)
+        app.activate(app.tabs[0].id)
+        XCTAssertNil(app.selectedBranchID)
+        XCTAssertFalse(try XCTUnwrap(app.allCommandActions.first { $0.id == "collapse-branch" }).enabled)
+    }
+
     func testRestoreDropsOrphanParents() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let parent = UUID(), child = UUID(), orphan = UUID(), missing = UUID()
@@ -157,7 +210,12 @@ final class ProvenanceTests: XCTestCase {
         XCTAssertEqual(line.x, ShellLayout.threadLineInset)
         // From the bottom of A's 20pt icon slot (row centre 18 + 10) to C's icon centre (2 × 40 + 18).
         XCTAssertEqual(line.vertical, CGRect(x: 17, y: 28, width: 1, height: 70.5))
-        XCTAssertEqual(line.ticks, [CGRect(x: 18, y: 57.5, width: 6, height: 1), CGRect(x: 18, y: 97.5, width: 6, height: 1)])
+        // Ticks run from the vertical (x 17) to the child's icon slot edge (x 28), starting past the 1pt vertical.
+        XCTAssertEqual(line.ticks, [CGRect(x: 18, y: 57.5, width: 10, height: 1), CGRect(x: 18, y: 97.5, width: 10, height: 1)])
+        XCTAssertEqual(ShellLayout.threadTick, 11)
+        let childSlot = ShellLayout.threadIndent + ShellLayout.rowInsetLeading
+        XCTAssertEqual(line.x + ShellLayout.threadTick, childSlot)
+        XCTAssertTrue(line.ticks.allSatisfy { $0.minX == line.vertical.maxX && $0.maxX == childSlot }, "the tick enters the child's icon slot")
         XCTAssertFalse(layout.connectors(activeID: other)[0].active)
 
         // While the vertical animates, it is drawn to its animated bottom and ticks appear as it reaches them.

@@ -29,24 +29,45 @@ enum ChatMarkdown {
         return result
     }
 
-    /// A run of answer text, or a `[n]` citation marker (the model's source number).
+    /// A run of answer text, a `[n]` citation marker (the model's source number), or the chip of
+    /// a citation matched to a sentence the model left uncited (its per-answer index).
     enum Segment: Equatable {
         case text(String)
         case marker(Int)
+        case anchored(Int)
     }
-    /// Splits a line at its `[n]` markers (and any `(url)` the model appended to one).
+    /// Private brackets around an anchored chip's index; a model does not write them.
+    static let anchorOpen = "⁅", anchorClose = "⁆"
+    /// Splits a line at its `[n]` markers (and any `(url)` the model appended to one) and anchored chips.
     static func segments(_ line: String) -> [Segment] {
-        guard let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?"#) else { return [.text(line)] }
+        guard let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?|⁅(\d+)⁆"#) else { return [.text(line)] }
         var result: [Segment] = [], cursor = line.startIndex
         for match in regex.matches(in: line, range: NSRange(line.startIndex..., in: line)) {
-            guard let range = Range(match.range, in: line), let number = Range(match.range(at: 1), in: line).flatMap({ Int(line[$0]) }) else { continue }
+            guard let range = Range(match.range, in: line) else { continue }
+            let segment: Segment
+            if let number = Range(match.range(at: 1), in: line).flatMap({ Int(line[$0]) }) { segment = .marker(number) }
+            else if let index = Range(match.range(at: 2), in: line).flatMap({ Int(line[$0]) }) { segment = .anchored(index) }
+            else { continue }
             if cursor < range.lowerBound { result.append(.text(String(line[cursor..<range.lowerBound]))) }
-            result.append(.marker(number)); cursor = range.upperBound
+            result.append(segment); cursor = range.upperBound
         }
         if cursor < line.endIndex { result.append(.text(String(line[cursor...]))) }
         return result
     }
-    static func hasMarkers(_ text: String) -> Bool { text.range(of: #"\[\d+\]"#, options: .regularExpression) != nil }
+    static func hasMarkers(_ text: String) -> Bool {
+        text.range(of: #"\[\d+\]"#, options: .regularExpression) != nil || text.contains(anchorOpen)
+    }
+    /// `text` with each fallback citation's chip placed after the sentences it was matched to.
+    static func anchored(_ text: String, citations: [ChatCitation]) -> String {
+        var result = text
+        for citation in citations {
+            for anchor in citation.anchors ?? [] {
+                guard !anchor.isEmpty, let range = result.range(of: anchor) else { continue }
+                result.insert(contentsOf: " " + anchorOpen + "\(citation.index)" + anchorClose, at: range.upperBound)
+            }
+        }
+        return result
+    }
 
     /// The text of a block that quotes a page: a `>` block quote, or a block wholly in quotation
     /// marks whose words appear verbatim in one of the answer's sources. `nil` otherwise.
@@ -131,7 +152,7 @@ struct ChatMarkdownView<Chip: View>: View {
     let chip: (ChatCitation) -> Chip
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(ChatMarkdown.blocks(text)) { block in
+            ForEach(ChatMarkdown.blocks(ChatMarkdown.anchored(text, citations: citations))) { block in
                 if block.code {
                     ScrollView(.horizontal) { Text(block.text).font(ShellType.code).textSelection(.enabled).padding(10) }
                         .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
@@ -169,6 +190,8 @@ struct ChatMarkdownView<Chip: View>: View {
                 case .marker(let number):
                     if let citation = citations.first(where: { $0.sourceNumber == number }) { chip(citation) }
                     else { Text("[unverified source] ").font(ShellType.caption).foregroundStyle(app.pal.ink3) }
+                case .anchored(let index):
+                    if let citation = citations.first(where: { $0.index == index }) { chip(citation) }
                 }
             }
         }
