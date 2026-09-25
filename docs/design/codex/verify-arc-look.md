@@ -1,6 +1,6 @@
 # Task: verify Graphene's Arc-look rebuild on the real app
 
-You are working on macOS with real computer use. Do the work synchronously yourself. Do not delegate, do not schedule jobs, do not ask questions; if something is blocked, record it and move on. Never use `GRAPHENE_DEBUG`, the `cmd.txt` debug driver, or any scripted UI automation inside the app: every interaction is a real click, key press or drag through computer use, exactly as a user would do it.
+You are Codex running on macOS with the computer-use tool. Use it for every interaction with the apps (screenshots, clicks, keys, drags); use the shell only for builds, file work and `screencapture`. Do the work synchronously yourself. Do not delegate, do not schedule jobs, do not ask questions; if something is blocked, record it and move on. Never use `GRAPHENE_DEBUG`, the `cmd.txt` debug driver, or any scripted UI automation inside the app: every interaction is a real click, key press or drag through computer use, exactly as a user would do it.
 
 ## Goal
 Build the current `master` of this repository, run it on an isolated profile, exercise the surfaces in `docs/design/arc-look.md` section 6 (Acceptance), capture evidence, and write a report that says plainly which acceptance items pass, which fail, and what looks wrong compared with Arc. Output goes in `docs/parity/shots/arc-look/` (PNGs plus `report.md`). Do not commit.

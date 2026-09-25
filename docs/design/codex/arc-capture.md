@@ -1,6 +1,6 @@
 # Task: capture Arc browser reference screenshots for a design spec
 
-You are working on macOS with real computer use. Do the work synchronously yourself. Do not delegate, do not schedule jobs, do not ask questions; if something is blocked, note it in the manifest and move on.
+You are Codex running on macOS with the computer-use tool. Use it for every interaction with the apps (screenshots, clicks, keys, drags); use the shell only for builds, file work and `screencapture`. Do the work synchronously yourself. Do not delegate, do not schedule jobs, do not ask questions; if something is blocked, note it in the manifest and move on.
 
 ## Goal
 Produce a set of crisp, window-only PNG screenshots of the Arc browser (installed at /Applications/Arc.app, version 1.163) showing its visual design, saved under `docs/parity/ref/arc/` in this repository, plus `manifest.md` describing each capture. These are design references for a native macOS app that wants Arc's look and feel. The spec they feed is `docs/design/arc-look.md`.
