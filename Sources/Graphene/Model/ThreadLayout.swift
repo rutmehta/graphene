@@ -187,6 +187,28 @@ struct ThreadLayout: Equatable {
     static func fadeDelay(column: Int) -> Double { min(Double(max(0, column)) * fadeStagger, fadeCap) }
 }
 
+/// The space-wide map (graphene-language.md §5.2): with no thread selected, every thread in the
+/// space as its own tree, in the list's order (newest first), each a `ThreadLayout` with its own
+/// start label. The view stacks them with `sectionGap` between. Pure: visits are grouped once.
+struct ThreadForest {
+    struct Tree: Identifiable {
+        let thread: KnowledgeGraph.Thread
+        let layout: ThreadLayout
+        var id: UUID { thread.id }
+    }
+    let trees: [Tree]
+
+    init(threads: [KnowledgeGraph.Thread], visits: [GraphVisit]) {
+        let byThread = Dictionary(grouping: visits, by: \.threadID)
+        trees = threads.map { thread in
+            Tree(thread: thread, layout: ThreadLayout(nodeIDs: thread.nodes.map(\.id), visits: byThread[thread.id] ?? [], start: thread.start))
+        }
+    }
+
+    /// Pages across every tree.
+    var pageCount: Int { trees.reduce(0) { $0 + $1.layout.nodes.count } }
+}
+
 /// What a click on a map or list node does: one click selects, a double-click opens the page
 /// in the current tab, ⌘-double-click opens it as a child of the current tab.
 enum ThreadNodeClick: Equatable {
@@ -217,6 +239,12 @@ enum ThreadPanes {
     static func counts(pages: Int, sites: Int, notes: Int) -> String {
         func count(_ n: Int, _ noun: String) -> String { "\(n) \(noun)\(n == 1 ? "" : "s")" }
         return [count(pages, "page"), count(sites, "site"), count(notes, "note")].joined(separator: " · ")
+    }
+
+    /// The All threads strip's metadata: "3 threads · 12 pages".
+    static func forestCounts(threads: Int, pages: Int) -> String {
+        func count(_ n: Int, _ noun: String) -> String { "\(n) \(noun)\(n == 1 ? "" : "s")" }
+        return count(threads, "thread") + " · " + count(pages, "page")
     }
 }
 

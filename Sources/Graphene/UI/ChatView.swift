@@ -103,6 +103,11 @@ struct ChatView: View {
     }
     /// What the model can see, from the attached sources the space allows.
     private var grounding: ChatGrounding { ChatGrounding(sources: attachments.filter { app.aiSourceAllowed($0) }, activeTabID: app.activeTabID) }
+    /// The header's grounding line: "This thread" when the panel was opened on a thread and every
+    /// source is one of its pages; otherwise what `ChatGrounding` says.
+    static func groundingLine(_ grounding: ChatGrounding, sources: [KnowledgeSource], thread: Bool) -> String {
+        thread && !sources.isEmpty && sources.allSatisfy({ $0.kind == "Visited page" }) ? "This thread" : grounding.line
+    }
     /// Marks an answer's passages in `tab`'s page and links the found chips (D6 §3.4). Private tabs never inject.
     @discardableResult
     static func link(_ message: ChatMessage, citations: [ChatCitation], in tab: Tab, app: AppState) async -> Set<String> {
@@ -115,7 +120,7 @@ struct ChatView: View {
                 Text("Ask").font(ShellType.title)
                 HStack(spacing: ShellLayout.statusDot) {
                     Circle().fill(grounding.grounded ? app.pal.accent : app.pal.ink3).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
-                    Text(grounding.line).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+                    Text(Self.groundingLine(grounding, sources: attachments.filter { app.aiSourceAllowed($0) }, thread: scopedNodes != nil)).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
                 }.accessibilityElement(children: .combine).accessibilityIdentifier("chat.grounding")
             }
             Spacer()

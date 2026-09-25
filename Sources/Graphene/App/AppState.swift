@@ -581,17 +581,26 @@ final class AppState: ObservableObject, BrowserCoordinator {
         }
     }
 
+    /// Opens Ask grounded on `thread` ("This thread", its pages as sources). The panel floats
+    /// over whatever surface is showing; Threads stays on screen.
     func askThread(_ thread: KnowledgeGraph.Thread) {
+        guard !isPrivate else { notify("Knowledge capture is unavailable in Private windows."); return }
         attachedSources = []
         knowledgeThreadID = thread.id
         knowledgeSearchPresented = true
-        show(.web)
     }
 
+    /// ⌘K and the Ask glyphs. Never changes `activeSurface`: over Threads, Vault, Board or Mail
+    /// the panel opens on top of the library surface. On Threads it is grounded on the thread
+    /// the list selected; elsewhere on the current tab.
     func toggleKnowledge() {
         guard !isPrivate else { notify("Knowledge capture is unavailable in Private windows."); return }
-        if knowledgeSearchPresented { knowledgeSearchPresented = false }
-        else { knowledgeThreadID = nil; knowledgeSearchPresented = true }
+        if knowledgeSearchPresented { knowledgeSearchPresented = false; return }
+        if activeSurface == .threads, let thread = currentThreads.first(where: { $0.id == selectedThreadID }) {
+            askThread(thread)
+        } else {
+            knowledgeThreadID = nil; knowledgeSearchPresented = true
+        }
     }
 
     func setColor(_ color: SpaceColor) {

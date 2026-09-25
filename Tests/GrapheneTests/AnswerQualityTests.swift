@@ -110,6 +110,52 @@ final class AnswerQualityTests: XCTestCase {
         XCTAssertTrue(saysMissing || second.contains("lima"), "either the not-in-sources sentence or a real answer")
     }
 
+    // Explicit opt-in: the thread summary on the real on-device model, through the same
+    // ThreadSummaryModel.messages / thinThreadSummary path as Threads. Writes to the
+    // "-summary" sibling of GRAPHENE_AI_ANSWERS. Case 1 is two fetched pages from
+    // docs/parity/shots/wp8; case 2 is a search-only thread (the owner's two Google "hello"
+    // pages), which the app answers without the model; the model's own reply to the same
+    // request is recorded too, to check the prompt alone would not invent a summary.
+    @MainActor func testLiveThreadSummary() async throws {
+        guard let answers = ProcessInfo.processInfo.environment["GRAPHENE_AI_ANSWERS"] else { throw XCTSkip("Opt-in real-model harness") }
+        let output = (answers as NSString).deletingPathExtension + "-summary.md"
+        struct Row: Decodable { let url: String; let title: String; let text: String }
+        let inputs = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("docs/parity/shots/wp8/inputs.json")
+        let rows = try JSONDecoder().decode([Row].self, from: Data(contentsOf: inputs))
+        let graphene = try XCTUnwrap(rows.first { $0.url.contains("wikipedia.org/wiki/Graphene") })
+        let webb = try XCTUnwrap(rows.first { $0.url.contains("nasa.gov") })
+        let research = [KnowledgeSource(id: UUID(), title: "Graphene - Wikipedia", url: graphene.url, text: graphene.text, kind: "Thread"),
+                        KnowledgeSource(id: UUID(), title: "NASA Reveals Webb Telescope’s First Images of Unseen Universe", url: webb.url, text: webb.text, kind: "Thread")]
+        let search = [KnowledgeSource(id: UUID(), title: "Google", url: "https://www.google.com/", text: "Google Search I'm Feeling Lucky", kind: "Thread"),
+                      KnowledgeSource(id: UUID(), title: "hello - Google Search", url: "https://www.google.com/search?q=hello", text: "hello - Google Search", kind: "Thread")]
+        func model(_ sources: [KnowledgeSource]) async -> String {
+            var text = ""
+            do { for try await delta in OnDeviceProvider().stream(messages: ThreadSummaryModel.messages(sources)) { text += delta } }
+            catch { text += "\nERROR: " + error.localizedDescription }
+            return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        var report = "# Real on-device thread summaries\n\nSame ThreadSummaryModel.messages (PageContext.threadSummaryInstructions and threadSummaryRequest) and OnDeviceProvider as Threads.\n\n"
+
+        XCTAssertNil(PageContext.thinThreadSummary(research))
+        let budgeted = PageContext.budget(research, limit: 6000).sources
+        let summary = await model(budgeted)
+        report += "## Case 1: two-page thread (Graphene, Webb)\n\n\(summary)\n\nCitations: \(ThreadSummaryView.citations(summary, sources: budgeted, threadID: UUID()).map(\.index))\n\n"
+        try report.write(toFile: output, atomically: true, encoding: .utf8)
+
+        let app = try XCTUnwrap(PageContext.thinThreadSummary(search))
+        let direct = await model(search)
+        report += "## Case 2: search-only thread (google.com, google.com/search?q=hello)\n\nApp (no model call): \(app)\n\nModel given the same request: \(direct)\n"
+        try report.write(toFile: output, atomically: true, encoding: .utf8)
+
+        XCTAssertFalse(summary.contains("ERROR:"), summary)
+        let lower = summary.lowercased()
+        for phrase in ["conversation", "assistant", "the user and", "chat"] { XCTAssertFalse(lower.contains(phrase), "describes the format: \(phrase)") }
+        XCTAssertTrue(lower.contains("graphene") && (lower.contains("webb") || lower.contains("telescope")), "about both pages")
+        XCTAssertEqual(app, "These pages are search results for “hello”; there isn't enough content to summarise.")
+        XCTAssertFalse(direct.lowercased().contains("conversation"), direct)
+    }
+
     // Explicit opt-in: ordinary tests never download pages or invoke Apple Intelligence.
     func testLiveAnswers() async throws {
         guard let input = ProcessInfo.processInfo.environment["GRAPHENE_AI_QUESTIONS"],
