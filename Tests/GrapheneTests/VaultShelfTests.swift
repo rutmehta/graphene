@@ -57,15 +57,17 @@ final class VaultShelfTests: XCTestCase {
     }
 
     func testChipCountByWidth() {
-        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarDefault)), 4)
-        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 208), 4)
-        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 207.5), 3)
-        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarRange.lowerBound)), 3)
+        // Chips are 72–96pt; the count is what fits after the "Vault" word, up to four.
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarDefault)), 2)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 300), 3)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 344), 4)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: 400), 4)
+        XCTAssertEqual(VaultShelfLayout.chipCount(contentWidth: ShellLayout.sidebarContentWidth(ShellLayout.sidebarRange.lowerBound)), 1)
 
         let app = AppState(directory: root)
         for index in 1...5 { save(app, "Quote \(index)") }
-        XCTAssertEqual(app.shelfNotes(contentWidth: 300).count, 4)
-        XCTAssertEqual(app.shelfNotes(contentWidth: 180).count, 3)
+        XCTAssertEqual(app.shelfNotes(contentWidth: 400).count, 4)
+        XCTAssertEqual(app.shelfNotes(contentWidth: 300).count, 3)
     }
 
     func testNotesAreNewestFirstAndScopedToTheSpace() {

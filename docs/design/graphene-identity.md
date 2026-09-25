@@ -95,7 +95,7 @@ Nothing else. No weather, no wallpapers, no shortcuts grid. When every section i
 
 **What it is.** A single row above the sidebar footer, `shelfHeight` tall, present only when the current space has Vault notes: the last four saves as chips of `shelfChipWidth × 32`, `shelfChipRadius`, `fill` background, the note's source favicon at 16 and the first words of the quote in `caption` `ink2` on one line, truncated. A `label`-type "Vault" word at the leading edge in `ink3` opens the Vault view. Hover shows the full quote in a `TabPreview`-style card. Drag a chip out to drop the note as Markdown into any app or into the chat panel (existing drop support). Clicking a chip opens the source page and highlights the passage (as 3.3).
 
-**Rules.** The shelf never scrolls; four chips maximum; if the sidebar is narrower than 224 it shows three. It is hidden while the archive view is open and in private windows. It shifts the Today list up by `shelfHeight`; it does not overlay it.
+**Rules.** The shelf never scrolls. Chips are 72 to 96pt wide; it shows as many as fit after the "Vault" word, up to four (two at the default 224pt sidebar, three from about 270pt of content width, four from 342). It is hidden while the archive view is open and in private windows. It shifts the Today list up by `shelfHeight`; it does not overlay it.
 
 **Acceptance.** Save two selections with ⌘D on two pages: two chips appear with the right favicons and quotes; clicking one opens its page and highlights; hovering shows the full quote. Delete both notes in Vault: the shelf disappears and the footer geometry is back to the Arc look.
 

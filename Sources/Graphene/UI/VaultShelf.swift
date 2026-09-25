@@ -6,9 +6,10 @@ import AppKit
 enum VaultShelfLayout {
     /// Chips shown when the sidebar content is at least `narrowContentWidth` wide.
     static let maxChips = 4
-    /// Chips shown below `narrowContentWidth`.
-    static let narrowChips = 3
-    static let narrowContentWidth: CGFloat = 208
+    /// A chip never shrinks below this; the count is whatever fits between the "Vault" word and the trailing edge.
+    static let minChipWidth: CGFloat = 72
+    /// Width reserved for the "Vault" word and its gap.
+    static let labelWidth: CGFloat = 36
     static let chipHeight: CGFloat = 32
     /// Gap between chips, and between a chip's favicon and its text.
     static let chipGap: CGFloat = 6
@@ -23,7 +24,8 @@ enum VaultShelfLayout {
     }
 
     static func chipCount(contentWidth: CGFloat) -> Int {
-        contentWidth < narrowContentWidth ? narrowChips : maxChips
+        let available = contentWidth - labelWidth + chipGap
+        return min(maxChips, max(1, Int(available / (minChipWidth + chipGap))))
     }
 
     /// The full text a note shows: its quote, else its note, else its page title.
@@ -148,7 +150,7 @@ private struct ShelfChip: View {
             .frame(height: VaultShelfLayout.chipHeight)
             .background(hovered ? app.pal.fillHover : app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.shelfChipRadius))
             .contentShape(RoundedRectangle(cornerRadius: ShellLayout.shelfChipRadius))
-            .frame(minWidth: 0, maxWidth: ShellLayout.shelfChipWidth)
+            .frame(minWidth: VaultShelfLayout.minChipWidth, maxWidth: ShellLayout.shelfChipWidth)
             .animation(SidebarMotion.hover, value: hovered)
             .onTapGesture { open() }
             .onHover { inside in
