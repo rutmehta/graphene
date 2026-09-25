@@ -44,26 +44,35 @@ struct DroppedText: Transferable {
 
 /// A card the Board makes from a dropped string.
 struct BoardDropCard: Equatable {
+    var kind: BoardCardKind = .note
     var title: String
     var text: String = ""
     var url: String? = nil
+    /// The clipped page text of a quote card.
+    var quote: String? = nil
 }
 
 extension AppState {
-    /// The Board card for a dropped value: a tab link, a Vault card, a web link, or a text note.
-    /// Nil for a reference to a tab or note that no longer exists.
+    /// The Board card for a dropped value: a sidebar tab or web link makes a page card, a Vault
+    /// note (shelf chip or list row) a quote card, anything else a note card. Nil for a
+    /// reference to a tab or note that no longer exists.
     func boardDropCard(for value: String) -> BoardDropCard? {
         if let id = payloadID(value, prefix: "tab:") {
             guard let tab = tabs.first(where: { $0.id == id }) else { return nil }
-            return BoardDropCard(title: tab.displayTitle, url: tab.url?.absoluteString)
+            guard let url = tab.url?.absoluteString else { return BoardDropCard(kind: .note, title: tab.displayTitle) }
+            return BoardDropCard(kind: .page, title: tab.displayTitle, url: url)
         }
         if let id = payloadID(value, prefix: "note:") {
             guard let note = vault.annotations.first(where: { $0.id == id }) else { return nil }
-            return BoardDropCard(title: note.title, text: note.text + "\n" + note.note, url: note.url)
+            let url = note.url.isEmpty ? nil : note.url
+            if note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return BoardDropCard(kind: .note, title: note.title, text: note.note, url: url)
+            }
+            return BoardDropCard(kind: .quote, title: note.title, text: note.note, url: url, quote: note.text)
         }
         if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") {
-            return BoardDropCard(title: url.host ?? value, url: value)
+            return BoardDropCard(kind: .page, title: url.host ?? value, url: value)
         }
-        return BoardDropCard(title: "Note", text: value)
+        return BoardDropCard(kind: .note, title: "Note", text: value)
     }
 }

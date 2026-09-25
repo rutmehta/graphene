@@ -101,21 +101,24 @@ struct ProvenanceConnector: Equatable {
     let lastChildRow: Int
     /// The branch holds the selected tab and draws in `threadLineActive`.
     let active: Bool
+    /// Row metrics: the sidebar's by default; Mail conversations pass their 44pt rows.
+    var rowPitch: CGFloat = ShellLayout.rowPitch
+    var rowHeight: CGFloat = ShellLayout.rowHeight
 
-    private static func iconCentreY(_ row: Int) -> CGFloat {
-        CGFloat(row) * ShellLayout.rowPitch + ShellLayout.rowHeight / 2
+    private func iconCentreY(_ row: Int) -> CGFloat {
+        CGFloat(row) * rowPitch + rowHeight / 2
     }
     var x: CGFloat { CGFloat(parentIndent) * ShellLayout.threadIndent + ShellLayout.threadLineInset }
     /// From the bottom of the parent's icon slot to the centre of the last child's icon.
     var vertical: CGRect {
-        let top = Self.iconCentreY(parentRow) + ShellLayout.iconSlot / 2
-        let bottom = Self.iconCentreY(lastChildRow) + ShellLayout.hairline / 2
+        let top = iconCentreY(parentRow) + ShellLayout.iconSlot / 2
+        let bottom = iconCentreY(lastChildRow) + ShellLayout.hairline / 2
         return CGRect(x: x, y: top, width: ShellLayout.hairline, height: max(0, bottom - top))
     }
     /// Each tick runs `threadTick` from the vertical to the child's icon slot edge. It starts just
     /// right of the vertical so the translucent strokes never overlap.
     var ticks: [CGRect] {
-        childRows.map { CGRect(x: x + ShellLayout.hairline, y: Self.iconCentreY($0) - ShellLayout.hairline / 2,
+        childRows.map { CGRect(x: x + ShellLayout.hairline, y: iconCentreY($0) - ShellLayout.hairline / 2,
                                width: ShellLayout.threadTick - ShellLayout.hairline, height: ShellLayout.hairline) }
     }
     /// The path while its vertical is drawn from `top` down to `bottom` (the length animates on

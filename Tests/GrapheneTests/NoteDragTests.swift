@@ -68,12 +68,12 @@ final class NoteDragTests: XCTestCase {
     func testBoardMakesAVaultCardFromTheDroppedNote() async throws {
         let note = try XCTUnwrap(app.vault.annotations.first)
         let value = try await load(NoteDrag.itemProvider(for: note))
-        XCTAssertEqual(app.boardDropCard(for: value), BoardDropCard(title: "Example", text: "Saved quote\nMy note", url: "https://example.org/a"))
+        XCTAssertEqual(app.boardDropCard(for: value), BoardDropCard(kind: .quote, title: "Example", text: "My note", url: "https://example.org/a", quote: "Saved quote"))
         XCTAssertNil(app.boardDropCard(for: "note:\(UUID())"), "a deleted note makes no card")
         let tab = app.newTab()
-        XCTAssertEqual(app.boardDropCard(for: "tab:\(tab.id)"), BoardDropCard(title: tab.displayTitle, url: tab.url?.absoluteString))
-        XCTAssertEqual(app.boardDropCard(for: "https://swift.org/blog"), BoardDropCard(title: "swift.org", url: "https://swift.org/blog"))
-        XCTAssertEqual(app.boardDropCard(for: "Loose words"), BoardDropCard(title: "Note", text: "Loose words"))
+        XCTAssertEqual(app.boardDropCard(for: "tab:\(tab.id)"), BoardDropCard(kind: tab.url == nil ? .note : .page, title: tab.displayTitle, url: tab.url?.absoluteString))
+        XCTAssertEqual(app.boardDropCard(for: "https://swift.org/blog"), BoardDropCard(kind: .page, title: "swift.org", url: "https://swift.org/blog"))
+        XCTAssertEqual(app.boardDropCard(for: "Loose words"), BoardDropCard(kind: .note, title: "Note", text: "Loose words"))
     }
 
     func testOnlyMarkHoversAskTheTranscriptToScroll() async {

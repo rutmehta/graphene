@@ -740,6 +740,13 @@ final class AppState: ObservableObject, BrowserCoordinator {
         persistSoon()
     }
 
+    /// A link in a Mail message (graphene-language.md §5.7) opens as a child of the tab the Mail
+    /// surface sits over, so it shows its provenance in the sidebar. Only web links open.
+    func openMailLink(_ url: URL) {
+        guard ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return }
+        openTab(url: url, parent: activeTab, activate: true)
+    }
+
     // MARK: provenance (graphene-identity.md §3.1)
 
     /// Only unfoldered Today tabs take part in branches; pinned tabs and favorites never do.
