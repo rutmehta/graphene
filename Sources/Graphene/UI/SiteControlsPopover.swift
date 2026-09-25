@@ -6,10 +6,18 @@ struct SiteControlsButton: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
     var body: some View {
-        HStack(spacing: 0) {
-            if tab.articleDetected { IconButton("Reader", system: "doc.plaintext") { app.commandActions.first { $0.id == "reader" }?.run() } }
-            IconButton("Site controls", system: tab.url?.scheme == "https" && tab.loadError == nil ? "lock" : "exclamationmark.shield") { app.siteControlsTabID = tab.id }
+        HStack(spacing: PageToolbarGeometry.controlGap) {
+            if tab.articleDetected {
+                ToolbarGlyphButton(title: "Reader", system: "doc.plaintext", identifier: "toolbar.reader") { app.commandActions.first { $0.id == "reader" }?.run() }
+            }
+            // The page's favicon is the site-controls button (arc-look.md §3.2).
+            Button { app.siteControlsTabID = tab.id } label: {
+                Favicon(host: tab.url?.host, size: ShellLayout.iconSize, url: tab.url)
+                    .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+            }.buttonStyle(ShellButtonStyle())
                 .disabled(tab.url?.host == nil)
+                .help(tab.url?.scheme == "https" && tab.loadError == nil ? "Site controls: secure connection" : "Site controls: connection not secure")
+                .accessibilityLabel("Site controls").accessibilityIdentifier("toolbar.siteControls").accessibilityAddTraits(.isButton)
                 .popover(isPresented: Binding(get: { app.siteControlsTabID == tab.id }, set: { if !$0 { app.siteControlsTabID = nil } })) { SiteControlsPopover(tab: tab) }
         }
     }
@@ -24,9 +32,9 @@ struct SiteControlsPopover: View {
     private var engine: WKWebEngine? { tab.engine as? WKWebEngine }
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(host).font(.system(size: 15, weight: .semibold))
+            Text(host).font(ShellType.title)
             DisclosureGroup(tab.url?.scheme == "https" && tab.loadError == nil ? "Secure connection" : "Connection not secure") {
-                Text(engine?.certificateSummary ?? "No certificate available. HTTP connections are not encrypted.").font(.system(size: 11)).textSelection(.enabled)
+                Text(engine?.certificateSummary ?? "No certificate available. HTTP connections are not encrypted.").font(ShellType.caption).textSelection(.enabled)
             }
             HStack {
                 Text("Zoom"); Spacer()
@@ -35,23 +43,24 @@ struct SiteControlsPopover: View {
             }
             Slider(value: Binding(get: { site.zoom }, set: { zoom($0) }), in: 0.25...3, step: 0.05)
             Toggle("Block ads & trackers", isOn: Binding(get: { site.blocking ?? app.settings.contentBlocking ?? true }, set: { site.blocking = $0; save(); Task { await engine?.applyBlocking(host: host) } }))
-            HStack { Text(engine?.blockingActive == true ? "Blocking on" : "Blocking off"); Spacer(); Button("Use global setting") { site.blocking = nil; save(); Task { await engine?.applyBlocking(host: host) } } }.font(.system(size: 11)).foregroundStyle(app.pal.ink3)
-            if let error = engine?.blockerError { Text(error).font(.system(size: 11)) }
+            HStack { Text(engine?.blockingActive == true ? "Blocking on" : "Blocking off"); Spacer(); Button("Use global setting") { site.blocking = nil; save(); Task { await engine?.applyBlocking(host: host) } } }.font(ShellType.caption).foregroundStyle(app.pal.ink3)
+            if let error = engine?.blockerError { Text(error).font(ShellType.caption) }
             Divider()
             permission("Camera", key: \.camera)
             permission("Microphone", key: \.microphone)
             permission("Motion", key: \.motion)
-            Text("Location and notifications: managed by WebKit/macOS. No public per-site delegate is available in this macOS WKWebView.").font(.system(size: 11)).foregroundStyle(app.pal.ink3)
+            Text("Location and notifications: managed by WebKit/macOS. No public per-site delegate is available in this macOS WKWebView.").font(ShellType.caption).foregroundStyle(app.pal.ink3)
             Divider()
             Button("Boosts ▸") { app.boostHost = host; dismiss() }
             Button("Zap an element…") { engine?.startZap(); app.notify("Click an element to hide it. Escape cancels."); dismiss() }
             Button("Clear data for this site…") { app.clearCurrentSiteData() }
             if let url = tab.url { Button("Open in default browser") { app.openInSystemBrowser(url) } }
-            if !status.isEmpty { Text(status).font(.system(size: 11)) }
-        }.padding(20).frame(width: 340).font(.system(size: 12)).foregroundStyle(app.pal.ink).background(app.pal.ground)
+            if !status.isEmpty { Text(status).font(ShellType.caption) }
+        }.padding(ShellLayout.sectionGap + ShellLayout.windowGap).frame(width: SiteControlsPopover.width).font(ShellType.body).foregroundStyle(app.pal.ink).background(app.pal.elev)
             .onAppear { site = app.sites.site(host) }
             .onReceive(app.sites.$entries) { _ in site = app.sites.site(host) }
     }
+    static let width: CGFloat = 320
     private func permission(_ title: String, key: WritableKeyPath<SitePreference, SitePermission>) -> some View {
         Picker(title, selection: Binding(get: { site[keyPath: key] }, set: { site[keyPath: key] = $0; save() })) {
             ForEach(SitePermission.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }

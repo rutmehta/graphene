@@ -9,15 +9,12 @@ struct RootView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var peekTask: Task<Void, Never>?
     @State private var askResizeStart: Double?
-
-    @State private var addressHovered = false
     @SceneStorage("shell.windowID") private var windowID = UUID().uuidString
     private var sidebarWidth: CGFloat { app.sidebarWidths[windowID].map { CGFloat($0) } ?? app.sidebarWidth }
     private var sidebarLayout: Bool { app.layout == .sidebar }
     private var showsSidebar: Bool { sidebarLayout && !app.sidebarCollapsed }
     /// The page card's inset from the window's top, right and bottom (and left when collapsed).
     private var cardGap: CGFloat { sidebarLayout && app.settings.pageGutter ? ShellLayout.windowGap : 0 }
-    private var cardShape: RoundedRectangle { RoundedRectangle(cornerRadius: sidebarLayout ? ShellLayout.pageRadius : 0) }
     /// Sidebar collapse: a short spring; Reduce Motion fades only.
     private var collapseAnimation: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.30, dampingFraction: 0.75)
@@ -35,24 +32,21 @@ struct RootView: View {
                 ShellContentLayout(overlayAsk: geometry.size.width - (showsSidebar ? sidebarWidth : 0) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth, showAsk: app.knowledgeSearchPresented, preferredAskWidth: app.settings.askWidth, floating: app.settings.chatPanelMode == .floating) {
                     VStack(spacing: 0) {
                         if app.layout == .topTabs { TopTabBar(); TopBrowserToolbar().zIndex(10) }
-                        else if app.sidebarCollapsed { WorkspaceToolbar() }
                         if let error = app.graph.errorText ?? app.sessionError {
                             Text(error).font(ShellType.secondary).foregroundStyle(app.pal.ink2)
                                 .padding(12).frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Group {
-                            switch app.activeSurface {
-                            case .web:
-                                SplitBrowserView()
-                            case .threads: LedgerView()
-                            case .vault: VaultView()
-                            case .mail: MailView()
-                            case .board: EaselView()
-                            }
+                            if app.activeSurface == .web {
+                                SplitBrowserView(reservesTrafficLights: app.sidebarCollapsed && sidebarLayout, cardOriginX: cardGap)
+                            } else if sidebarLayout {
+                                VStack(spacing: 0) {
+                                    SurfaceToolbar(reservesTrafficLights: app.sidebarCollapsed, cardOriginX: cardGap)
+                                    librarySurface
+                                }.pageCard()
+                            } else { librarySurface }
                         }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(app.pal.ground)
-                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
-                            .padding(app.layout == .topTabs && app.settings.pageGutter ? 6 : 0)
+                            .modifier(TopTabsPageSurface(active: !sidebarLayout))
                             .overlay {
                                 if app.layout == .topTabs && app.commandBarPresented {
                                     app.pal.scrimSubtle.contentShape(Rectangle())
@@ -60,10 +54,7 @@ struct RootView: View {
                                 }
                             }
                     }
-                    .background(sidebarLayout ? app.pal.pageBg : app.pal.chromeBg)
-                    .clipShape(cardShape)
-                    .overlay(cardShape.strokeBorder(sidebarLayout ? app.pal.pageBorder : .clear, lineWidth: ShellLayout.hairline))
-                    .shadow(color: sidebarLayout ? app.pal.pageShadow : .clear, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
+                    .background(sidebarLayout ? Color.clear : app.pal.chromeBg)
 
                     if app.knowledgeSearchPresented {
                         KnowledgeSearchView(scopedNodes: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.nodes,
@@ -89,6 +80,7 @@ struct RootView: View {
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
                 }
+                .overlay { if let tab = app.peekTab { PeekOverlay(tab: tab) } }
                 .padding(.vertical, cardGap).padding(.trailing, cardGap).padding(.leading, showsSidebar ? 0 : cardGap)
                 .transaction { if reduceMotion { $0.animation = nil } }
             }
@@ -96,28 +88,20 @@ struct RootView: View {
             .overlay(alignment: .leading) {
                 if app.layout == .sidebar && app.sidebarCollapsed {
                     if app.sidebarPeek {
-                        Sidebar(width: sidebarWidth).frame(width: sidebarWidth).background { ChromeBackground() }
-                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
-                            .shadow(color: app.pal.shadow, radius: 14, x: 6)
+                        // The peeked sidebar floats over the page card as an elevated panel (§3.3, §4).
+                        Sidebar(width: sidebarWidth).frame(width: sidebarWidth).background(app.pal.sidebarPeekBg)
+                            .clipShape(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
+                            .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
+                            .padding(ShellLayout.windowGap)
                             .onHover { inside in if !inside && !app.spaceEditorPresented { app.sidebarPeek = false } }
-                            .transition(.move(edge: .leading).combined(with: .opacity))
+                            .transition(reduceMotion ? .opacity : .offset(x: -sidebarWidth).combined(with: .opacity))
                     } else {
                         Rectangle().fill(app.pal.hitTarget).frame(width: 4).onHover { inside in
                             peekTask?.cancel()
                             if inside { peekTask = Task { try? await Task.sleep(for: .milliseconds(200)); if !Task.isCancelled { app.sidebarPeek = true } } }
                         }
                     }
-                }
-            }
-            .overlay(alignment: .top) {
-                if app.layout == .sidebar && app.sidebarCollapsed {
-                    Button { app.focusAddress() } label: {
-                        Text(app.activeTab?.url?.host ?? "Search or enter URL").font(ShellType.caption)
-                            .padding(.horizontal, 18).frame(height: 30)
-                            .background(app.pal.elev, in: Capsule()).shadow(color: app.pal.shadow, radius: 8)
-                    }.buttonStyle(.plain).help("Open location (⌘L)")
-                        .accessibilityIdentifier("page.location").accessibilityLabel("Open location").accessibilityAddTraits(.isButton)
-                        .opacity(addressHovered ? 1 : 0).onHover { addressHovered = $0 }.padding(.top, 7)
                 }
             }
             .overlay {
@@ -139,13 +123,12 @@ struct RootView: View {
             .animation(collapseAnimation, value: app.sidebarCollapsed)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.16), value: app.knowledgeSearchPresented)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: app.commandBarPresented)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: app.sidebarPeek)
+            .animation(reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.28, dampingFraction: 0.8), value: app.sidebarPeek)
         }
         .ignoresSafeArea()
         .background(WindowAccessor(onKeyWindow: { app.focusedWindowID = windowID }, state: windowState))
         .background(TabKeyboardMonitor(app: app))
         .overlay { if !app.switcherIDs.isEmpty { TabSwitcher() } }
-        .overlay { if let tab = app.peekTab { PeekOverlay(tab: tab) } }
         .overlay { WindowOutline() }
         .onAppear {
             app.focusedWindowID = windowID
@@ -168,65 +151,31 @@ struct RootView: View {
         .preferredColorScheme(app.mode == .automatic ? nil : (app.pal.isDark ? .dark : .light))
         .tint(app.pal.accentText)
     }
-}
 
-
-private struct WorkspaceToolbar: View {
-    @EnvironmentObject var app: AppState
-    var body: some View {
-        HStack(spacing: 6) {
-            if app.sidebarCollapsed {
-                IconButton("Show sidebar", system: "sidebar.left") { app.toggleSidebar() }
-            }
-            if app.activeSurface == .web, let tab = app.activeTab { BrowserToolbar(tab: tab) }
-            else {
-                Text(app.activeSurface.rawValue.capitalized).font(ShellType.label).foregroundStyle(app.pal.ink2).padding(.leading, 6)
-                Spacer()
-                IconButton("Open location", system: "magnifyingglass") { app.openCommandBar(newTab: true) }
-                IconButton("Ask Graphene", system: "sidebar.right") { app.toggleKnowledge() }
-            }
+    @ViewBuilder private var librarySurface: some View {
+        switch app.activeSurface {
+        case .threads: LedgerView()
+        case .vault: VaultView()
+        case .mail: MailView()
+        case .board: EaselView()
+        case .web: EmptyView()
         }
-        // The card starts at `windowGap` when collapsed, so this keeps the controls clear of the traffic lights.
-        .padding(.leading, app.sidebarCollapsed ? ShellLayout.trafficReserve - ShellLayout.windowGap : ShellLayout.windowGap)
-        .padding(.trailing, ShellLayout.windowGap)
-        .frame(height: ShellLayout.pageToolbarHeight)
-            .background(app.pal.pageBg)
     }
 }
 
-private struct BrowserToolbar: View {
-    @ObservedObject var tab: Tab
+/// The top-tabs layout keeps its inset, clipped page surface; the sidebar layout's cards style themselves.
+private struct TopTabsPageSurface: ViewModifier {
     @EnvironmentObject var app: AppState
-    @State private var addressHovered = false
-    var body: some View {
-        HStack(spacing: 1) {
-            IconButton("Back", system: "chevron.left") { tab.goBack() }.disabled(!tab.canGoBack)
-            IconButton("Forward", system: "chevron.right") { tab.goForward() }.disabled(!tab.canGoForward)
-            IconButton(tab.isLoading ? "Stop loading" : "Reload", system: tab.isLoading ? "xmark" : "arrow.clockwise") { tab.isLoading ? tab.stop() : tab.reload() }
-        }
-        Spacer(minLength: 4)
-        Button { app.openCommandBar(newTab: false) } label: {
-            HStack(spacing: 6) {
-                Image(systemName: tab.url?.scheme == "https" ? "lock" : "magnifyingglass").font(ShellType.caption)
-                Text(tab.url?.host?.replacingOccurrences(of: "www.", with: "") ?? "Search or enter URL")
-                    .font(ShellType.caption).lineLimit(1)
-            }.foregroundStyle(app.pal.ink2).padding(.horizontal, 12).frame(height: 26)
-                .background(addressHovered ? app.pal.hover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-        }.buttonStyle(.plain).onHover { addressHovered = $0 }.help(tab.url?.absoluteString ?? "Open location (⌘L)")
-            .accessibilityLabel("Open location")
-            .accessibilityIdentifier("collapsed.location").accessibilityAddTraits(.isButton)
-            .contextMenu {
-                CaptureSiteMenu(tab: tab)
-                if let url = tab.url {
-                    Button("Copy URL") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(url.absoluteString, forType: .string) }
-                }
-            }
-        Spacer(minLength: 4)
-        SiteControlsButton(tab: tab)
-        IconButton("Save page or add a note", system: "bookmark") { app.noteComposerPresented = true }.disabled(tab.url == nil || app.isPrivate)
-        IconButton("Ask Graphene", system: "sidebar.right") { app.toggleKnowledge() }
+    var active: Bool
+    func body(content: Content) -> some View {
+        if active {
+            content.background(app.pal.pageBg)
+                .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
+                .padding(app.settings.pageGutter ? ShellLayout.windowGap : 0)
+        } else { content }
     }
 }
+
 
 struct IconButton: View {
     let title: String
@@ -250,6 +199,20 @@ struct BrowserPage: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
     var body: some View {
+        VStack(spacing: 0) {
+            if app.findPresented && tab.url != nil && (app.activeSplit == nil || app.activeTabID == tab.id) { FindBar(tab: tab) }
+            page
+        }
+        .task(id: app.activeTabID) {
+            while !Task.isCancelled && app.activeTabID == tab.id {
+                let playing = await tab.engine.evaluateJavaScript("Array.from(document.querySelectorAll('audio,video')).some(e => !e.paused && !e.ended && !e.muted && e.volume > 0)")
+                guard !Task.isCancelled else { return }
+                tab.isPlayingAudio = playing as? Bool ?? false
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
+    }
+    private var page: some View {
         ZStack(alignment: .top) {
             if tab.url == nil { NewTabView() }
             else if let error = tab.loadError {
@@ -260,19 +223,7 @@ struct BrowserPage: View {
             } else { WebContainer(tab: tab) }
             if tab.signInBlocked, let url = tab.url {
                 HStack { Text("This site rejects embedded browser sign-in."); Button("Open in default browser") { app.openInSystemBrowser(url) } }
-                    .font(ShellType.secondary).padding(12).background(app.pal.elev).foregroundStyle(app.pal.ink)
-            }
-            if app.findPresented && tab.url != nil { FindBar(tab: tab).frame(maxWidth: .infinity, alignment: .trailing).padding(12) }
-            if tab.isLoading {
-                GeometryReader { geo in Rectangle().fill(app.pal.accent).frame(width: geo.size.width * max(0.05, tab.progress), height: 2) }.frame(height: 2)
-            }
-        }
-        .task(id: app.activeTabID) {
-            while !Task.isCancelled && app.activeTabID == tab.id {
-                let playing = await tab.engine.evaluateJavaScript("Array.from(document.querySelectorAll('audio,video')).some(e => !e.paused && !e.ended && !e.muted && e.volume > 0)")
-                guard !Task.isCancelled else { return }
-                tab.isPlayingAudio = playing as? Bool ?? false
-                try? await Task.sleep(for: .seconds(2))
+                    .font(ShellType.secondary).padding(ShellLayout.sectionGap).background(app.pal.elev).foregroundStyle(app.pal.ink)
             }
         }
     }
@@ -285,12 +236,13 @@ private struct NewTabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Button { app.openCommandBar(newTab: true) } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "magnifyingglass").font(ShellType.row)
+                        HStack(spacing: ShellLayout.sectionGap) {
+                            Image(systemName: "magnifyingglass").font(ShellType.glyph)
                             Text(app.layout == .topTabs ? "Search or ask" : "Search or enter a URL").font(ShellType.row)
                             Spacer()
-                            Text("⌘T").font(ShellType.label).padding(5).background(app.pal.hover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
-                        }.foregroundStyle(app.pal.ink3).padding(.horizontal, 14).frame(height: 44)
+                            Text("⌘T").font(ShellType.label).padding(.horizontal, ShellLayout.rowInsetLeading / 2).padding(.vertical, PageToolbarGeometry.controlGap)
+                                .background(app.pal.rowHover, in: RoundedRectangle(cornerRadius: ShellLayout.chipRadius))
+                        }.foregroundStyle(app.pal.ink3).padding(.horizontal, ShellLayout.sectionGap).frame(height: ShellLayout.commandRowHeight)
                             .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
                     }.buttonStyle(.plain).accessibilityIdentifier("newTab.search")
                         .accessibilityLabel("Search or enter a URL").accessibilityAddTraits(.isButton)
@@ -301,15 +253,15 @@ private struct NewTabView: View {
                             Spacer()
                             Button("All threads") { app.show(.threads) }.font(ShellType.caption).buttonStyle(.plain)
                                 .accessibilityIdentifier("newTab.threads").accessibilityLabel("All threads").accessibilityAddTraits(.isButton)
-                        }.foregroundStyle(app.pal.ink3).padding(.top, 32).padding(.bottom, 13)
+                        }.foregroundStyle(app.pal.ink3).padding(.top, ShellLayout.pageToolbarHeight).padding(.bottom, ShellLayout.sectionGap)
                         ForEach(app.currentThreads.prefix(3)) { thread in
                             Button { app.openThread(thread) } label: {
-                                HStack(spacing: 11) {
-                                    Favicon(host: thread.hosts.first, size: 14)
+                                HStack(spacing: ShellLayout.rowInsetLeading) {
+                                    Favicon(host: thread.hosts.first, size: ShellLayout.iconSize)
                                     Text(thread.title).font(ShellType.row).foregroundStyle(app.pal.ink2).lineLimit(1)
                                     Spacer()
                                     Text(thread.end, format: .relative(presentation: .named, unitsStyle: .abbreviated)).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                                }.frame(height: 32).contentShape(Rectangle())
+                                }.frame(height: ShellLayout.rowHeight).contentShape(Rectangle())
                             }.buttonStyle(.plain)
                                 .accessibilityIdentifier("newTab.thread.\(thread.id)").accessibilityLabel(thread.title).accessibilityAddTraits(.isButton)
                         }
@@ -319,7 +271,7 @@ private struct NewTabView: View {
                 .padding(.top, max(60, geometry.size.height * 0.34)).padding(.bottom, 40)
                 .frame(maxWidth: .infinity)
             }
-        }.background(app.pal.ground)
+        }.background(app.pal.pageBg)
     }
 }
 
@@ -335,15 +287,20 @@ private struct FindBar: View {
     @State private var requestID = UUID()
     @FocusState private var focused: Bool
     var body: some View {
-        HStack(spacing: 8) {
-            TextField("Find in page", text: $app.findQuery).textFieldStyle(.plain).font(ShellType.secondary).focused($focused).frame(minWidth: 70, idealWidth: 180, maxWidth: 180).onSubmit { find() }
+        HStack(spacing: PageToolbarGeometry.controlGap) {
+            Image(systemName: "magnifyingglass").font(ShellType.caption).foregroundStyle(app.pal.ink3).accessibilityHidden(true)
+                .padding(.trailing, PageToolbarGeometry.controlGap * 2)
+            TextField("Find in page", text: $app.findQuery).textFieldStyle(.plain).font(ShellType.secondary).focused($focused).onSubmit { find() }
                 .accessibilityIdentifier("page.find").accessibilityLabel("Find in page")
             if !query.isEmpty { Text(found ? "\(counter.current) of \(counter.total)" : "No matches").font(ShellType.caption).foregroundStyle(app.pal.ink3).help("Matches in the main document; embedded frames are not searched.").accessibilityIdentifier("page.findCount") }
-            IconButton("Previous match", system: "chevron.up") { find(backwards: true) }
-            IconButton("Next match", system: "chevron.down") { find() }
-            IconButton("Close find", system: "xmark") { app.findPresented = false }
-        }.padding(8).background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius)).overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(app.pal.hairline))
-            .shadow(color: app.pal.shadow, radius: 12, y: 4)
+            ToolbarGlyphButton(title: "Previous match", system: "chevron.up", identifier: "page.findPrevious") { find(backwards: true) }
+            ToolbarGlyphButton(title: "Next match", system: "chevron.down", identifier: "page.findNext") { find() }
+            ToolbarGlyphButton(title: "Close find", system: "xmark", identifier: "page.findClose") { app.findPresented = false }
+        }
+        .padding(.leading, ShellLayout.sectionGap).padding(.trailing, ShellLayout.windowGap)
+        .frame(height: ShellLayout.pageToolbarHeight)
+        .background(app.pal.elev)
+        .overlay(alignment: .bottom) { Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline) }
             .task { try? await Task.sleep(for: .milliseconds(100)); if !Task.isCancelled && !app.commandBarPresented { focused = true } }.onExitCommand { app.findPresented = false }
             .onChange(of: query) { find() }
             .onChange(of: app.findRequest) { _, _ in find(backwards: app.findBackwards) }

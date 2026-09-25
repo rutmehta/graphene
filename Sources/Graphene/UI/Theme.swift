@@ -77,6 +77,11 @@ enum ShellLayout {
     static let popoverRadius: CGFloat = 12
     static let chatWidth: CGFloat = 420
     static let chatWidthRange: ClosedRange<CGFloat> = 360...560
+    /// Peek card: at most this wide, inset from the page card on every side.
+    static let peekMaxWidth: CGFloat = 900
+    static let peekInset: CGFloat = 40
+    /// Little Arc's floating panel.
+    static let littleArcSize = CGSize(width: 760, height: 560)
     static func clampedSidebarWidth(_ width: CGFloat) -> CGFloat {
         min(sidebarRange.upperBound, max(sidebarRange.lowerBound, width))
     }
@@ -218,6 +223,8 @@ struct Palette {
     var pageShadowY: CGFloat { isDark ? 2 : 1 }
     var windowOutline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.06) }
     var elev: Color { isDark ? Color(hex: "26262C") : .white }
+    /// The collapsed sidebar peeking over the page card.
+    var sidebarPeekBg: Color { elev.opacity(0.96) }
     var scrim: Color { Color.black.opacity(isDark ? 0.30 : 0.13) }
     /// The light dimming behind the top-tabs integrated command bar.
     var scrimSubtle: Color { Color.black.opacity(isDark ? 0.075 : 0.035) }
