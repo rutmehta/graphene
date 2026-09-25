@@ -42,7 +42,7 @@ final class ResumePageTests: XCTestCase {
             XCTAssertEqual(alpha(palette.lattice), 0.04, accuracy: 0.001)
             XCTAssertEqual(alpha(palette.highlight), 0.22, accuracy: 0.001)
             XCTAssertEqual(alpha(palette.highlightActive), 0.38, accuracy: 0.001)
-            XCTAssertEqual(alpha(palette.threadLine), mode == .dark ? 0.18 : 0.14, accuracy: 0.001)
+            XCTAssertEqual(alpha(palette.threadLine), mode == .dark ? 0.18 : 0.24, accuracy: 0.001)
             XCTAssertEqual(alpha(palette.quoteRule), alpha(palette.threadLine), accuracy: 0.001)
         }
     }

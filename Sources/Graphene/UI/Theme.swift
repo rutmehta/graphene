@@ -376,7 +376,7 @@ struct Palette {
     var tileFill: Color { isDark ? fill : rowHover }
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
     /// The provenance connector under Today rows, and the one on the selected tab's branch.
-    var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.14) }
+    var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.24) }
     var threadLineActive: Color { accent.opacity(0.60) }
     /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
     var elevFill: Color { isDark ? fill : rowHover }

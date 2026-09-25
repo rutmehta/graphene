@@ -222,10 +222,11 @@ private struct BoardCard: View {
             VStack(alignment: .leading, spacing: ShellLayout.rowInsetLeading) {
                 HStack(alignment: .top, spacing: ShellLayout.rowInsetLeading) {
                     Rectangle().fill(pal.quoteRule).frame(width: ShellLayout.hairline)
+                    // Clamp the quote so the note and the provenance line always fit inside the card.
                     Text(item.quote ?? "").font(ShellType.quote).lineSpacing(ShellType.quoteLineSpacing).foregroundStyle(pal.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }.fixedSize(horizontal: false, vertical: true)
-                if !item.text.isEmpty { Text(item.text).font(ShellType.row).foregroundStyle(pal.ink2) }
+                        .lineLimit(BoardCardText.quoteLineLimit).truncationMode(.tail)
+                }
+                if !item.text.isEmpty { Text(item.text).font(ShellType.row).foregroundStyle(pal.ink2).lineLimit(2) }
                 Spacer(minLength: 0)
                 Text(BoardCardText.provenance(item)).font(ShellType.caption).foregroundStyle(pal.ink3).lineLimit(1)
             }
@@ -270,6 +271,8 @@ enum BoardCardText {
         guard let host = item.url.flatMap(URL.init(string:))?.host else { return "" }
         return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
     }
+    /// Lines of quote a card shows before truncating, leaving room for the note and provenance.
+    static let quoteLineLimit = 6
     /// The quote card's provenance line: the source page's title and host.
     static func provenance(_ item: BoardItem) -> String {
         [item.title, host(item)].filter { !$0.isEmpty }.joined(separator: " · ")

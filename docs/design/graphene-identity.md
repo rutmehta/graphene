@@ -27,7 +27,7 @@ Five rules keep it from turning into a dashboard:
 | `ShellLayout.newTabColumnWidth` | 560 | Content column on the new-tab page |
 | `ShellLayout.newTabGap` | 24 | Between new-tab sections |
 | `ShellLayout.latticeCell` | 28 | Hex lattice cell size for empty states |
-| `Palette.threadLine` | `ink` at 18% dark, 14% light | The connector hairline |
+| `Palette.threadLine` | `ink` at 18% dark, 24% light | The connector hairline |
 | `Palette.threadLineActive` | `accent` at 60% | The connector on the selected row's branch |
 | `Palette.highlight` | `accent` at 22% | In-page Ask citation highlight (injected as CSS) |
 | `Palette.highlightActive` | `accent` at 38% | Hovered or selected citation |

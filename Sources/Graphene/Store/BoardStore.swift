@@ -40,7 +40,7 @@ struct BoardItem: Codable, Identifiable, Equatable {
         switch kind {
         case .page: return BoardGrid.snap(size: CGSize(width: 252, height: 218))
         case .note: return BoardGrid.snap(size: CGSize(width: 224, height: 145))
-        case .quote: return BoardGrid.snap(size: CGSize(width: 252, height: 170))
+        case .quote: return BoardGrid.snap(size: CGSize(width: 252, height: 218))
         }
     }
 }

@@ -14,7 +14,7 @@ The thread is the only new drawing. It joins a child tab to its parent in the si
 
 **Two textures, both quiet.** The Arc grain (2%) on chrome, and the hex lattice (4% ink, 28pt cells) in exactly four places: empty new-tab page, empty Threads, empty Vault, and the Board canvas where a grid earns its keep. The lattice fades to nothing across its bottom third. It never sits behind rows, text or chrome.
 
-**Two inks.** `ink` for content, `ink2` for secondary rows, `ink3` for glyphs and metadata, exactly as the Arc look. Provenance lines are `threadLine` (ink at 18% dark, 14% light), and the branch that contains the selection turns `threadLineActive` (accent 60%). Highlights in a page are `highlight` (accent 22%) and `highlightActive` (accent 38%).
+**Two inks.** `ink` for content, `ink2` for secondary rows, `ink3` for glyphs and metadata, exactly as the Arc look. Provenance lines are `threadLine` (ink at 18% dark, 24% light), and the branch that contains the selection turns `threadLineActive` (accent 60%). Highlights in a page are `highlight` (accent 22%) and `highlightActive` (accent 38%).
 
 **Cards only where a thing is separate.** A page card, a chat panel, a Board card, a Peek. Quotes, notes, thread rows and mail rows are rows, not cards.
 
