@@ -5,3 +5,6 @@
 *.xcworkspace
 Package.resolved
 .claude/worktrees/
+docs/parity/shots/**/visits/
+docs/parity/shots/**/ctrl-tab/
+docs/parity/shots/**/spaces/
