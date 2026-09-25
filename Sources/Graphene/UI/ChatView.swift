@@ -39,7 +39,10 @@ struct ChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-
+                        if (controller.chat?.messages ?? []).isEmpty && !search {
+                            Text(ChatGrounding.emptyState).font(ShellType.secondary).foregroundStyle(app.pal.ink3)
+                                .accessibilityIdentifier("chat.emptyState")
+                        }
                         ForEach(controller.chat?.messages ?? []) { message in messageView(message) }
                         if search {
                             ForEach(results) { source in
@@ -77,11 +80,29 @@ struct ChatView: View {
             }
             .onChange(of: app.activeSpaceID) { _, _ in controller.stop(); Task { await reset() } }
             .onChange(of: app.settings.ai) { _, _ in controller.stop() }
-            .onDisappear { controller.stop(); captureToken = UUID() }
+            .onChange(of: controller.arrived) { _, id in
+                guard let id, let chat = controller.chat, let message = chat.messages.first(where: { $0.id == id }), let tab = app.activeTab else { return }
+                Task { await ChatView.link(message, citations: chat.citations(for: message), in: tab, app: app) }
+            }
+            .onDisappear { controller.stop(); captureToken = UUID(); app.citations.clear() }
+    }
+    /// What the model can see, from the attached sources the space allows.
+    private var grounding: ChatGrounding { ChatGrounding(sources: attachments.filter { app.aiSourceAllowed($0) }, activeTabID: app.activeTabID) }
+    /// Marks an answer's passages in `tab`'s page and links the found chips (D6 §3.4). Private tabs never inject.
+    @discardableResult
+    static func link(_ message: ChatMessage, citations: [ChatCitation], in tab: Tab, app: AppState) async -> Set<String> {
+        guard !app.isPrivate, !tab.isPrivate, app.aiTabAllowed(tab) else { return [] }
+        return await app.citations.link(messageID: message.id, citations: citations, sources: message.sources ?? [], tabID: tab.id, url: tab.url, page: .engine(tab.engine))
     }
     private var header: some View {
         HStack(spacing: 2) {
-            Text("Chat").font(ShellType.title)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Ask").font(ShellType.title)
+                HStack(spacing: ShellLayout.statusDot) {
+                    Circle().fill(grounding.grounded ? app.pal.accent : app.pal.ink3).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                    Text(grounding.line).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+                }.accessibilityElement(children: .combine).accessibilityIdentifier("chat.grounding")
+            }
             Spacer()
             glyphButton("Past chats", system: "clock.arrow.circlepath") { store?.reload(); history.toggle() }
                 .popover(isPresented: $history) {
@@ -122,17 +143,18 @@ struct ChatView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
                     ForEach(attachments) { source in
+                        SourceChip(source: source) { attachments.removeAll { $0.id == source.id } }
+                    }
+                    Button { query += query.isEmpty || query.hasSuffix(" ") ? "@" : " @"; focused = true } label: {
                         HStack(spacing: 4) {
-                            Favicon(host: URL(string: source.url)?.host, size: ShellLayout.iconSize)
-                            Text(source.title).lineLimit(1).frame(maxWidth: 180)
-                            Button { attachments.removeAll { $0.id == source.id } } label: { Image(systemName: "xmark").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3) }
-                                .buttonStyle(.plain).accessibilityIdentifier("chat.remove.\(source.id)")
-                                .accessibilityLabel("Remove \(source.title)").accessibilityAddTraits(.isButton)
+                            Image(systemName: "plus").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
+                            Text("Add")
                         }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
                             .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
                             .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-                    }
-                    if attachments.isEmpty { Text("No sources").font(ShellType.secondary).foregroundStyle(app.pal.ink3) }
+                            .contentShape(Rectangle())
+                    }.buttonStyle(.plain).help("Attach tabs (@)")
+                        .accessibilityIdentifier("chat.addSource").accessibilityLabel("Add a source").accessibilityAddTraits(.isButton)
                 }
             }
             if capturing { ProgressView().controlSize(.mini) }
@@ -188,11 +210,21 @@ struct ChatView: View {
                     .foregroundStyle(app.pal.ink2).textSelection(.enabled)
             }
             else {
-                ChatMarkdownView(text: message.content, sources: message.sources ?? [])
-                if controller.working, message.id == controller.chat?.messages.last?.id { ProgressView().controlSize(.small) }
-                ForEach(Array((message.sources ?? []).enumerated()), id: \.element.id) { index, source in
-                    Button("[\(index + 1)] \(source.title)") { open(source) }.buttonStyle(.plain).font(ShellType.caption).foregroundStyle(app.pal.accentText).lineLimit(1)
-                        .accessibilityIdentifier("chat.citation.\(message.id).\(source.id)").accessibilityLabel(source.title).accessibilityAddTraits(.isButton)
+                let citations = controller.chat?.citations(for: message) ?? []
+                let streaming = controller.working && message.id == controller.chat?.messages.last?.id
+                let chip = { (citation: ChatCitation, full: Bool) in
+                    CitationChip(linker: app.citations, citation: citation, message: message, citations: citations, full: full)
+                }
+                ChatMarkdownView(text: message.content, sources: message.sources ?? [], citations: citations) { chip($0, false) }
+                    .foregroundStyle(app.pal.ink)
+                if streaming { ProgressView().controlSize(.small) }
+                if !citations.isEmpty {
+                    ChatFlow(lineSpacing: ShellLayout.iconBackingInset * 2) {
+                        ForEach(citations) { citation in chip(citation, true).padding(.trailing, ShellLayout.iconBackingInset * 2) }
+                    }.accessibilityIdentifier("chat.sourcesLine.\(message.id)")
+                } else if !streaming, !message.content.isEmpty {
+                    Text(ChatGrounding.noSources).font(ShellType.caption).foregroundStyle(app.pal.ink3)
+                        .accessibilityIdentifier("chat.noSources.\(message.id)")
                 }
                 HStack {
                     Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(message.content, forType: .string) }
@@ -233,6 +265,23 @@ struct ChatView: View {
                         .accessibilityIdentifier("chat.skill.\(skill.trigger)").accessibilityLabel(skill.trigger).accessibilityAddTraits(.isButton)
                 }
             }
+            if query.isEmpty && !choosingSkill {
+                // Skills are offered only while the composer is empty; typing hides them.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        ForEach(skills) { skill in
+                            Button {
+                                query = skill.trigger + " "; contexts = Set(skill.contexts); focused = true; Task { await collect() }
+                            } label: {
+                                Text(skill.trigger).font(ShellType.label).foregroundStyle(app.pal.ink2)
+                                    .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+                                    .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                            }.buttonStyle(.plain).help(skill.name)
+                                .accessibilityIdentifier("chat.skillChip.\(skill.trigger)").accessibilityLabel(skill.name).accessibilityAddTraits(.isButton)
+                        }
+                    }
+                }
+            }
             HStack(alignment: .bottom, spacing: 2) {
                 composerGlyph("@", font: ShellType.row, label: "Attach tabs", help: "Attach tabs (@)", id: "chat.attach") {
                     query += query.isEmpty || query.hasSuffix(" ") ? "@" : " @"; focused = true
@@ -240,7 +289,7 @@ struct ChatView: View {
                 composerGlyph("/", font: ShellType.glyph, label: "Choose a skill", help: "Choose a skill (/)", id: "chat.chooseSkill") {
                     choosingSkill.toggle(); focused = true
                 }
-                TextField("Ask a question about this page…", text: $query, axis: .vertical).textFieldStyle(.plain).lineLimit(1...5)
+                TextField(grounding.placeholder, text: $query, axis: .vertical).textFieldStyle(.plain).lineLimit(1...5)
                     .font(ShellType.row).focused($focused).onSubmit { send() }.accessibilityLabel("Chat composer")
                     .accessibilityIdentifier("chat.composer")
                     .padding(.vertical, 6)
@@ -286,6 +335,7 @@ struct ChatView: View {
         }
     }
     private func reset() async {
+        app.citations.clear()
         controller.select(ChatSession(spaceID: app.activeSpaceID, profileID: app.activeSpace.profileID ?? Profile.defaultID))
         scopeToken = UUID(); attachments = []; contexts = !app.attachedSources.isEmpty ? [] : (scopedNodes == nil ? [.currentTab] : [.thread])
         await collect()
@@ -316,4 +366,116 @@ struct ChatView: View {
         app.attachedSources = []; capturing = false
     }
     private func open(_ source: KnowledgeSource) { if let url = URL(string: source.url), ["http", "https"].contains(url.scheme ?? "") { app.openTab(url: url, parent: nil, activate: true) } }
+}
+
+/// One attached source in the strip: favicon (a quotation glyph for Vault notes) and a short
+/// title on a 24pt `elevFill` chip; the remove `xmark` appears on hover.
+private struct SourceChip: View {
+    @EnvironmentObject var app: AppState
+    let source: KnowledgeSource
+    let remove: () -> Void
+    @State private var hovering = false
+    var body: some View {
+        HStack(spacing: 4) {
+            if source.isNote {
+                Image(systemName: "quote.opening").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
+                    .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+            } else {
+                Favicon(host: URL(string: source.url)?.host, size: ShellLayout.iconSize)
+            }
+            Text(source.title).lineLimit(1).frame(maxWidth: 180)
+            // Space is kept for the glyph so the chip does not resize under the pointer.
+            Button(action: remove) { Image(systemName: "xmark").font(ShellType.glyphMini).foregroundStyle(hovering ? app.pal.ink3 : Color.clear) }
+                .buttonStyle(.plain).allowsHitTesting(hovering)
+                .accessibilityIdentifier("chat.remove.\(source.id)")
+                .accessibilityLabel("Remove \(source.title)").accessibilityAddTraits(.isButton)
+        }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
+            .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+            .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+            .onHover { hovering = $0 }
+            .help(source.title)
+    }
+}
+
+/// A citation chip, inline in the answer (the index alone) or in the sources line under it
+/// (index, favicon and title). Linked chips drive the page's marks; other-tab chips preview and
+/// switch; the rest open their source.
+struct CitationChip: View {
+    @EnvironmentObject var app: AppState
+    @ObservedObject var linker: CitationLinker
+    let citation: ChatCitation
+    let message: ChatMessage
+    let citations: [ChatCitation]
+    let full: Bool
+    @State private var previewing = false
+    private var source: KnowledgeSource? {
+        let sources = message.sources ?? []
+        return sources.indices.contains(citation.sourceNumber - 1) ? sources[citation.sourceNumber - 1] : nil
+    }
+    private var link: CitationChipLink {
+        CitationLinker.chipLink(citation, source: source, linkedIDs: linker.messageID == message.id ? linker.linkedIDs : [], linkedTabID: linker.tabID,
+                                activeTab: app.activeTab.map { ($0.id, $0.url) }, openTabIDs: Set(app.tabs.map(\.id)))
+    }
+    private var active: Bool { linker.messageID == message.id && linker.activeID == citation.citationID }
+    var body: some View {
+        let link = link
+        Button { click(link) } label: {
+            if full {
+                HStack(spacing: 4) {
+                    CitationIndexLabel(index: citation.index, active: active, linked: link != .unlinkedPage)
+                    if source?.isNote == true {
+                        Image(systemName: "quote.opening").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
+                            .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+                    } else {
+                        Favicon(host: source.flatMap { URL(string: $0.url)?.host }, size: ShellLayout.iconSize)
+                    }
+                    Text(source?.title ?? "Source").lineLimit(1).frame(maxWidth: 160, alignment: .leading)
+                }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
+                    .padding(.trailing, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+                    .background(active ? app.pal.accentSoft : app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                    .contentShape(Rectangle())
+            } else {
+                CitationIndexLabel(index: citation.index, active: active, linked: link != .unlinkedPage).contentShape(Rectangle())
+            }
+        }.buttonStyle(.plain)
+            .onHover { hover($0, link) }
+            .popover(isPresented: $previewing, arrowEdge: .bottom) {
+                if case .tab(let id) = link, let tab = app.tabs.first(where: { $0.id == id }) { TabPreview(tab: tab).environmentObject(app) }
+            }
+            .help(help(link))
+            .accessibilityIdentifier("chat.citation.\(message.id).\(citation.index)\(full ? ".source" : "")")
+            .accessibilityLabel("Source \(citation.index): \(source?.title ?? "unknown")").accessibilityAddTraits(.isButton)
+    }
+    private func help(_ link: CitationChipLink) -> String {
+        switch link {
+        case .page: return "Show in page"
+        case .unlinkedPage: return "Passage not found on this page"
+        case .tab: return "Switch to \(source?.title ?? "tab")"
+        case .source: return source?.title ?? ""
+        }
+    }
+    private func hover(_ hovering: Bool, _ link: CitationChipLink) {
+        switch link {
+        case .page: linker.hoverChip(hovering ? citation.citationID : nil)
+        case .tab: previewing = hovering
+        case .unlinkedPage, .source: break
+        }
+    }
+    private func click(_ link: CitationChipLink) {
+        switch link {
+        case .page: Task { await linker.focus(citation.citationID) }
+        case .unlinkedPage: break
+        case .tab(let id):
+            previewing = false
+            app.activate(id)
+            guard let tab = app.tabs.first(where: { $0.id == id }) else { return }
+            let message = message, citations = citations, target = citation.citationID
+            Task {
+                let found = await ChatView.link(message, citations: citations, in: tab, app: app)
+                if found.contains(target) { await app.citations.focus(target) }
+            }
+        case .source:
+            if let source, let url = URL(string: source.url), ["http", "https"].contains(url.scheme ?? "") { app.openTab(url: url, parent: nil, activate: true) }
+        }
+    }
 }

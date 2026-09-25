@@ -152,6 +152,8 @@ enum ShellType {
     static let glyphMini = Font.system(size: 10, weight: .regular)
     /// Code blocks in chat answers.
     static let code = Font.system(size: 12, weight: .regular, design: .monospaced)
+    /// Text quoted from a page (graphene-language.md §3): New York 13, set at `rowLineHeight` via `rowLineSpacing`.
+    static let quote = Font.system(size: rowSize, weight: .regular, design: .serif)
     /// Chat body line height as a multiple of the font size.
     static let rowLineHeight: CGFloat = 1.45
     /// Extra leading that turns `row` into `rowLineHeight`.
@@ -306,6 +308,10 @@ struct Palette {
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
     /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
     var elevFill: Color { isDark ? fill : rowHover }
+    /// The provenance connector hairline: `ink` at 18% dark, 14% light (D6 §2).
+    var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.14) }
+    /// The 1pt rule beside a quote block (graphene-language.md §4).
+    var quoteRule: Color { threadLine }
     /// A practically invisible fill that still receives hover and drops.
     var hitTarget: Color { Color.black.opacity(0.001) }
 
