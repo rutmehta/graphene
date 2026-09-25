@@ -74,6 +74,11 @@ enum ShellLayout {
     /// Hit target of a row's close glyph and the space label's `…`.
     static let closeTarget: CGFloat = 24
     static let folderIndent: CGFloat = 20
+    /// Provenance rows in Today (graphene-identity.md §2): per-depth indent of a child row,
+    /// x of the connector hairline from the parent row's leading edge, and the deepest indent.
+    static let threadIndent: CGFloat = 20
+    static let threadLineInset: CGFloat = 17
+    static let threadMaxDepth = 3
     /// Reset-tab dot on a pinned favicon and footer space dots.
     static let statusDot: CGFloat = 6
     static let spaceDotPitch: CGFloat = 14
@@ -304,6 +309,9 @@ struct Palette {
     /// `fill` is translucent white, which vanishes on a white `pageBg`, so it falls back to `rowHover`.
     var tileFill: Color { isDark ? fill : rowHover }
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
+    /// The provenance connector under Today rows, and the one on the selected tab's branch.
+    var threadLine: Color { ink.opacity(isDark ? 0.18 : 0.14) }
+    var threadLineActive: Color { accent.opacity(0.60) }
     /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
     var elevFill: Color { isDark ? fill : rowHover }
     /// A practically invisible fill that still receives hover and drops.

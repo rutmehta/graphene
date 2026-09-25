@@ -14,6 +14,15 @@ enum SidebarMotion {
             insertion: .offset(x: ShellLayout.spaceSlide).combined(with: .opacity),
             removal: .offset(x: -ShellLayout.spaceSlide).combined(with: .opacity))
     }
+    /// Branch collapse and expand (graphene-identity.md §4): child rows slide 8pt and fade over
+    /// 160ms; Reduce Motion keeps only a 120ms fade.
+    static let branchSlide: CGFloat = 8
+    static func branch(reduceMotion: Bool) -> Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.16)
+    }
+    static func branchTransition(reduceMotion: Bool) -> AnyTransition {
+        reduceMotion ? .opacity : .offset(y: -branchSlide).combined(with: .opacity)
+    }
 }
 
 /// The footer strip's glyphs, grouped around the centred space dots. Downloads joins the
@@ -108,15 +117,99 @@ struct Sidebar: View {
     }
 
     private func rows(_ section: TabSection) -> some View {
-        VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
+        // Only a space whose Today list has a child tab pays for provenance rows.
+        let branches = section == .today ? app.todayProvenance() : nil
+        return VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
             ForEach(app.folders.filter { $0.spaceID == app.activeSpaceID && $0.section == section }) { folder in
                 FolderRow(folder: folder)
             }
-            ForEach(app.visibleTabs.filter { $0.section == section && $0.folderID == nil }) { tab in
-                SidebarTab(tab: tab).id(tab.id)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+            if let branches, branches.hasBranches {
+                ProvenanceRows(layout: branches)
+            } else {
+                ForEach(app.visibleTabs.filter { $0.section == section && $0.folderID == nil }) { tab in
+                    SidebarTab(tab: tab).id(tab.id)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
         }
+    }
+}
+
+/// Today rows as branches (graphene-identity.md §3.1): children indent `threadIndent` per
+/// depth under their parent, joined by one hairline path per parent drawn behind the rows.
+private struct ProvenanceRows: View {
+    let layout: ProvenanceLayout
+    @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var body: some View {
+        let tabs = Dictionary(app.visibleTabs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
+            ForEach(layout.rows) { row in
+                if let tab = tabs[row.id] {
+                    SidebarTab(tab: tab, hiddenDescendants: row.collapsed ? row.descendants : nil)
+                        .padding(.leading, CGFloat(row.indent) * ShellLayout.threadIndent)
+                        .id(tab.id)
+                        .transition(row.depth > 0 ? SidebarMotion.branchTransition(reduceMotion: reduceMotion) : .opacity.combined(with: .move(edge: .top)))
+                }
+            }
+        }
+        .background(alignment: .topLeading) { ThreadLines(connectors: layout.connectors(activeID: app.activeTabID)) }
+        .background(BranchKeyMonitor(app: app))
+    }
+}
+
+/// The connector paths: `threadLine`, or `threadLineActive` on the selected tab's branch.
+private struct ThreadLines: View {
+    let connectors: [ProvenanceConnector]
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        let pal = app.pal
+        Canvas { context, _ in
+            for connector in connectors {
+                var path = Path(connector.vertical)
+                for tick in connector.ticks { path.addRect(tick) }
+                context.fill(path, with: .color(connector.active ? pal.threadLineActive : pal.threadLine))
+            }
+        }.allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
+
+/// ⌥← / ⌥→ collapse and expand the selected Today row's branch. The keys belong to the
+/// sidebar only after a click in the Today rows and until the next other key or click, so
+/// word-wise caret movement in the page and in text fields keeps working.
+private struct BranchKeyMonitor: NSViewRepresentable {
+    let app: AppState
+    func makeNSView(context: Context) -> MonitorView { MonitorView(app: app) }
+    func updateNSView(_ nsView: MonitorView, context: Context) {}
+    final class MonitorView: NSView {
+        let app: AppState
+        private var monitor: Any?
+        private var engaged = false
+        init(app: AppState) {
+            self.app = app
+            super.init(frame: .zero)
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown]) { [weak self] event in
+                guard let self, let window = self.window, event.window === window else { return event }
+                if event.type == .leftMouseDown {
+                    self.engaged = self.bounds.contains(self.convert(event.locationInWindow, from: nil))
+                    return event
+                }
+                let arrow = event.keyCode == 123 || event.keyCode == 124
+                let modifiers = event.modifierFlags.intersection([.command, .control, .shift, .option])
+                guard arrow, modifiers == .option, self.engaged, window.isKeyWindow,
+                      let id = self.app.activeTabID, !self.app.branchChildren(of: id).isEmpty else {
+                    if !event.modifierFlags.contains(.option) || !arrow { self.engaged = false }
+                    return event
+                }
+                let collapse = event.keyCode == 123
+                withAnimation(SidebarMotion.branch(reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)) {
+                    self.app.setBranch(id, collapsed: collapse)
+                }
+                return nil
+            }
+        }
+        required init?(coder: NSCoder) { nil }
+        deinit { if let monitor { NSEvent.removeMonitor(monitor) } }
     }
 }
 
@@ -342,6 +435,8 @@ private struct SidebarTab: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
     var tile = false
+    /// Set on a collapsed branch's parent: the count shown at the trailing edge.
+    var hiddenDescendants: Int? = nil
     @State private var hovered = false
     @State private var renaming = false
     @State private var name = ""
@@ -433,6 +528,9 @@ private struct SidebarTab: View {
             }.buttonStyle(.plain).help(offBase ? "Return to pinned page" : "Open tab")
                 .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)")
                 .accessibilityLabel(offBase ? "Return \(tab.displayTitle) to pinned page" : "Open \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+                .modifier(BranchDropTarget(enabled: tab.section == .today && tab.folderID == nil) { payload in
+                    if let id = payloadID(payload, prefix: "tab:") { app.adoptTab(id, under: tab.id) }
+                })
             if renaming { InlineName(text: $name) { app.renameTab(tab, name: name); renaming = false } }
             else {
                 Text(tab.displayTitle).font(selected ? ShellType.rowSelected : ShellType.row).lineLimit(1)
@@ -443,6 +541,11 @@ private struct SidebarTab: View {
             }
             if tab.isPlayingAudio {
                 Image(systemName: "speaker.wave.2.fill").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3).help("Playing audio")
+            }
+            if let hiddenDescendants {
+                Text("\(hiddenDescendants)").font(ShellType.label).monospacedDigit().foregroundStyle(app.pal.ink3)
+                    .help("\(hiddenDescendants) hidden tabs; ⌥→ expands")
+                    .accessibilityLabel("\(hiddenDescendants) collapsed tabs")
             }
             if tab.section == .today {
                 Button { app.requestCloseTab(tab.id) } label: {
@@ -544,6 +647,16 @@ struct ShellButtonStyle: ButtonStyle {
 func payloadID(_ payload: String, prefix: String) -> UUID? {
     guard payload.hasPrefix(prefix) else { return nil }
     return UUID(uuidString: String(payload.dropFirst(prefix.count)))
+}
+
+/// A Today row's icon slot: dropping a tab here makes it the row's child. Rows that cannot
+/// take children get no drop target, so the row's own reorder target handles the drop.
+private struct BranchDropTarget: ViewModifier {
+    var enabled: Bool
+    var accept: (String) -> Void
+    func body(content: Content) -> some View {
+        if enabled { content.modifier(ShellDropTarget(accept: accept)) } else { content }
+    }
 }
 
 private struct ShellDropTarget: ViewModifier {

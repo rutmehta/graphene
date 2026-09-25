@@ -46,6 +46,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
             if let id = activeTabID {
                 claimTab(id)
                 recentIDs.removeAll { $0 == id }; recentIDs.insert(id, at: 0)
+                if !collapsedBranchIDs.isEmpty { revealInBranch(id) }
                 tabs.first { $0.id == id }?.lastActiveAt = clock()
             }
         }
@@ -149,6 +150,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
     var findBackwards = false
     @Published var toasts = ToastQueue()
     @Published var selectedThreadID: UUID?
+    /// Today branches collapsed with ⌥← (per window, not persisted).
+    @Published var collapsedBranchIDs: Set<UUID> = []
     private var subscriptions = Set<AnyCancellable>()
 
     @Published private(set) var sessionError: String?
@@ -307,6 +310,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
             for index in splits.indices { splits[index].tabIDs.removeAll { $0 == id } }
             splits.removeAll { $0.tabIDs.count < 2 }
         }
+        if tab.spaceID != destination || section != .today || folderID != nil { detachFromBranch(tab) }
         tab.spaceID = destination
         tab.isFavorite = section == .favorites
         tab.isPinned = section != .today
@@ -532,19 +536,25 @@ final class AppState: ObservableObject, BrowserCoordinator {
         return tab
     }
 
-    func closeTab(_ id: UUID) {
-        guard let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
+    @discardableResult
+    func closeTab(_ id: UUID, announce: Bool = true) -> UUID? {
+        guard let target = tabs.first(where: { $0.id == id }) else { return nil }
+        promoteChildren(of: target)
+        collapsedBranchIDs.remove(id)
+        guard let idx = tabs.firstIndex(where: { $0.id == id }) else { return nil }
         selectedTabIDs.remove(id)
         for state in library.states { state.recentIDs.removeAll { $0 == id } }
         let closing = tabs[idx]
         let sibling = splits.first(where: { $0.tabIDs.contains(id) })?.tabIDs.first { $0 != id }
         for index in splits.indices { splits[index].tabIDs.removeAll { $0 == id } }
         splits.removeAll { $0.tabIDs.count < 2 }
+        var archived: UUID?
         if closing.url != nil && !isPrivate {
             var entry = SessionTab(closing)
             entry.archiveID = UUID(); entry.archivedAt = clock()
             archivedTabs.append(entry)
-            if let archiveID = entry.archiveID {
+            archived = entry.archiveID
+            if announce, let archiveID = entry.archiveID {
                 toasts.enqueue(title: "Closed \(closing.displayTitle)", icon: "xmark.circle", seconds: 5, actionTitle: "Undo") { [weak self] in
                     self?.restoreArchive(archiveID)
                 }
@@ -560,10 +570,18 @@ final class AppState: ObservableObject, BrowserCoordinator {
         }
         if visibleTabs.isEmpty { _ = newTab(activate: true) }
         persistSoon()
+        return archived
     }
 
     func reopenClosedTab() {
         guard let closed = archivedTabs.popLast() else { return }
+        restore(closed)
+    }
+
+    /// Reopens an archived entry. Its parent link survives only when that parent is open,
+    /// under its original id or the id `remap` gives it (a branch restored in one Undo).
+    @discardableResult
+    private func restore(_ closed: SessionTab, remap: [UUID: UUID] = [:]) -> Tab {
         if let id = closed.spaceID, spaces.contains(where: { $0.id == id }) { selectSpace(id) }
         let tab = activeTab?.url == nil ? activeTab! : newTab()
         tab.profileID = activeSpace.profileID ?? Profile.defaultID; tab.discard()
@@ -577,9 +595,11 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.lastActiveAt = clock()
         tab.folderID = closed.folderID.flatMap { id in folders.contains { $0.id == id } ? id : nil }
         tab.isRestoring = true
+        tab.parentTabID = closed.parentTabID.map { remap[$0] ?? $0 }.flatMap { id in tabs.contains { $0.id == id && $0.id != tab.id } ? id : nil }
         if let url = closed.url.flatMap(URL.init(string:)) { tab.load(url) }
         show(.web)
         persistSoon()
+        return tab
     }
 
     func moveTab(_ id: UUID, onto destinationID: UUID, before: Bool = false) {
@@ -592,6 +612,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
         let tab = tabs.remove(at: source)
         guard let destination = tabs.firstIndex(where: { $0.id == destinationID }) else { return }
         tabs.insert(tab, at: !before && source < destinationIndex ? destination + 1 : destination)
+        // A reordered child leaves its branch and becomes a root at the drop position.
+        tab.parentTabID = nil
+        objectWillChange.send()
         persistSoon()
     }
 
@@ -683,13 +706,135 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.currentThreadID = parent?.currentThreadID
         tab.currentNodeID = parent?.currentNodeID   // so the child's first page links from the parent's node
         if let idx = tabs.firstIndex(where: { $0.id == parent?.id }) {
-            tabs.insert(tab, at: idx + 1)
+            // Siblings read oldest first, so a new child follows its parent's whole branch.
+            let branch = parent.map { branchIDs($0.id) } ?? []
+            tabs.insert(tab, at: (tabs.lastIndex { branch.contains($0.id) } ?? idx) + 1)
         } else {
             tabs.append(tab)
         }
         if activate || routedSpace != nil { self.activate(tab.id) }
         tab.load(url)
         persistSoon()
+    }
+
+    // MARK: provenance (graphene-identity.md §3.1)
+
+    /// Only unfoldered Today tabs take part in branches; pinned tabs and favorites never do.
+    private func inTodayList(_ tab: Tab) -> Bool { tab.section == .today && tab.folderID == nil }
+
+    /// The Today list of a space as branches, with `collapsedBranchIDs` applied.
+    func todayProvenance(spaceID: UUID? = nil) -> ProvenanceLayout {
+        let space = spaceID ?? activeSpaceID
+        let today = tabs.filter { $0.spaceID == space && inTodayList($0) }
+        var parents: [UUID: UUID] = [:]
+        for tab in today { if let parent = tab.parentTabID { parents[tab.id] = parent } }
+        return ProvenanceLayout(ids: today.map(\.id), parents: parents, collapsed: collapsedBranchIDs)
+    }
+
+    /// The participating parent of a tab: an open Today tab in the same space.
+    func branchParent(of id: UUID) -> Tab? {
+        guard let tab = tabs.first(where: { $0.id == id }), inTodayList(tab), let parentID = tab.parentTabID, parentID != id,
+              let parent = tabs.first(where: { $0.id == parentID }), parent.spaceID == tab.spaceID, inTodayList(parent) else { return nil }
+        return parent
+    }
+
+    /// Direct children shown under a Today row, in list order.
+    func branchChildren(of id: UUID) -> [Tab] {
+        tabs.filter { $0.parentTabID == id && branchParent(of: $0.id)?.id == id }
+    }
+
+    /// The tab and every descendant, parents before children.
+    func branchIDs(_ id: UUID) -> [UUID] {
+        var result: [UUID] = [], queue = [id]
+        while !queue.isEmpty {
+            let next = queue.removeFirst()
+            guard !result.contains(next) else { continue }
+            result.append(next)
+            queue.append(contentsOf: branchChildren(of: next).map(\.id))
+        }
+        return result
+    }
+
+    /// Children of a closing or leaving tab take its place: they join its own parent (or become
+    /// roots) at its position in the list, so the branch closes without a gap.
+    private func promoteChildren(of tab: Tab) {
+        let children = tabs.filter { $0.parentTabID == tab.id && $0.id != tab.id }
+        guard !children.isEmpty else { return }
+        let adopter = branchParent(of: tab.id)?.id
+        let moving = inTodayList(tab) ? children.filter { $0.spaceID == tab.spaceID && inTodayList($0) } : []
+        for child in children { child.parentTabID = adopter }
+        if !moving.isEmpty {
+            tabs.removeAll { candidate in moving.contains { $0 === candidate } }
+            if let index = tabs.firstIndex(where: { $0 === tab }) { tabs.insert(contentsOf: moving, at: index) }
+        }
+        objectWillChange.send()
+    }
+
+    private func detachFromBranch(_ tab: Tab) {
+        guard tab.parentTabID != nil || tabs.contains(where: { $0.parentTabID == tab.id }) else { return }
+        promoteChildren(of: tab)
+        tab.parentTabID = nil
+        collapsedBranchIDs.remove(tab.id)
+    }
+
+    /// "Detach from parent": the tab becomes a root and keeps its own children.
+    func detachFromParent(_ id: UUID) {
+        guard let tab = tabs.first(where: { $0.id == id }), tab.parentTabID != nil else { return }
+        tab.parentTabID = nil
+        objectWillChange.send(); persistSoon()
+    }
+
+    /// Dropping a tab on a Today row's icon slot makes it that row's newest child.
+    func adoptTab(_ id: UUID, under parentID: UUID) {
+        guard id != parentID, let parent = tabs.first(where: { $0.id == parentID }), inTodayList(parent),
+              tabs.contains(where: { $0.id == id }), !branchIDs(id).contains(parentID) else { return }
+        placeTab(id, section: .today, spaceID: parent.spaceID)
+        guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
+        let tab = tabs.remove(at: index)
+        let branch = branchIDs(parentID)
+        tabs.insert(tab, at: (tabs.lastIndex { branch.contains($0.id) } ?? tabs.count - 1) + 1)
+        tab.parentTabID = parentID
+        collapsedBranchIDs.remove(parentID)
+        objectWillChange.send(); persistSoon()
+    }
+
+    /// "Close branch": archives the tab and its descendants with one Undo toast.
+    func closeBranch(_ id: UUID) {
+        let ids = branchIDs(id)
+        guard ids.count > 1 else { closeTab(id); return }
+        // Deepest first, so no child is promoted and every entry keeps its original parent.
+        let restoring = Array(ids.reversed().compactMap { closeTab($0, announce: false) }.reversed())
+        guard !restoring.isEmpty else { return }
+        toasts.enqueue(title: "Archived \(restoring.count) tabs", icon: "archivebox", seconds: 5, actionTitle: "Undo") { [weak self] in
+            self?.restoreBranch(restoring)
+        }
+    }
+
+    /// Reopens archive entries parents first, relinking children to their restored parents.
+    func restoreBranch(_ archiveIDs: [UUID]) {
+        var remap: [UUID: UUID] = [:], first: Tab?
+        for archiveID in archiveIDs {
+            guard let index = archivedTabs.firstIndex(where: { $0.archiveID == archiveID }) else { continue }
+            let entry = archivedTabs.remove(at: index)
+            let tab = restore(entry, remap: remap)
+            if let old = entry.id { remap[old] = tab.id }
+            if first == nil { first = tab }
+        }
+        if let first { activate(first.id) }
+    }
+
+    /// ⌥← / ⌥→ on a Today row with children.
+    func setBranch(_ id: UUID, collapsed: Bool) {
+        guard !branchChildren(of: id).isEmpty else { return }
+        if collapsed { collapsedBranchIDs.insert(id) } else { collapsedBranchIDs.remove(id) }
+    }
+
+    /// Selecting a tab inside a collapsed branch opens the branches above it.
+    private func revealInBranch(_ id: UUID) {
+        var current = id, seen: Set<UUID> = []
+        while let parent = branchParent(of: current), seen.insert(parent.id).inserted {
+            collapsedBranchIDs.remove(parent.id); current = parent.id
+        }
     }
 
     // MARK: session persistence
@@ -699,13 +844,14 @@ final class AppState: ObservableObject, BrowserCoordinator {
         var favorite: Bool?; var pinnedURL: String?; var customTitle: String?; var folderID: UUID?
         var lastActiveAt: Date?; var archivedAt: Date?; var archiveID: UUID?; var title: String?
         var id: UUID?
+        var parentTabID: UUID?
         @MainActor init(_ tab: Tab) {
             url = tab.url?.absoluteString; pinned = tab.isPinned; spaceID = tab.spaceID
             nodeID = tab.currentNodeID; threadID = tab.currentThreadID
             favorite = tab.isFavorite; pinnedURL = tab.pinnedURL?.absoluteString
             customTitle = tab.customTitle; folderID = tab.folderID
             lastActiveAt = tab.lastActiveAt; title = tab.title
-            id = tab.id
+            id = tab.id; parentTabID = tab.parentTabID
         }
     }
     struct SessionData: Codable {
@@ -810,8 +956,10 @@ final class AppState: ObservableObject, BrowserCoordinator {
             }
         }
         if let idx = session.activeSpaceIndex, spaces.indices.contains(idx) { activeSpaceID = spaces[idx].id }
+        var restoredParents: [(Tab, UUID)] = []
         for st in session.tabs {
             let tab = makeTab(id: st.id ?? UUID())
+            if let parent = st.parentTabID { restoredParents.append((tab, parent)) }
             tab.isPinned = st.pinned
             tab.isFavorite = st.favorite ?? false
             tab.pinnedURL = (st.pinnedURL ?? (st.pinned ? st.url : nil)).flatMap(URL.init(string:))
@@ -832,6 +980,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
             // Blank tabs also need their own space's store, not the active space's.
             tab.discard()
         }
+        // A parent that did not come back leaves its children as roots.
+        for (tab, parent) in restoredParents where parent != tab.id && tabs.contains(where: { $0.id == parent }) { tab.parentTabID = parent }
         splits = (session.splits ?? []).filter { group in
             group.tabIDs.count >= 2 && group.tabIDs.count <= 4 && Set(group.tabIDs).count == group.tabIDs.count && group.tabIDs.allSatisfy { id in tabs.contains { $0.id == id } }
         }
