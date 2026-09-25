@@ -26,6 +26,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     private(set) var articleDetected = false
     private(set) var signInBlocked = false
     private var externalDecisions: [String: Bool] = [:]
+    /// The server trust WebKit handed us in the last server-trust challenge, read-only.
+    private(set) var challengeTrust: (host: String, trust: SecTrust)?
     private static let pipScript: String = {
         guard let url = Bundle.module.url(forResource: "pip", withExtension: "js") else { return "" }
         return (try? String(contentsOf: url, encoding: .utf8)) ?? ""
@@ -386,18 +388,39 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
         delegate?.engine(self, didFail: NSError(domain: "Graphene", code: 1, userInfo: [NSLocalizedDescriptionKey: "This page crashed — Reload to continue."]))
     }
 
+    /// WebKit evaluates server trust itself — with its own policies, revocation settings and
+    /// network fetches of missing intermediates — so Graphene never pre-evaluates or overrides it.
+    /// The trust is only kept (read-only) for the Site Controls certificate summary.
     func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust, let trust = challenge.protectionSpace.serverTrust else { completionHandler(.performDefaultHandling, nil); return }
-        guard SecTrustEvaluateWithError(trust, nil) else {
-            completionHandler(.cancelAuthenticationChallenge, nil)
-            delegate?.engine(self, didFail: NSError(domain: "Graphene", code: NSURLErrorServerCertificateUntrusted, userInfo: [NSLocalizedDescriptionKey: "The certificate for \(challenge.protectionSpace.host) could not be verified. Graphene has not sent page data. Certificate overrides are unavailable because WebKit does not expose HSTS policy safely."]))
-            return
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust, let trust = challenge.protectionSpace.serverTrust {
+            challengeTrust = (challenge.protectionSpace.host, trust)
         }
         completionHandler(.performDefaultHandling, nil)
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { delegate?.engine(self, didFail: error) }
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { delegate?.engine(self, didFail: error) }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { delegate?.engine(self, didFail: Self.presentable(error, host: currentURL?.host)) }
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { delegate?.engine(self, didFail: Self.presentable(error, host: currentURL?.host)) }
+
+    /// The URL errors WebKit reports when it rejects a server certificate. Graphene fails closed:
+    /// there is no bypass, only the page's "Try again".
+    nonisolated static let certificateErrorCodes: Set<Int> = [NSURLErrorServerCertificateUntrusted, NSURLErrorServerCertificateHasBadDate,
+                                                  NSURLErrorServerCertificateHasUnknownRoot, NSURLErrorServerCertificateNotYetValid]
+
+    /// A certificate failure as a clear, user-facing error; every other error is returned unchanged.
+    nonisolated static func presentable(_ error: Error, host fallbackHost: String? = nil) -> Error {
+        let nsError = error as NSError
+        // A TLS failure that carries the peer's trust (e.g. a certificate issued for another host)
+        // is a certificate rejection too, whatever code the network layer chose.
+        let rejectedTrust = nsError.code == NSURLErrorSecureConnectionFailed && nsError.userInfo[NSURLErrorFailingURLPeerTrustErrorKey] != nil
+        guard nsError.domain == NSURLErrorDomain, certificateErrorCodes.contains(nsError.code) || rejectedTrust else { return error }
+        let failing = (nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL)
+            ?? (nsError.userInfo[NSURLErrorFailingURLStringErrorKey] as? String).flatMap(URL.init(string:))
+        let host = failing?.host ?? fallbackHost ?? "This site"
+        var info = nsError.userInfo
+        info[NSLocalizedDescriptionKey] = "\(host)'s certificate isn't trusted, so Graphene didn't load the page."
+        info[NSUnderlyingErrorKey] = nsError
+        return NSError(domain: NSURLErrorDomain, code: nsError.code, userInfo: info)
+    }
 
     private func recordIfNew(_ url: URL?, title: String?) {
         guard let url, url.scheme == "http" || url.scheme == "https" else { return }

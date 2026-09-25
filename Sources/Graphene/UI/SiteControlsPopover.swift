@@ -72,7 +72,8 @@ struct SiteControlsPopover: View {
 
 extension WKWebEngine {
     var certificateSummary: String? {
-        guard let trust = webView.serverTrust, let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate], let certificate = chain.first else { return nil }
+        let fallback = challengeTrust.flatMap { $0.host == webView.url?.host ? $0.trust : nil }
+        guard let trust = webView.serverTrust ?? fallback, let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate], let certificate = chain.first else { return nil }
         let subject = SecCertificateCopySubjectSummary(certificate) as String? ?? "Unknown subject"
         let keys = [kSecOIDX509V1IssuerName, kSecOIDX509V1ValidityNotBefore, kSecOIDX509V1ValidityNotAfter] as CFArray
         let values = SecCertificateCopyValues(certificate, keys, nil) as? [String: Any] ?? [:]
