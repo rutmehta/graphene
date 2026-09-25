@@ -9,7 +9,7 @@ struct ChromeBackground: View {
         ZStack {
             app.pal.sidebarGradient
             if !reduceTransparency { ChromeGrain().allowsHitTesting(false) }
-        }.accessibilityHidden(true)
+        }.ignoresSafeArea().accessibilityHidden(true)
     }
 }
 
@@ -32,7 +32,9 @@ struct ChromeGrain: View {
 struct WindowOutline: View {
     @EnvironmentObject var app: AppState
     var body: some View {
+        // The hidden titlebar is still a 32pt safe area to SwiftUI; without ignoring it the top
+        // stroke lands at y=32 and reads as a rule across the sidebar.
         Rectangle().strokeBorder(app.pal.windowOutline, lineWidth: ShellLayout.windowOutline)
-            .allowsHitTesting(false).accessibilityHidden(true)
+            .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
     }
 }

@@ -284,7 +284,7 @@ struct Palette {
         isDark ? Self.hsb(spaceHS.hue + 44.0 / 360, 0.92 * chromeSaturation, 0.15)
                : Self.hsb(spaceHS.hue + 25.0 / 360, 0.26 * chromeSaturation, 0.92)
     }
-    var grainOpacity: Double { isDark ? 0.03 : 0.025 }
+    var grainOpacity: Double { 0.02 }
     var chromeGrain: Color { (isDark ? Color.white : Color.black).opacity(grainOpacity) }
 
     // MARK: ink and translucent fills

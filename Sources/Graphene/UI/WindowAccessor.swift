@@ -24,12 +24,27 @@ struct WindowAccessor: NSViewRepresentable {
         window.styleMask.insert(.fullSizeContentView)
     }
 
+    /// Diagnostic: prints the theme frame's view tree (class, frame, hidden, layer border/background) to stderr.
+    static func dump(_ view: NSView, depth: Int) {
+        let pad = String(repeating: "  ", count: depth)
+        let layer = view.layer.map { "bw=\($0.borderWidth) bg=\($0.backgroundColor != nil) op=\($0.opacity)" } ?? "nolayer"
+        FileHandle.standardError.write("\(pad)\(type(of: view)) \(view.frame) hidden=\(view.isHidden) \(layer)\n".data(using: .utf8)!)
+        if depth < 4 { view.subviews.forEach { dump($0, depth: depth + 1) } }
+    }
+
     private func write(_ window: NSWindow?) {
         guard let window, window.windowNumber > 0 else { return }
         state?.attach(window)
         if window.isKeyWindow { onKeyWindow() }
         Self.flattenTitlebar(window)
         window.isMovableByWindowBackground = false
+        if ProcessInfo.processInfo.environment["GRAPHENE_DUMP_WINDOW"] == "1", let frame = window.contentView?.superview {
+            Self.dump(frame, depth: 0)
+            if let pal = state?.app.pal {
+                func hex(_ c: Color) -> String { let n = NSColor(c).usingColorSpace(.sRGB) ?? .black; return String(format: "%d,%d,%d", Int(n.redComponent * 255), Int(n.greenComponent * 255), Int(n.blueComponent * 255)) }
+                FileHandle.standardError.write("palette chromeTop=\(hex(pal.chromeTop)) chromeBottom=\(hex(pal.chromeBottom)) sat=\(pal.chromeSaturation)\n".data(using: .utf8)!)
+            }
+        }
         if !window.styleMask.contains(.fullScreen) {
             for (index, kind) in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].enumerated() {
                 guard let button = window.standardWindowButton(kind), let container = button.superview else { continue }
