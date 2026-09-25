@@ -35,6 +35,9 @@ protocol WebEngine: AnyObject {
     func setActiveHighlight(_ id: String?) async
     /// Scrolls the first mark with `id` smoothly to the centre of the page.
     func scrollToHighlight(_ id: String) async
+    /// The bounding rect of the first mark with `id`, in the page viewport's coordinates
+    /// (top-left origin) in points of the host view; `nil` when there is no such mark.
+    func highlightRect(id: String) async -> CGRect?
     /// Removes every citation mark from the page.
     func clearHighlights() async
 }

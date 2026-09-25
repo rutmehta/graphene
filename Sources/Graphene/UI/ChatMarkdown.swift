@@ -57,14 +57,70 @@ enum ChatMarkdown {
     static func hasMarkers(_ text: String) -> Bool {
         text.range(of: #"\[\d+\]"#, options: .regularExpression) != nil || text.contains(anchorOpen)
     }
-    /// `text` with each fallback citation's chip placed after the sentences it was matched to.
+    /// `text` with each citation's chip in place: the `[n]` markers of per-claim citations
+    /// become their chips by position among the answer's markers (older citations keep their
+    /// `[n]`, resolved by source number), and each fallback citation's chip follows the
+    /// sentences it was matched to.
     static func anchored(_ text: String, citations: [ChatCitation]) -> String {
         var result = text
+        var byMarker: [Int: Int] = [:]
+        for citation in citations { for marker in citation.markers ?? [] { byMarker[marker] = citation.index } }
+        if !byMarker.isEmpty, let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?"#) {
+            for (ordinal, match) in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).enumerated().reversed() {
+                guard let index = byMarker[ordinal], let range = Range(match.range, in: result) else { continue }
+                result.replaceSubrange(range, with: anchorOpen + "\(index)" + anchorClose)
+            }
+        }
         for citation in citations {
             for anchor in citation.anchors ?? [] {
                 guard !anchor.isEmpty, let range = result.range(of: anchor) else { continue }
                 result.insert(contentsOf: " " + anchorOpen + "\(citation.index)" + anchorClose, at: range.upperBound)
             }
+        }
+        return result
+    }
+
+    // MARK: echoed passages
+
+    /// Fewest consecutive words an answer sentence must share with a cited passage to be set
+    /// as a quote rather than prose.
+    static let echoWords = 8
+    /// A run of a line: prose, or sentences that echo a cited passage verbatim.
+    struct Piece: Equatable {
+        var text: String
+        var quote: Bool
+    }
+    /// The words of `text` compared for an echo: markers and chips dropped, case folded,
+    /// punctuation ignored.
+    static func comparable(_ text: String) -> [String] {
+        text.replacingOccurrences(of: #"\[\d+\]|⁅\d+⁆"#, with: " ", options: .regularExpression)
+            .lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
+    }
+    /// Whether `sentence` repeats at least `echoWords` consecutive words of one of `passages`.
+    static func echoes(_ sentence: String, passages: [String]) -> Bool {
+        let words = comparable(sentence)
+        guard words.count >= echoWords else { return false }
+        let runs = Set(words.indices.dropLast(echoWords - 1).map { words[$0..<$0 + echoWords].joined(separator: " ") })
+        return passages.contains { passage in
+            let source = comparable(passage)
+            return source.count >= echoWords && source.indices.dropLast(echoWords - 1).contains { runs.contains(source[$0..<$0 + echoWords].joined(separator: " ")) }
+        }
+    }
+    /// `line` split into prose and echoed sentences, neighbours of a kind joined; a sentence
+    /// of markers alone ("… 130 GPa. [1]") stays with the one before it.
+    static func pieces(_ line: String, passages: [String]) -> [Piece] {
+        var result: [Piece] = []
+        for range in PageContext.sentenceRanges(line) {
+            var sentence = String(line[range])
+            // Chips the sentence break left at the start of this sentence belong to the one before.
+            if let last = result.indices.last, let lead = sentence.range(of: #"^\s*((\[\d+\]|⁅\d+⁆)\s*)+"#, options: .regularExpression) {
+                result[last].text += sentence[lead]
+                sentence = String(sentence[lead.upperBound...])
+                if sentence.isEmpty { continue }
+            }
+            let quote = echoes(sentence, passages: passages)
+            if let last = result.indices.last, comparable(sentence).isEmpty || result[last].quote == quote { result[last].text += sentence }
+            else { result.append(Piece(text: sentence, quote: quote)) }
         }
         return result
     }
@@ -157,16 +213,25 @@ struct ChatMarkdownView<Chip: View>: View {
                     ScrollView(.horizontal) { Text(block.text).font(ShellType.code).textSelection(.enabled).padding(10) }
                         .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                 } else if let quote = ChatMarkdown.quote(block.text, sources: sources) {
-                    HStack(alignment: .top, spacing: ShellLayout.rowInsetLeading) {
-                        Rectangle().fill(app.pal.quoteRule).frame(width: ShellLayout.hairline)
+                    quoteRow {
                         Text(quote).font(ShellType.quote).lineSpacing(ShellType.rowLineSpacing).textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
-                    }.fixedSize(horizontal: false, vertical: true)
+                    }
                 } else {
                     let heading = block.text.hasPrefix("#")
                     let value = heading ? block.text.drop(while: { $0 == "#" || $0 == " " }).description : block.text
                     let font = heading ? ShellType.title : ShellType.row
-                    if ChatMarkdown.hasMarkers(value) {
+                    let pieces = heading ? [] : value.components(separatedBy: "\n").flatMap { ChatMarkdown.pieces($0, passages: passages) }
+                    if pieces.contains(where: \.quote) {
+                        VStack(alignment: .leading, spacing: ShellType.rowLineSpacing) {
+                            ForEach(Array(pieces.enumerated()), id: \.offset) { _, piece in
+                                let run = piece.text.trimmingCharacters(in: .whitespaces)
+                                if piece.quote { quoteRow { flow(run, font: ShellType.quote) } }
+                                else if ChatMarkdown.hasMarkers(run) { flow(run, font: font) }
+                                else { Text(ChatMarkdown.attributed(run)).font(font).lineSpacing(ShellType.rowLineSpacing).textSelection(.enabled) }
+                            }
+                        }
+                    } else if ChatMarkdown.hasMarkers(value) {
                         VStack(alignment: .leading, spacing: ShellType.rowLineSpacing) {
                             ForEach(Array(value.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in flow(line, font: font) }
                         }
@@ -180,6 +245,15 @@ struct ChatMarkdownView<Chip: View>: View {
                 if ["http", "https"].contains(url.scheme ?? "") { app.openTab(url: url, parent: nil, activate: true); return .handled }
                 return .discarded
             })
+    }
+    /// The passages this answer cites: a sentence echoing one is set as a quote.
+    private var passages: [String] { citations.compactMap(\.passage) }
+    /// Page text in the answer: `content` beside the `quoteRule`.
+    private func quoteRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        HStack(alignment: .top, spacing: ShellLayout.rowInsetLeading) {
+            Rectangle().fill(app.pal.quoteRule).frame(width: ShellLayout.hairline)
+            content()
+        }.fixedSize(horizontal: false, vertical: true)
     }
     private func flow(_ line: String, font: Font) -> some View {
         ChatFlow(lineSpacing: ShellType.rowLineSpacing) {

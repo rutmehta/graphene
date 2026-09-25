@@ -70,6 +70,15 @@ struct ChatView: View {
             composer
         }.foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accentText)
             .frame(width: embedded ? nil : 680, height: embedded ? nil : 660)
+            // The panel's frame over the page, so a scroll to a mark keeps it clear of the panel.
+            .background {
+                if embedded {
+                    GeometryReader { geometry in
+                        Color.clear.onAppear { app.citations.panelFrame = geometry.frame(in: .global) }
+                            .onChange(of: geometry.frame(in: .global)) { _, frame in app.citations.panelFrame = frame }
+                    }
+                }
+            }
             .task {
                 store = ChatStore(root: app.dataDirectory); skills = SkillStore(root: app.dataDirectory).skills
                 if let latest = store?.chats.first(where: { $0.spaceID == app.activeSpaceID && $0.profileID == (app.activeSpace.profileID ?? Profile.defaultID) }), app.askRequest == nil, scopedNodes == nil {
@@ -90,7 +99,7 @@ struct ChatView: View {
                 guard let id, let chat = controller.chat, let message = chat.messages.first(where: { $0.id == id }), let tab = app.activeTab else { return }
                 Task { await ChatView.link(message, citations: chat.citations(for: message), in: tab, app: app) }
             }
-            .onDisappear { controller.stop(); captureToken = UUID(); app.citations.clear() }
+            .onDisappear { controller.stop(); captureToken = UUID(); app.citations.clear(); if embedded { app.citations.panelFrame = nil } }
     }
     /// What the model can see, from the attached sources the space allows.
     private var grounding: ChatGrounding { ChatGrounding(sources: attachments.filter { app.aiSourceAllowed($0) }, activeTabID: app.activeTabID) }
@@ -225,15 +234,20 @@ struct ChatView: View {
             else {
                 let citations = controller.chat?.citations(for: message) ?? []
                 let streaming = controller.working && message.id == controller.chat?.messages.last?.id
-                let chip = { (citation: ChatCitation, full: Bool) in
-                    CitationChip(linker: app.citations, citation: citation, message: message, citations: citations, full: full)
+                ChatMarkdownView(text: message.content, sources: message.sources ?? [], citations: citations) {
+                    CitationChip(linker: app.citations, citation: $0, message: message, citations: citations)
                 }
-                ChatMarkdownView(text: message.content, sources: message.sources ?? [], citations: citations) { chip($0, false) }
                     .foregroundStyle(app.pal.ink)
                 if streaming { ProgressView().controlSize(.small) }
                 if !citations.isEmpty {
+                    // One entry per source, carrying the indices of each passage cited from it.
                     ChatFlow(lineSpacing: ShellLayout.iconBackingInset * 2) {
-                        ForEach(citations) { citation in chip(citation, true).padding(.trailing, ShellLayout.iconBackingInset * 2).id(citation.citationID) }
+                        ForEach(ChatCitation.sourcesLine(citations), id: \.first?.citationID) { entry in
+                            CitationChip(linker: app.citations, citation: entry[0], message: message, citations: citations, siblings: entry)
+                                .padding(.trailing, ShellLayout.iconBackingInset * 2)
+                                .background { ForEach(entry.dropFirst()) { Color.clear.frame(width: 0, height: 0).id($0.citationID) } }
+                                .id(entry[0].citationID)
+                        }
                     }.accessibilityIdentifier("chat.sourcesLine.\(message.id)")
                 } else if !streaming, !message.content.isEmpty {
                     Text(ChatGrounding.noSources).font(ShellType.caption).foregroundStyle(app.pal.ink3)
@@ -382,17 +396,18 @@ struct ChatView: View {
 }
 
 /// One attached source in the strip: favicon (a quotation glyph for Vault notes) and a short
-/// title on a 24pt `elevFill` chip; the remove `xmark` appears on hover.
+/// title on a 24pt `elevFill` chip; the remove `xmark` appears on hover. Hovering a note
+/// shows its quote in a `NoteQuoteCard`.
 private struct SourceChip: View {
     @EnvironmentObject var app: AppState
     let source: KnowledgeSource
     let remove: () -> Void
     @State private var hovering = false
+    @State private var previewing = false
     var body: some View {
         HStack(spacing: 4) {
             if source.isNote {
-                Image(systemName: "quote.opening").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
-                    .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+                NoteGlyph()
             } else {
                 Favicon(host: URL(string: source.url)?.host, size: ShellLayout.iconSize)
             }
@@ -405,66 +420,103 @@ private struct SourceChip: View {
         }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
             .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
             .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-            .onHover { hovering = $0 }
-            .help(source.title)
+            .onHover { hovering = $0; if source.isNote { previewing = $0 } }
+            .popover(isPresented: $previewing, arrowEdge: .bottom) { NoteQuoteCard(title: source.title, quote: source.text).environmentObject(app) }
+            .help(source.isNote ? "" : source.title)
+    }
+}
+
+/// The 12pt quotation glyph that stands in for a favicon on Vault-note chips.
+private struct NoteGlyph: View {
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        Image(systemName: "quote.opening").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
+            .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
+    }
+}
+
+/// A Vault note's quote on hover, laid out like `TabPreview`: the quoted text in the serif
+/// `quote` face beside the `quoteRule`, the note's title under it in `caption` `ink3`.
+struct NoteQuoteCard: View {
+    @EnvironmentObject var app: AppState
+    let title: String
+    let quote: String
+    /// Lines of the quote shown before it is cut.
+    static let lineLimit = 8
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: ShellLayout.rowInsetLeading) {
+                Rectangle().fill(app.pal.quoteRule).frame(width: ShellLayout.hairline)
+                Text(quote.trimmingCharacters(in: .whitespacesAndNewlines)).font(ShellType.quote).lineSpacing(ShellType.rowLineSpacing)
+                    .foregroundStyle(app.pal.ink).lineLimit(Self.lineLimit).fixedSize(horizontal: false, vertical: true)
+            }.fixedSize(horizontal: false, vertical: true)
+            Text(title).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(2)
+        }.padding(12).frame(width: 260, alignment: .leading).background(app.pal.elev)
+            .accessibilityElement(children: .combine).accessibilityIdentifier("chat.noteQuote")
     }
 }
 
 /// A citation chip, inline in the answer (the index alone) or in the sources line under it
-/// (index, favicon and title). Linked chips drive the page's marks; other-tab chips preview and
-/// switch; the rest open their source.
+/// (the source's indices, favicon and title: one entry per source, `siblings` its citations).
+/// Linked chips drive the page's marks; other-tab chips preview and switch; note chips show
+/// their quote; the rest open their source.
 struct CitationChip: View {
     @EnvironmentObject var app: AppState
     @ObservedObject var linker: CitationLinker
     let citation: ChatCitation
     let message: ChatMessage
     let citations: [ChatCitation]
-    let full: Bool
+    /// The sources-line entry's citations; empty for an inline chip.
+    var siblings: [ChatCitation] = []
     @State private var previewing = false
+    private var full: Bool { !siblings.isEmpty }
     private var source: KnowledgeSource? {
         let sources = message.sources ?? []
         return sources.indices.contains(citation.sourceNumber - 1) ? sources[citation.sourceNumber - 1] : nil
     }
-    private var link: CitationChipLink {
+    private func link(_ citation: ChatCitation) -> CitationChipLink {
         CitationLinker.chipLink(citation, source: source, linkedIDs: linker.messageID == message.id ? linker.linkedIDs : [], linkedTabID: linker.tabID,
                                 activeTab: app.activeTab.map { ($0.id, $0.url) }, openTabIDs: Set(app.tabs.map(\.id)))
     }
-    private var active: Bool { linker.messageID == message.id && linker.activeID == citation.citationID }
+    private func active(_ citation: ChatCitation) -> Bool { linker.messageID == message.id && linker.activeID == citation.citationID }
     var body: some View {
-        let link = link
+        let link = link(citation)
         Button { click(link) } label: {
             if full {
                 HStack(spacing: 4) {
-                    CitationIndexLabel(index: citation.index, active: active, linked: link != .unlinkedPage)
-                    if source?.isNote == true {
-                        Image(systemName: "quote.opening").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
-                            .frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize)
-                    } else {
-                        Favicon(host: source.flatMap { URL(string: $0.url)?.host }, size: ShellLayout.iconSize)
+                    HStack(spacing: 0) {
+                        ForEach(siblings) { sibling in CitationIndexLabel(index: sibling.index, active: active(sibling), linked: self.link(sibling) != .unlinkedPage) }
                     }
+                    if source?.isNote == true { NoteGlyph() }
+                    else { Favicon(host: source.flatMap { URL(string: $0.url)?.host }, size: ShellLayout.iconSize) }
                     Text(source?.title ?? "Source").lineLimit(1).frame(maxWidth: 160, alignment: .leading)
                 }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
                     .padding(.trailing, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
-                    .background(active ? app.pal.accentSoft : app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                    .background(siblings.contains(where: active) ? app.pal.accentSoft : app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                     .contentShape(Rectangle())
             } else {
-                CitationIndexLabel(index: citation.index, active: active, linked: link != .unlinkedPage).contentShape(Rectangle())
+                CitationIndexLabel(index: citation.index, active: active(citation), linked: link != .unlinkedPage).contentShape(Rectangle())
             }
         }.buttonStyle(.plain)
             .onHover { hover($0, link) }
             .popover(isPresented: $previewing, arrowEdge: .bottom) {
                 if case .tab(let id) = link, let tab = app.tabs.first(where: { $0.id == id }) { TabPreview(tab: tab).environmentObject(app) }
+                else if let source, source.isNote { NoteQuoteCard(title: source.title, quote: citation.passage ?? source.text).environmentObject(app) }
             }
             .help(help(link))
             .accessibilityIdentifier("chat.citation.\(message.id).\(citation.index)\(full ? ".source" : "")")
-            .accessibilityLabel("Source \(citation.index): \(source?.title ?? "unknown")").accessibilityAddTraits(.isButton)
+            .accessibilityLabel(full ? "Source \(siblings.map { String($0.index) }.joined(separator: ", ")): \(source?.title ?? "unknown")" : "Source \(citation.index): \(source?.title ?? "unknown")")
+            .accessibilityAddTraits(.isButton)
     }
-    private func help(_ link: CitationChipLink) -> String { link.help(title: source?.title, note: source?.isNote == true) }
+    private func help(_ link: CitationChipLink) -> String {
+        link.help(title: source?.title, note: source?.isNote == true, behind: linker.messageID == message.id && linker.behindIDs.contains(citation.citationID))
+    }
     private func hover(_ hovering: Bool, _ link: CitationChipLink) {
         switch link {
         case .page: linker.hoverChip(hovering ? citation.citationID : nil)
         case .tab: previewing = hovering
-        case .unlinkedPage, .source: break
+        case .source: if source?.isNote == true { previewing = hovering }
+        case .unlinkedPage: break
         }
     }
     private func click(_ link: CitationChipLink) {
@@ -481,6 +533,7 @@ struct CitationChip: View {
                 if found.contains(target) { await app.citations.focus(target) }
             }
         case .source:
+            previewing = false
             if let source, let url = URL(string: source.url), ["http", "https"].contains(url.scheme ?? "") { app.openTab(url: url, parent: nil, activate: true) }
         }
     }

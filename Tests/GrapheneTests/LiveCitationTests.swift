@@ -18,6 +18,8 @@ final class LiveCitationTests: XCTestCase {
     func testLiveWikipediaAnswerCitationsMarkThePage() async throws {
         guard ProcessInfo.processInfo.environment["GRAPHENE_LIVE_WEB"] == "1" else { throw XCTSkip("Opt-in live web test (GRAPHENE_LIVE_WEB=1)") }
         let engine = WKWebEngine()
+        // A viewport, so marks have a box to measure (the Ask panel's scroll inset).
+        engine.webView.frame = CGRect(x: 0, y: 0, width: 1000, height: 800)
         engine.load(Self.url)
         let deadline = Date().addingTimeInterval(45)
         try await Task.sleep(for: .milliseconds(500))
@@ -57,6 +59,24 @@ final class LiveCitationTests: XCTestCase {
         let marks = await engine.evaluateJavaScript("Array.from(document.querySelectorAll('mark[data-graphene-cite]')).map(m => m.textContent).join('|')") as? String
         print("LIVE linked:", linked.sorted(), "marks:", marks ?? "nil")
         XCTAssertFalse(linked.isEmpty, "the page reports the passages found")
+        // G8: one passage per claim. The tensile strength is the infobox row alone; the
+        // isolation claim is the 2004 sentence. The source label shares the first citation.
+        XCTAssertEqual(citations.count, 2)
+        let row = try XCTUnwrap(citations.first?.passage)
+        XCTAssertTrue(row.contains("130 GPa") && row.contains("Tensile strength"), row)
+        XCTAssertLessThanOrEqual(PageContext.words(row).count, PageContext.rowWordLimit, "the row, not the infobox")
+        let sentence = try XCTUnwrap(citations.last?.passage)
+        XCTAssertTrue(sentence.contains("2004") && sentence.contains("Geim"), sentence)
+        XCTAssertEqual(ChatCitation.sourcesLine(citations).count, 1, "one sources-line entry for the page")
+        XCTAssertEqual(linked, Set(citations.map(\.citationID)), "both passages are marked")
+        // The floating panel over this 1000×800 viewport: 420pt wide, inset 16 from the right, top and bottom.
+        let covered = CGRect(x: 1000 - 16 - ShellLayout.chatWidth, y: 16, width: ShellLayout.chatWidth, height: 768)
+        for citation in citations {
+            let rect = await engine.highlightRect(id: citation.citationID)
+            XCTAssertNotNil(rect, "the mark has a box")
+            let plan = rect.map { CitationLinker.reveal(mark: $0, viewport: CGSize(width: 1000, height: 800), covered: covered) }
+            print("LIVE rect \(citation.index):", rect.debugDescription, "reveal:", plan.debugDescription)
+        }
         await engine.clearHighlights()
     }
 }

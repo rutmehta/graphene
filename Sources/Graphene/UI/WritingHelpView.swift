@@ -51,6 +51,9 @@ extension WKWebEngine {
         aiPopover = popover; popover.show(relativeTo: rect, of: webView, preferredEdge: .maxY)
     }
 }
+/// The draft popover, on the Ask panel's card: `elev` fill, `popoverRadius`, a `hairline`
+/// edge and `pageShadow`; its actions are Ask's `label` chips and its instructions field is
+/// Ask's composer (graphene-language.md §5.4).
 private struct WritingHelpView: View {
     @EnvironmentObject var app: AppState
     let engine: WKWebEngine
@@ -61,31 +64,73 @@ private struct WritingHelpView: View {
     @State private var custom = ""
     @State private var status = ""
     var body: some View {
+        let unavailable = app.providerRegistry.unavailableReason != nil
         VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("Writing help").font(ShellType.title); Spacer(); Button("Close") { engine.aiPopover?.close() } }
-            Text(app.providerRegistry.status).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-            HStack {
-                ForEach(["Improve", "Shorten", "Fix grammar"], id: \.self) { action in Button(action) { generate(action) }.accessibilityIdentifier("writing.\(action)").accessibilityLabel(action).accessibilityAddTraits(.isButton) }
-                Menu("Tone") { ForEach(["Friendly", "Formal", "Direct"], id: \.self) { tone in Button(tone) { generate("Change tone to " + tone) } } }
-            }.disabled(app.providerRegistry.unavailableReason != nil)
-            HStack {
-                TextField("Custom instructions…", text: $custom).textFieldStyle(.roundedBorder).accessibilityIdentifier("writing.instructions").accessibilityLabel("Writing instructions")
-                    .onSubmit { if !custom.isEmpty, app.providerRegistry.unavailableReason == nil { generate(custom) } }
-                Button("Draft") { generate(custom) }.disabled(custom.isEmpty || app.providerRegistry.unavailableReason != nil)
-                    .accessibilityIdentifier("writing.generate").accessibilityLabel("Generate draft").accessibilityAddTraits(.isButton)
+            HStack(spacing: 2) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Writing help").font(ShellType.title)
+                    Text(app.providerRegistry.status).font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+                }
+                Spacer()
+                Button { engine.aiPopover?.close() } label: {
+                    Image(systemName: "xmark").font(ShellType.glyph).foregroundStyle(app.pal.ink3)
+                        .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+                }.buttonStyle(ShellButtonStyle()).help("Close").accessibilityLabel("Close").accessibilityAddTraits(.isButton)
             }
-            ScrollView { Text(draft.text.isEmpty ? original : draft.text).font(ShellType.row).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }.frame(height: 190)
+            HStack(spacing: 4) {
+                ForEach(["Improve", "Shorten", "Fix grammar"], id: \.self) { action in
+                    Button { generate(action) } label: { chip(action) }.buttonStyle(.plain)
+                        .accessibilityIdentifier("writing.\(action)").accessibilityLabel(action).accessibilityAddTraits(.isButton)
+                }
+                Menu { ForEach(["Friendly", "Formal", "Direct"], id: \.self) { tone in Button(tone) { generate("Change tone to " + tone) } } } label: { chip("Tone") }
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            }.disabled(unavailable)
+            // Ask's composer: `elevFill`, `popoverRadius`, 40pt minimum, send in `accent`.
+            HStack(alignment: .bottom, spacing: 2) {
+                TextField("Custom instructions…", text: $custom).textFieldStyle(.plain).font(ShellType.row)
+                    .accessibilityIdentifier("writing.instructions").accessibilityLabel("Writing instructions")
+                    .onSubmit { if !custom.isEmpty, !unavailable { generate(custom) } }
+                    .padding(.vertical, 6).padding(.horizontal, 4)
+                let disabled = custom.isEmpty || unavailable
+                Button { generate(custom) } label: {
+                    Image(systemName: "arrow.up.circle.fill").font(ShellType.input).foregroundStyle(disabled ? app.pal.inkDisabled : app.pal.accent)
+                        .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+                }.buttonStyle(.plain).disabled(disabled).help("Draft")
+                    .accessibilityIdentifier("writing.generate").accessibilityLabel("Generate draft").accessibilityAddTraits(.isButton)
+            }.padding((ShellLayout.composerMinHeight - ShellLayout.controlSize) / 2)
+                .frame(minHeight: ShellLayout.composerMinHeight)
+                .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+            ScrollView {
+                Text(draft.text.isEmpty ? original : draft.text).font(ShellType.row).lineSpacing(ShellType.rowLineSpacing).textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(height: 190)
             Text(status.hasPrefix("Draft inserted") ? "Draft applied to the page." : (draft.text.isEmpty ? "Original text. Choose an action to preview a draft." : "Draft preview · your page is unchanged.")).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-            if draft.working { HStack { ProgressView().controlSize(.small); Button("Stop") { draft.stop() } } }
-            HStack {
-                Button("Replace") { apply("replace") }.accessibilityIdentifier("writing.replace").accessibilityLabel("Replace text").accessibilityAddTraits(.isButton)
-                Button("Insert below") { apply("insert") }.accessibilityIdentifier("writing.insert").accessibilityLabel("Insert below").accessibilityAddTraits(.isButton)
-                Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(draft.text, forType: .string); status = "Copied draft." }
+            if draft.working {
+                HStack { ProgressView().controlSize(.small); Button { draft.stop() } label: { chip("Stop") }.buttonStyle(.plain).accessibilityLabel("Stop").accessibilityAddTraits(.isButton) }
+            }
+            HStack(spacing: 4) {
+                Button { apply("replace") } label: { chip("Replace") }.buttonStyle(.plain)
+                    .accessibilityIdentifier("writing.replace").accessibilityLabel("Replace text").accessibilityAddTraits(.isButton)
+                Button { apply("insert") } label: { chip("Insert below") }.buttonStyle(.plain)
+                    .accessibilityIdentifier("writing.insert").accessibilityLabel("Insert below").accessibilityAddTraits(.isButton)
+                Button { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(draft.text, forType: .string); status = "Copied draft." } label: { chip("Copy") }.buttonStyle(.plain)
+                    .accessibilityLabel("Copy").accessibilityAddTraits(.isButton)
             }.disabled(draft.text.isEmpty || draft.working)
             if let reason = draft.error ?? app.providerRegistry.unavailableReason { Text(reason).font(ShellType.caption).foregroundStyle(app.pal.ink2) }
             if !status.isEmpty { Text(status).font(ShellType.caption).foregroundStyle(app.pal.ink2) }
-        }.font(ShellType.body).padding(18).frame(width: 430).foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accent)
+        }.font(ShellType.body).padding(18).frame(width: 430).foregroundStyle(app.pal.ink)
+            .background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
+            .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
+            .tint(app.pal.accent)
             .onDisappear { draft.stop() }.onChange(of: app.settings.ai) { _, _ in draft.stop() }
+    }
+    /// Ask's skill chip: `label` in `ink2` on a 24pt `elevFill` chip with `rowRadius`.
+    private func chip(_ title: String) -> some View {
+        Text(title).font(ShellType.label).foregroundStyle(app.pal.ink2)
+            .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+            .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+            .contentShape(Rectangle())
     }
     private func generate(_ instruction: String) {
         guard engine.currentURL == origin, engine.capturePermitted(), app.activeTab.map(app.aiTabAllowed) == true else { status = "Page or privacy settings changed. Reopen writing help."; return }
