@@ -304,6 +304,68 @@ final class AppState: ObservableObject, BrowserCoordinator {
     }
 
     func openThread(_ thread: KnowledgeGraph.Thread) { selectedThreadID = thread.id; show(.threads) }
+
+    // MARK: thread map actions (graphene-language.md §5.2)
+
+    /// The thread's map, from its recorded visits.
+    func threadLayout(_ thread: KnowledgeGraph.Thread) -> ThreadLayout {
+        ThreadLayout(thread: thread, visits: graph.visits(inThread: thread.id))
+    }
+
+    /// A map node was clicked. Plain: the page loads in the current tab and the visit rejoins
+    /// the thread under its map parent, so the tree stays as drawn. `asChild` (⌘-click): the page
+    /// opens as a child tab of the current tab, which the sidebar draws with its connector.
+    func openThreadNode(_ nodeID: UUID, in thread: KnowledgeGraph.Thread, asChild: Bool) {
+        guard let page = thread.nodes.first(where: { $0.id == nodeID }), let url = URL(string: page.url) else { return }
+        if asChild, let parent = activeTab {
+            openTab(url: url, parent: parent, activate: true)
+            return
+        }
+        let tab = activeTab ?? newTab()
+        tab.currentNodeID = threadLayout(thread).node(nodeID)?.parentID
+        tab.currentThreadID = thread.id
+        tab.resumeThreadID = thread.id
+        tab.originQuery = nil
+        tab.load(url)
+        activate(tab.id)
+    }
+
+    /// "Resume from here": reopens the branch from `nodeID` forward as Today tabs, each child
+    /// tab linked to its map parent's tab so the sidebar shows the same tree. The first tab is
+    /// activated. Returns the opened tabs in map order.
+    @discardableResult
+    func resumeThread(from nodeID: UUID, in thread: KnowledgeGraph.Thread) -> [Tab] {
+        let layout = threadLayout(thread)
+        var opened: [UUID: Tab] = [:], result: [Tab] = []
+        for node in layout.branch(from: nodeID) {
+            guard let page = thread.nodes.first(where: { $0.id == node.id }), let url = URL(string: page.url) else { continue }
+            let parent = node.id == nodeID ? nil : node.parentID.flatMap { opened[$0] }
+            let before = Set(tabs.map(\.id))
+            openTab(url: url, parent: parent, activate: false)
+            guard let tab = tabs.first(where: { !before.contains($0.id) }) else { continue }
+            // The revisit is recorded under the node's map parent, in this thread.
+            tab.currentNodeID = node.parentID
+            tab.currentThreadID = thread.id
+            tab.resumeThreadID = thread.id
+            opened[node.id] = tab
+            result.append(tab)
+        }
+        if let first = result.first { activate(first.id) }
+        return result
+    }
+
+    /// "Note" on a map node: the page's Vault note if it has one, else the page opens in the
+    /// current tab with the note composer.
+    func openThreadNote(_ nodeID: UUID, in thread: KnowledgeGraph.Thread) {
+        guard let page = thread.nodes.first(where: { $0.id == nodeID }) else { return }
+        if let note = vault.annotations(forURL: page.url).max(by: { $0.created < $1.created }) {
+            vaultSelectionID = note.id
+            show(.vault)
+            return
+        }
+        openThreadNode(nodeID, in: thread, asChild: false)
+        noteComposerPresented = true
+    }
     func pin(_ tab: Tab) { placeTab(tab.id, section: tab.isPinned ? .today : .pinned) }
 
     func placeTab(_ id: UUID, section: TabSection, folderID: UUID? = nil, spaceID: UUID? = nil) {

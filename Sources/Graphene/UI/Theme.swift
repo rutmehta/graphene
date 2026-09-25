@@ -82,6 +82,11 @@ enum ShellLayout {
     /// (`threadLineInset + threadTick == threadIndent + rowInsetLeading`), so it enters the favicon column.
     static let threadTick: CGFloat = 11
     static let threadMaxDepth = 3
+    /// Thread map (graphene-language.md §4, §5.2): a node's favicon slot (favicon 16 in a 20
+    /// slot), the column pitch per depth, and the row pitch (the sidebar's `rowPitch`).
+    static let threadNodeSize: CGFloat = 20
+    static let threadColumn: CGFloat = 180
+    static let threadRowPitch: CGFloat = 40
     /// Reset-tab dot on a pinned favicon and footer space dots.
     static let statusDot: CGFloat = 6
     static let spaceDotPitch: CGFloat = 14
