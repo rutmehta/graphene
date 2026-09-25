@@ -32,10 +32,23 @@ struct SurfaceState<Actions: View>: View {
             if loading { ProgressView().controlSize(.regular).accessibilityLabel(title) }
             else if drawsLattice { Lattice().frame(width: Self.contentWidth, height: Lattice.bandHeight) }
             else { Image(systemName: symbol).font(ShellType.display.weight(.light)).foregroundStyle(app.pal.ink3) }
-            Text(title).font(ShellType.display)
-            Text(detail).font(ShellType.body).foregroundStyle(app.pal.ink2).multilineTextAlignment(.center)
-                .lineSpacing(ShellType.rowLineSpacing).frame(maxWidth: Self.contentWidth)
-            actions().padding(.top, ShellLayout.windowGap)
+            if title.isEmpty {
+                Text(detail).font(ShellType.secondary).foregroundStyle(app.pal.ink3).multilineTextAlignment(.center)
+                    .frame(maxWidth: Self.contentWidth)
+            } else {
+                Text(title).font(ShellType.display)
+                Text(detail).font(ShellType.body).foregroundStyle(app.pal.ink2).multilineTextAlignment(.center)
+                    .lineSpacing(ShellType.rowLineSpacing).frame(maxWidth: Self.contentWidth)
+                actions().padding(.top, ShellLayout.windowGap)
+            }
         }.foregroundStyle(app.pal.ink).padding(ShellLayout.peekInset).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+extension SurfaceState where Actions == EmptyView {
+    /// An empty Threads or Vault surface (graphene-language.md): the lattice and one
+    /// `secondary` `ink3` line, with no title and no buttons.
+    init(line: String, symbol: String) {
+        self.init(symbol: symbol, title: "", detail: line) { EmptyView() }
     }
 }

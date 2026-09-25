@@ -20,6 +20,8 @@ enum SidebarMotion {
     static func branch(reduceMotion: Bool) -> Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.16)
     }
+    /// The connector's vertical grows or shrinks to its new length; Reduce Motion redraws at once.
+    static let connector = Animation.easeOut(duration: 0.16)
     static func branchTransition(reduceMotion: Bool) -> AnyTransition {
         reduceMotion ? .opacity : .offset(y: -branchSlide).combined(with: .opacity)
     }
@@ -160,18 +162,67 @@ private struct ProvenanceRows: View {
 }
 
 /// The connector paths: `threadLine`, or `threadLineActive` on the selected tab's branch.
+/// On branch collapse and expand each vertical grows or shrinks to its new length over 160ms
+/// (graphene-identity.md §4); Reduce Motion redraws at once.
 private struct ThreadLines: View {
     let connectors: [ProvenanceConnector]
     @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         let pal = app.pal
-        Canvas { context, _ in
-            for connector in connectors {
-                var path = Path(connector.vertical)
-                for tick in connector.ticks { path.addRect(tick) }
-                context.fill(path, with: .color(connector.active ? pal.threadLineActive : pal.threadLine))
+        ZStack(alignment: .topLeading) {
+            ForEach(connectors, id: \.parentID) { connector in
+                ConnectorShape(connector: connector)
+                    .fill(connector.active ? pal.threadLineActive : pal.threadLine)
+                    .transition(reduceMotion ? .identity : .modifier(active: ConnectorReveal(vertical: connector.vertical, progress: 0),
+                                                                     identity: ConnectorReveal(vertical: connector.vertical, progress: 1)))
             }
-        }.allowsHitTesting(false).accessibilityHidden(true)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .animation(reduceMotion ? nil : SidebarMotion.connector, value: connectors)
+            .transaction { if reduceMotion { $0.animation = nil } }
+            .allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
+
+/// One parent's vertical and ticks, with the vertical's ends animatable so its length eases
+/// between layouts. Geometry comes from `ProvenanceConnector`.
+private struct ConnectorShape: Shape {
+    let vertical: CGRect
+    let ticks: [CGRect]
+    var top: CGFloat
+    var bottom: CGFloat
+    init(connector: ProvenanceConnector) {
+        vertical = connector.vertical; ticks = connector.ticks
+        top = connector.vertical.minY; bottom = connector.vertical.maxY
+    }
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(top, bottom) }
+        set { top = newValue.first; bottom = newValue.second }
+    }
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for part in ProvenanceConnector.drawn(vertical: vertical, ticks: ticks, top: top, bottom: bottom) { path.addRect(part) }
+        return path
+    }
+}
+
+/// A connector appearing or leaving: masks it to its top `progress` share, so the vertical
+/// grows down from its parent, or shrinks back up into it. Fully shown, nothing is masked.
+private struct ConnectorReveal: ViewModifier, Animatable {
+    let vertical: CGRect
+    var progress: CGFloat
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+    func body(content: Content) -> some View {
+        if progress >= 1 {
+            content
+        } else {
+            content.mask(alignment: .topLeading) {
+                Rectangle().frame(height: max(0, vertical.minY + vertical.height * progress)).frame(maxWidth: .infinity)
+            }
+        }
     }
 }
 

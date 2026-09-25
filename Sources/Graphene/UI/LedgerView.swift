@@ -25,9 +25,7 @@ struct LedgerView: View {
                 Button("Browse") { app.show(.web) }.buttonStyle(.bordered)
             }
         } else if app.currentThreads.isEmpty {
-            SurfaceState(symbol: "point.3.connected.trianglepath.dotted", title: "No threads yet", detail: "Pages you explore together become a thread. Start browsing to create your first one.") {
-                Button("Start browsing") { app.newTab() }.buttonStyle(.bordered)
-            }
+            SurfaceState(line: "Open a page and Graphene will keep the thread.", symbol: "point.3.connected.trianglepath.dotted")
         } else {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {

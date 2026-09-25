@@ -47,12 +47,7 @@ struct VaultView: View {
                 Button("Open vault folder") { NSWorkspace.shared.open(Paths.vault) }.buttonStyle(.bordered)
             }
         } else if app.vault.annotations.isEmpty {
-            SurfaceState(symbol: "bookmark", title: "No saved pages yet", detail: "Select text on a page to save a highlight, or press ⌘D to save the page with a note.") {
-                HStack(spacing: 12) {
-                    Button("Start browsing") { app.newTab() }.buttonStyle(.bordered)
-                    Button("Open vault folder") { NSWorkspace.shared.open(Paths.vault) }.buttonStyle(.bordered)
-                }
-            }
+            SurfaceState(line: "Select text on any page and press ⌘D.", symbol: "bookmark")
         } else {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {

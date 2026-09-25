@@ -118,4 +118,10 @@ struct ProvenanceConnector: Equatable {
         childRows.map { CGRect(x: x + ShellLayout.hairline, y: Self.iconCentreY($0) - ShellLayout.hairline / 2,
                                width: Self.tickLength, height: ShellLayout.hairline) }
     }
+    /// The path while its vertical is drawn from `top` down to `bottom` (the length animates on
+    /// collapse and expand): ticks appear once the vertical reaches them.
+    static func drawn(vertical: CGRect, ticks: [CGRect], top: CGFloat, bottom: CGFloat) -> [CGRect] {
+        let line = CGRect(x: vertical.minX, y: top, width: vertical.width, height: max(0, bottom - top))
+        return [line] + ticks.filter { $0.minY <= bottom }
+    }
 }

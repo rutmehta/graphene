@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 struct ChatSession: Codable, Identifiable {
     var id = UUID()
@@ -183,7 +184,11 @@ final class CitationLinker: ObservableObject {
         guard tabID == self.tabID else { return }
         let raised = id.flatMap { linkedIDs.contains($0) ? $0 : nil }
         if activeID != raised { activeID = raised }
+        if let raised { markRaised.send(raised) }
     }
+    /// Chips raised by a mark hover in the page, for the transcript to scroll into view.
+    /// Chip hovers do not send: that chip is already under the pointer.
+    let markRaised = PassthroughSubject<String, Never>()
     func pageNavigated(tabID: UUID) { if tabID == self.tabID { clear() } }
     /// Drops the link and removes the page's marks.
     func clear() { if let old = detach() { Task { await old.clear() } } }

@@ -39,16 +39,9 @@ struct EaselView: View {
                     ForEach(items) { item in BoardCard(item: item).offset(x: item.x, y: item.y) }
                 }.frame(width: max(1200, (items.map { $0.x + $0.width }.max() ?? 0) + 100), height: max(900, (items.map { $0.y + $0.height }.max() ?? 0) + 100))
                     .contentShape(Rectangle())
-                    .dropDestination(for: String.self) { strings, point in
-                        guard let value = strings.first else { return false }
-                        if let id = payloadID(value, prefix: "tab:"), let tab = app.tabs.first(where: { $0.id == id }) {
-                            add(title: tab.displayTitle, url: tab.url?.absoluteString, at: point); return true
-                        }
-                        if let id = payloadID(value, prefix: "note:"), let note = app.vault.annotations.first(where: { $0.id == id }) {
-                            add(title: note.title, text: note.text + "\n" + note.note, url: note.url, at: point); return true
-                        }
-                        if let url = URL(string: value), ["http", "https"].contains(url.scheme ?? "") { add(title: url.host ?? value, url: value, at: point) }
-                        else { add(title: "Note", text: value, at: point) }
+                    .dropDestination(for: DroppedText.self) { drops, point in
+                        guard let value = drops.first?.value, let card = app.boardDropCard(for: value) else { return false }
+                        add(title: card.title, text: card.text, url: card.url, at: point)
                         return true
                     }
             }

@@ -160,6 +160,13 @@ final class ProvenanceTests: XCTestCase {
         XCTAssertEqual(line.ticks, [CGRect(x: 18, y: 57.5, width: 6, height: 1), CGRect(x: 18, y: 97.5, width: 6, height: 1)])
         XCTAssertFalse(layout.connectors(activeID: other)[0].active)
 
+        // While the vertical animates, it is drawn to its animated bottom and ticks appear as it reaches them.
+        let full = ProvenanceConnector.drawn(vertical: line.vertical, ticks: line.ticks, top: line.vertical.minY, bottom: line.vertical.maxY)
+        XCTAssertEqual(full, [line.vertical] + line.ticks)
+        let half = ProvenanceConnector.drawn(vertical: line.vertical, ticks: line.ticks, top: 28, bottom: 60)
+        XCTAssertEqual(half, [CGRect(x: 17, y: 28, width: 1, height: 32), line.ticks[0]])
+        XCTAssertEqual(ProvenanceConnector.drawn(vertical: line.vertical, ticks: line.ticks, top: 28, bottom: 28), [CGRect(x: 17, y: 28, width: 1, height: 0)])
+
         // A nested parent's line moves in by its indent.
         let nested = ProvenanceLayout(ids: [a, b, c], parents: [b: a, c: b]).connectors(activeID: nil)
         XCTAssertEqual(nested.map(\.x), [17, 37])

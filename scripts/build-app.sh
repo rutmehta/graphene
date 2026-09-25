@@ -36,6 +36,11 @@ cat > "$GRAPHENE_APP_DIR/Contents/Info.plist" <<'PLIST'
 <key>CFBundleTypeRole</key><string>Viewer</string>
 <key>CFBundleURLSchemes</key><array><string>http</string><string>https</string></array>
 </dict></array>
+<key>UTExportedTypeDeclarations</key><array><dict>
+<key>UTTypeIdentifier</key><string>com.graphene.browser.note-reference</string>
+<key>UTTypeDescription</key><string>Graphene note</string>
+<key>UTTypeConformsTo</key><array><string>public.data</string></array>
+</dict></array>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSCameraUsageDescription</key><string>Websites can use your camera only after you allow access.</string>
 <key>NSMicrophoneUsageDescription</key><string>Websites can use your microphone only after you allow access.</string>

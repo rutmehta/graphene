@@ -3,6 +3,7 @@ import SwiftUI
 struct ChatView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let scopedNodes: [GraphNode]?
     let threadTitle: String?
     let embedded: Bool
@@ -60,6 +61,11 @@ struct ChatView: View {
                         Color.clear.frame(height: 1).id("bottom")
                     }.padding(ShellLayout.windowGap * 2)
                 }.onChange(of: controller.chat?.messages.last?.content) { _, _ in proxy.scrollTo("bottom", anchor: .bottom) }
+                    // A mark hovered in the page raises its chip; bring the chip into view by the least scroll.
+                    .onReceive(app.citations.markRaised) { id in
+                        guard !reduceMotion else { proxy.scrollTo(id); return }
+                        withAnimation(Motion.hover.animation) { proxy.scrollTo(id) }
+                    }
             }
             composer
         }.foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accentText)
@@ -220,7 +226,7 @@ struct ChatView: View {
                 if streaming { ProgressView().controlSize(.small) }
                 if !citations.isEmpty {
                     ChatFlow(lineSpacing: ShellLayout.iconBackingInset * 2) {
-                        ForEach(citations) { citation in chip(citation, true).padding(.trailing, ShellLayout.iconBackingInset * 2) }
+                        ForEach(citations) { citation in chip(citation, true).padding(.trailing, ShellLayout.iconBackingInset * 2).id(citation.citationID) }
                     }.accessibilityIdentifier("chat.sourcesLine.\(message.id)")
                 } else if !streaming, !message.content.isEmpty {
                     Text(ChatGrounding.noSources).font(ShellType.caption).foregroundStyle(app.pal.ink3)
@@ -307,8 +313,8 @@ struct ChatView: View {
                 .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
             if let reason = registry.unavailableReason { Text(reason).font(ShellType.caption).foregroundStyle(app.pal.ink3).fixedSize(horizontal: false, vertical: true) }
         }.padding(ShellLayout.windowGap * 1.5)
-            .dropDestination(for: String.self) { values, _ in
-                let sources = app.noteDropSources(values)
+            .dropDestination(for: DroppedText.self) { drops, _ in
+                let sources = app.noteDropSources(drops.map(\.value))
                 for source in sources { attachments.removeAll { $0.id == source.id }; attachments.append(source) }
                 if !sources.isEmpty { focused = true }
                 return !sources.isEmpty

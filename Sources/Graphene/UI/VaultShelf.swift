@@ -131,7 +131,8 @@ struct VaultShelf: View {
 }
 
 /// One saved note: favicon and the quote's first words on `fill`. Click opens the source at
-/// the passage, hover shows the whole quote, and dragging hands out the note as Markdown.
+/// the passage, hover shows the whole quote, and dragging hands out the note
+/// as its `note:<uuid>` reference for chat and the Board and as Markdown for other apps.
 private struct ShelfChip: View {
     let note: Annotation
     @EnvironmentObject var app: AppState
@@ -162,7 +163,7 @@ private struct ShelfChip: View {
             }
             .popover(isPresented: $previewShown, arrowEdge: .top) { ShelfQuoteCard(note: note).environmentObject(app) }
             .onDisappear { previewTask?.cancel(); previewShown = false }
-            .onDrag { NSItemProvider(object: Vault.markdown(for: note) as NSString) }
+            .onDrag { NoteDrag.itemProvider(for: note) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(VaultShelfLayout.fullText(note))
             .accessibilityHint("Opens the source page")
