@@ -49,10 +49,11 @@ enum LatticeGeometry {
     }
 }
 
-/// The hex lattice for the three empty states (new tab, Threads, Vault). 1pt `lattice`
-/// strokes on `latticeCell` cells, fading out over the bottom third. Reduce Transparency
-/// removes it entirely.
+/// The hex lattice for the three empty states (new tab, Threads, Vault) and the Board canvas.
+/// 1pt `lattice` strokes on `latticeCell` cells, fading out over the bottom third unless
+/// `fade` is off (the Board). Reduce Transparency removes it entirely.
 struct Lattice: View {
+    var fade: Bool = true
     @EnvironmentObject private var app: AppState
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     /// Height of the lattice band an empty state draws above its line of text.
@@ -66,7 +67,7 @@ struct Lattice: View {
             }
             .mask(LinearGradient(stops: [.init(color: .black, location: 0),
                                          .init(color: .black, location: LatticeGeometry.fadeStart),
-                                         .init(color: .clear, location: 1)],
+                                         .init(color: fade ? .clear : .black, location: 1)],
                                  startPoint: .top, endPoint: .bottom))
             .allowsHitTesting(false)
             .accessibilityHidden(true)

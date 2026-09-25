@@ -62,7 +62,8 @@ enum GmailClient {
             unread: labelIds.contains("UNREAD"),
             initial: String((name.isEmpty ? address : name).first.map(String.init) ?? "?").uppercased(),
             colorHex: color(for: address),
-            body: [decodeEntities(snippet)]
+            body: [decodeEntities(snippet)],
+            threadID: msg["threadId"] as? String
         )
     }
 

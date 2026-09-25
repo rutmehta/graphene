@@ -13,6 +13,11 @@ struct MailItem: Identifiable {
     var initial: String
     var colorHex: String
     var body: [String]
+    /// Gmail's thread id; conversations group by it, else by normalised subject.
+    var threadID: String? = nil
+
+    /// Unread rows carry the 6pt `accent` dot in the icon slot (there are no avatars).
+    var showsUnreadDot: Bool { unread }
 
     var timeLabel: String {
         let cal = Calendar.current
@@ -21,6 +26,85 @@ struct MailItem: Identifiable {
         else if cal.isDateInYesterday(date) { f.dateFormat = "'Yesterday'" }
         else { f.dateFormat = "MMM d" }
         return f.string(from: date)
+    }
+}
+
+/// Mail row metrics (graphene-language.md §5.7): two-line 44pt rows at a 44pt pitch, so the
+/// conversation connector reuses `ProvenanceConnector` with these metrics.
+enum MailLayout {
+    static let rowHeight: CGFloat = 44
+    /// Replies shown under a collapsed conversation's first message.
+    static let collapsedReplies = 3
+}
+
+/// One conversation: the first message and its replies, oldest first.
+struct MailConversation: Identifiable {
+    /// The Gmail thread id, else `subject:` plus the normalised subject.
+    let id: String
+    let messages: [MailItem]
+
+    var first: MailItem { messages[0] }
+    var replies: ArraySlice<MailItem> { messages.dropFirst() }
+    var latest: Date { messages.map(\.date).max() ?? first.date }
+
+    /// Replies hidden behind the "N more" label: all but the latest three unless expanded.
+    func hiddenCount(expanded: Bool) -> Int { expanded ? 0 : max(0, replies.count - MailLayout.collapsedReplies) }
+    /// The replies shown under the first message.
+    func visibleReplies(expanded: Bool) -> [MailItem] { Array(replies.suffix(replies.count - hiddenCount(expanded: expanded))) }
+
+    /// The rows drawn for this conversation, top to bottom.
+    func rows(expanded: Bool) -> [MailConversationRow] {
+        var rows: [MailConversationRow] = [.message(first, reply: false)]
+        let hidden = hiddenCount(expanded: expanded)
+        if hidden > 0 { rows.append(.more(hidden)) }
+        else if expanded && replies.count > MailLayout.collapsedReplies { rows.append(.fewer) }
+        rows += visibleReplies(expanded: expanded).map { .message($0, reply: true) }
+        return rows
+    }
+
+    /// The thread connector from the first message to each visible reply, in the rows' space.
+    func connector(expanded: Bool) -> ProvenanceConnector? {
+        let rows = rows(expanded: expanded)
+        let children = rows.indices.filter { if case .message(_, true) = rows[$0] { return true } else { return false } }
+        guard let last = children.last else { return nil }
+        return ProvenanceConnector(parentID: UUID(), parentRow: 0, parentIndent: 0, childRows: children, lastChildRow: last,
+                                   active: false, rowPitch: MailLayout.rowHeight, rowHeight: MailLayout.rowHeight)
+    }
+
+    /// Conversations from inbox messages, newest activity first.
+    static func group(_ items: [MailItem]) -> [MailConversation] {
+        var order: [String] = [], buckets: [String: [MailItem]] = [:]
+        for item in items {
+            let key = item.threadID.map { "thread:\($0)" } ?? "subject:\(normalizedSubject(item.subject))"
+            if buckets[key] == nil { order.append(key) }
+            buckets[key, default: []].append(item)
+        }
+        return order.map { key in MailConversation(id: key, messages: buckets[key]!.sorted { $0.date < $1.date }) }
+            .enumerated().sorted { $0.element.latest != $1.element.latest ? $0.element.latest > $1.element.latest : $0.offset < $1.offset }
+            .map(\.element)
+    }
+
+    /// The subject without reply and forward prefixes, case- and space-folded.
+    static func normalizedSubject(_ subject: String) -> String {
+        var value = subject.trimmingCharacters(in: .whitespacesAndNewlines)
+        while let range = value.range(of: #"^(re|fwd?|aw|wg)(\[\d+\])?\s*:\s*"#, options: [.regularExpression, .caseInsensitive]) {
+            value.removeSubrange(range)
+        }
+        return value.lowercased().split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    }
+}
+
+/// A row in a conversation: a message (the first, or an indented reply) or the collapse label.
+enum MailConversationRow: Identifiable {
+    case message(MailItem, reply: Bool)
+    case more(Int)
+    case fewer
+    var id: String {
+        switch self {
+        case .message(let item, _): return item.id
+        case .more: return "more"
+        case .fewer: return "fewer"
+        }
     }
 }
 
@@ -41,6 +125,13 @@ final class MailStore: ObservableObject {
     @Published var bodyCache: [String: EmailBody] = [:]
     @Published var loadingBody = false
     @Published private(set) var accountAddress: String?
+    /// Conversations the user expanded past their latest three replies.
+    @Published var expandedConversations: Set<String> = []
+
+    var conversations: [MailConversation] { MailConversation.group(items) }
+    func toggleExpanded(_ id: String) {
+        if expandedConversations.contains(id) { expandedConversations.remove(id) } else { expandedConversations.insert(id) }
+    }
 
     var isConfigured: Bool { GmailConfig.isConfigured }
     var selected: MailItem? { items.first { $0.id == selectedID } ?? items.first }
@@ -87,7 +178,7 @@ final class MailStore: ObservableObject {
         items = []
         isConnected = false
         selectedID = nil
-        bodyCache = [:]; accountAddress = nil
+        bodyCache = [:]; accountAddress = nil; expandedConversations = []
     }
 
     func reload() { Task { await load() } }

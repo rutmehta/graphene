@@ -124,6 +124,8 @@ enum ShellLayout {
     static let commandMaxRows = 8
     // Popovers and panels
     static let popoverRadius: CGFloat = 12
+    /// Board cards (graphene-language.md §4): the popover radius.
+    static let boardCardRadius: CGFloat = popoverRadius
     static let chatWidth: CGFloat = 420
     static let chatWidthRange: ClosedRange<CGFloat> = 360...560
     /// Peek card: at most this wide, inset from the page card on every side.
