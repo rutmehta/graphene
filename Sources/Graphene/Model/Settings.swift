@@ -9,7 +9,6 @@ struct Settings: Codable, Equatable {
     var customSearchURL: String?
     var downloadsFolder: String?
     var startupBlank: Bool?
-    var compactSidebar: Bool?
     var layout: BrowserLayout?
     var appearance: ThemeMode?
     var searchEngine: SearchEngine?

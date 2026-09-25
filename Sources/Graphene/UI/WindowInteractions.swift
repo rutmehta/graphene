@@ -40,10 +40,9 @@ struct SidebarResizeHandle: View {
     @EnvironmentObject var app: AppState
     @Binding var width: CGFloat
     @State private var origin: CGFloat?
-    @State private var hovered = false
     var body: some View {
-        Rectangle().fill(hovered ? app.pal.hairline : app.pal.hitTarget).frame(width: 4)
-            .contentShape(Rectangle()).onHover { hovered = $0; if $0 { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+        Rectangle().fill(app.pal.hitTarget).frame(width: ShellLayout.resizeStrip)
+            .contentShape(Rectangle()).onHover { if $0 { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
             .gesture(DragGesture(minimumDistance: 0).onChanged { value in
                 if origin == nil { origin = width }
                 width = ShellLayout.clampedSidebarWidth((origin ?? width) + value.translation.width)

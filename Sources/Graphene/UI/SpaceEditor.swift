@@ -1,6 +1,8 @@
 import SwiftUI
 import AppKit
 
+/// Name, glyph and colour of the active space. The colour is a hue and a saturation,
+/// which is all the chrome palette reads (arc-look.md §2.3).
 struct SpaceEditor: View {
     @EnvironmentObject var app: AppState
     private var theme: SpaceTheme {
@@ -14,7 +16,7 @@ struct SpaceEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Space").font(.system(size: 13, weight: .semibold))
+                Text("Space").font(ShellType.title)
                 Spacer()
                 IconButton("Done", system: "checkmark") { app.spaceEditorPresented = false }
             }
@@ -33,18 +35,19 @@ struct SpaceEditor: View {
                 ForEach(SpaceColor.allCases) { color in
                     Button { app.setColor(color) } label: {
                         Circle().fill(color.c1).frame(width: 26, height: 26)
-                            .overlay(Circle().strokeBorder(app.pal.ink.opacity(app.activeSpace.color == color && app.activeSpace.theme == nil ? 0.7 : 0.1), lineWidth: 2))
+                            .overlay(Circle().strokeBorder(app.activeSpace.color == color && app.activeSpace.theme == nil ? app.pal.ink2 : app.pal.hairline, lineWidth: 2))
                     }.buttonStyle(.plain).help(color.label)
                         .accessibilityIdentifier("space.color.\(color.rawValue)").accessibilityLabel(color.label).accessibilityAddTraits(.isButton)
                 }
                 Spacer()
             }
+            Text("Colour").font(ShellType.label).foregroundStyle(app.pal.ink3)
             // Two-dimensional hue/saturation plane. Sliders below offer keyboard equivalents.
             GeometryReader { geometry in
                 ZStack(alignment: .topLeading) {
                     LinearGradient(colors: stride(from: 0.0, through: 1.0, by: 0.1).map { Color(hue: $0, saturation: 0.7, brightness: 0.8) }, startPoint: .leading, endPoint: .trailing)
-                    LinearGradient(colors: [app.pal.elev.opacity(0.85), app.pal.elev.opacity(0)], startPoint: .top, endPoint: .bottom)
-                    Circle().strokeBorder(app.pal.ink, lineWidth: 2).background(Circle().fill(app.pal.elev.opacity(0.5)))
+                    LinearGradient(colors: [app.pal.elev, .clear], startPoint: .top, endPoint: .bottom)
+                    Circle().strokeBorder(app.pal.ink, lineWidth: 2).background(Circle().fill(app.pal.fill))
                         .frame(width: 12, height: 12).offset(x: theme.hue * (geometry.size.width - 12), y: theme.saturation * (geometry.size.height - 12))
                 }.clipShape(RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                     .gesture(DragGesture(minimumDistance: 0).onChanged { value in
@@ -56,11 +59,10 @@ struct SpaceEditor: View {
             }.frame(height: 90).accessibilityLabel("Hue and saturation; use sliders below for keyboard adjustment")
             labeledSlider("Hue", value: binding(\.hue), range: 0...1)
             labeledSlider("Saturation", value: binding(\.saturation), range: 0...1)
-            labeledSlider("Intensity", value: binding(\.intensity), range: 0...0.65)
             Picker("Appearance", selection: Binding(get: { app.mode }, set: { app.mode = $0; app.persist() })) {
                 ForEach(ThemeMode.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
             }
-        }.font(.system(size: 12)).foregroundStyle(app.pal.ink)
+        }.font(ShellType.secondary).foregroundStyle(app.pal.ink)
             .padding(18).frame(width: 290).background(app.pal.sidebarBg)
             .environment(\.colorScheme, app.pal.isDark ? .dark : .light)
     }

@@ -9,12 +9,11 @@ struct SpaceInfo: Identifiable, Equatable, Codable {
     var profileID: UUID? = nil
 }
 
+/// The space's colour: hue and saturation drive the whole chrome palette.
+/// Keys written by earlier versions (intensity, gradient, grain) are ignored on decode.
 struct SpaceTheme: Equatable, Codable {
     var hue: Double = 0.57
     var saturation: Double = 0.45
-    var intensity: Double = 0.25
-    var gradient: Bool = true
-    var grain: Bool = false
 }
 
 enum TabSection: String, Codable, CaseIterable { case favorites, pinned, today }

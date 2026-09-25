@@ -2,114 +2,86 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+/// Sidebar motion (arc-look.md §4): the space switch slides 24pt with a fade; hover and
+/// selection fade in 100ms. Reduce Motion turns the slide into a 120ms fade.
+enum SidebarMotion {
+    static let hover = Animation.easeOut(duration: 0.10)
+    static func spaceSwitch(reduceMotion: Bool) -> Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.18)
+    }
+    static func spaceTransition(reduceMotion: Bool) -> AnyTransition {
+        reduceMotion ? .opacity : .asymmetric(
+            insertion: .offset(x: ShellLayout.spaceSlide).combined(with: .opacity),
+            removal: .offset(x: -ShellLayout.spaceSlide).combined(with: .opacity))
+    }
+}
+
+/// The footer strip's glyphs, grouped around the centred space dots. Downloads joins the
+/// trailing group so both sides stay two glyphs wide and the dots keep room at 180pt.
+enum SidebarFooterItem: Hashable { case archive, library, downloads, newTab }
+
+struct SidebarFooterLayout: Equatable {
+    var leading: [SidebarFooterItem]
+    var trailing: [SidebarFooterItem]
+    init(downloadsActive: Bool) {
+        leading = [.archive, .library]
+        trailing = (downloadsActive ? [.downloads] : []) + [.newTab]
+    }
+    /// Both side groups take this width so the space dots stay centred in the strip.
+    var sideWidth: CGFloat { CGFloat(max(leading.count, trailing.count)) * ShellLayout.controlSize }
+}
+
 struct Sidebar: View {
     var width: CGFloat = ShellLayout.sidebarDefault
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var renaming = false
-    @State private var name = ""
     @State private var deleteSpace: SpaceInfo?
     @State private var draggingTab = false
+    private var showsAddress: Bool { app.settings.addressPlacement == .sidebar && app.activeTab != nil }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
-                IconButton("Hide sidebar (⌘S)", system: "sidebar.left") { app.toggleSidebar() }
+                SidebarGlyphButton("Hide sidebar (⌘S)", system: "sidebar.left", identifier: "sidebar.toggle") { app.toggleSidebar() }
                 Spacer(minLength: 0)
-                if let tab = app.activeTab {
-                    IconButton("Back", system: "chevron.left") { tab.goBack() }.disabled(!tab.canGoBack)
-                    IconButton("Forward", system: "chevron.right") { tab.goForward() }.disabled(!tab.canGoForward)
-                    IconButton(tab.isLoading ? "Stop" : "Reload", system: tab.isLoading ? "xmark" : "arrow.clockwise") { tab.isLoading ? tab.stop() : tab.reload() }
-                }
-            }.padding(.leading, ShellLayout.trafficReserve).padding(.trailing, ShellLayout.windowGap)
+            }.padding(.leading, ShellLayout.trafficReserve)
                 .frame(height: ShellLayout.trafficBandHeight).background(WindowDragRegion())
-            if let tab = app.activeTab { SidebarAddress(tab: tab).padding(.horizontal, 10) }
-            if app.isPrivate {
-                Label("Private", systemImage: "eye.slash").font(ShellType.label)
-                    .padding(.horizontal, 10).padding(.vertical, 6).background(app.pal.elev, in: Capsule()).padding(.horizontal, 14)
+            if showsAddress || app.isPrivate {
+                VStack(alignment: .leading, spacing: 0) {
+                    if showsAddress, let tab = app.activeTab { SidebarAddress(tab: tab) }
+                    if app.isPrivate {
+                        Label("Private", systemImage: "eye.slash").font(ShellType.label).foregroundStyle(app.pal.ink2)
+                            .padding(.leading, ShellLayout.rowInsetLeading).frame(height: ShellLayout.spaceLabelHeight)
+                    }
+                }.padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.sectionGap)
             }
-            HStack(spacing: 6) {
-                SpaceGlyph(icon: app.activeSpace.icon)
-                if renaming {
-                    InlineName(text: $name) { app.renameSpace(app.activeSpaceID, name: name); renaming = false }
-                } else {
-                    Text(app.activeSpace.name).font(ShellType.label)
-                        .lineLimit(1).onTapGesture(count: 2) { name = app.activeSpace.name; renaming = true }
-                }
-                Spacer(minLength: 0)
-                IconButton("Edit space theme", system: "ellipsis") { app.spaceEditorPresented.toggle() }
-                    .popover(isPresented: $app.spaceEditorPresented) { SpaceEditor().environmentObject(app) }
-            }.foregroundStyle(app.pal.ink2).padding(.horizontal, 16)
-            if app.archivePresented { ArchiveView() } else { ScrollViewReader { _ in
+            if app.archivePresented {
+                SpaceLabel().padding(.horizontal, ShellLayout.windowGap)
+                ArchiveView()
+            } else {
                 ScrollView {
-                    LazyVStack(spacing: 8) {
-                        if hasContent(.favorites) || draggingTab { favorites }
-                        if hasContent(.pinned) || draggingTab {
-                            section(.pinned)
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        if hasContent(.favorites) || draggingTab { favorites.padding(.bottom, ShellLayout.sectionGap) }
+                        SpaceLabel()
+                        rows(.pinned)
+                        TodayDivider()
+                        VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
+                            NewTabRow()
+                            rows(.today)
                         }
-                        Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline).padding(.horizontal, 2)
-                        section(.today)
-                    }.padding(.horizontal, 8).padding(.bottom, 12)
+                    }.padding(.horizontal, ShellLayout.windowGap).padding(.bottom, ShellLayout.sectionGap)
                         .id(app.activeSpaceID)
-                        .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
+                        .transition(SidebarMotion.spaceTransition(reduceMotion: reduceMotion))
                 }.scrollIndicators(.hidden)
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: app.activeSpaceID)
+                    .animation(SidebarMotion.spaceSwitch(reduceMotion: reduceMotion), value: app.activeSpaceID)
                     .overlay(alignment: .top) { DragAutoScrollEdge(direction: -1).frame(height: 12) }
                     .overlay(alignment: .bottom) { DragAutoScrollEdge(direction: 1).frame(height: 12) }
                     .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: app.visibleTabs.map(\.id))
             }
+            if let tab = app.tabs.first(where: { $0.id == app.mediaTabID }) {
+                NowPlayingRow(tab: tab).padding(.horizontal, ShellLayout.windowGap)
             }
-            if let tab = app.tabs.first(where: { $0.id == app.mediaTabID }) { NowPlayingRow(tab: tab).padding(.horizontal, 10) }
-            if !app.knowledgeSearchPresented {
-                Button { app.toggleKnowledge() } label: {
-                    HStack(spacing: 8) { Image(systemName: "sparkle"); Text("Ask Graphene"); Spacer(); Text("⌘K") }
-                        .font(ShellType.caption).padding(.horizontal, 10).frame(height: 28)
-                }.buttonStyle(ShellButtonStyle()).disabled(app.isPrivate).padding(.horizontal, 6)
-                    .accessibilityIdentifier("sidebar.ask").accessibilityLabel("Ask Graphene (⌘K)").accessibilityAddTraits(.isButton)
-            }
-            ZStack {
-                HStack(spacing: 0) {
-                    LibraryButton()
-                    DownloadsButton(store: app.downloads, onlyWhenRecent: true)
-                    Spacer(minLength: 0)
-                    IconButton("New Tab (⌘T)", system: "plus") { app.openCommandBar(newTab: true) }
-                        .contextMenu {
-                            Button("New Space (⌘⌥N)") { app.createSpace(); app.spaceEditorPresented = true }
-                            Button("This space’s Board (⌘⌥5)") { app.show(.board) }.disabled(app.isPrivate)
-                        }
-                }
-                ScrollViewReader { proxy in
-                ScrollView(.horizontal) {
-                    HStack(spacing: 3) {
-                        ForEach(app.spaces) { space in
-                            Button { app.selectSpace(space.id) } label: {
-                                Circle().fill(space.id == app.activeSpaceID ? app.pal.ink2 : app.pal.ink3)
-                                    .frame(width: space.id == app.activeSpaceID ? 8 : 5, height: space.id == app.activeSpaceID ? 8 : 5).frame(width: 20, height: 28)
-                            }.buttonStyle(ShellButtonStyle()).id(space.id)
-                                .help(space.name).accessibilityLabel("Switch to \(space.name)")
-                                .accessibilityIdentifier("sidebar.space.\(space.id)").accessibilityAddTraits(.isButton)
-                                .accessibilityAddTraits(space.id == app.activeSpaceID ? [.isSelected] : [])
-                                .onDrag { NSItemProvider(object: "space:\(space.id)" as NSString) }
-                                .modifier(ShellDropTarget { payload in
-                                    if let id = payloadID(payload, prefix: "space:") { app.moveSpace(id, before: space.id) }
-                                    else if let id = payloadID(payload, prefix: "tab:"), let tab = app.tabs.first(where: { $0.id == id }) {
-                                        app.placeTab(id, section: tab.section, spaceID: space.id)
-                                    }
-                                })
-                                .contextMenu {
-                                    Button("Rename / Theme…") { app.selectSpace(space.id); app.spaceEditorPresented = true }
-                                    Button("Move left") { if let i = app.spaces.firstIndex(where: { $0.id == space.id }), i > 0 { app.moveSpace(space.id, before: app.spaces[i - 1].id) } }
-                                    Button("Delete space…") { deleteSpace = space }.disabled(app.spaces.count == 1)
-                                    Button("New Space") { app.createSpace(); app.spaceEditorPresented = true }
-                                }
-                        }
-                    }
-                }.scrollIndicators(.hidden).clipped().defaultScrollAnchor(.center)
-                    .onChange(of: app.activeSpaceID) { _, id in
-                        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.14)) { proxy.scrollTo(id, anchor: .center) }
-                    }
-                }.padding(.horizontal, 54)
-            }.padding(.horizontal, 10).frame(height: ShellLayout.footerHeight)
+            SidebarFooter(store: app.downloads, deleteSpace: $deleteSpace)
         }
         .background(SidebarSwipe { app.selectRelativeSpace($0) })
         .onDrop(of: [.utf8PlainText], isTargeted: $draggingTab) { _ in false }
@@ -119,15 +91,13 @@ struct Sidebar: View {
         } message: { Text("Tabs and folders move to the previous space. The last space cannot be deleted.") }
     }
 
+    /// Shown only when the space has favorites, or while a tab is dragged so it can become one.
     private var favorites: some View {
-        VStack(spacing: 0) {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ShellLayout.favoriteGap), count: ShellLayout.favoriteColumns(width: width - 2 * ShellLayout.windowGap)), spacing: ShellLayout.favoriteGap) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: ShellLayout.favoriteGap), count: ShellLayout.favoriteColumns(width: ShellLayout.sidebarContentWidth(width))), spacing: ShellLayout.favoriteGap) {
             ForEach(app.visibleTabs.filter { $0.section == .favorites }) { tab in
                 SidebarTab(tab: tab, tile: true)
             }
-        }
-
-        }.frame(minHeight: 40)
+        }.frame(minHeight: ShellLayout.favoriteHeight)
             .modifier(ShellDropTarget { payload in
                 if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .favorites, spaceID: app.activeSpaceID) }
             })
@@ -137,32 +107,8 @@ struct Sidebar: View {
         app.visibleTabs.contains { $0.section == section } || app.folders.contains { $0.spaceID == app.activeSpaceID && $0.section == section }
     }
 
-    private func section(_ section: TabSection) -> some View {
+    private func rows(_ section: TabSection) -> some View {
         VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
-            HStack {
-                Spacer()
-                if section == .today {
-                    Button("Tidy") { app.tidyToday() }.buttonStyle(.plain).help("Archive stale Today tabs using the interval in Settings")
-                        .accessibilityIdentifier("sidebar.tidy").accessibilityLabel("Tidy stale tabs").accessibilityAddTraits(.isButton)
-                    Text("|").accessibilityHidden(true)
-                    Button("Clear") { app.archiveToday() }.buttonStyle(.plain).help("Archive all Today tabs; restore with ⇧⌘T")
-                        .accessibilityIdentifier("sidebar.clear").accessibilityLabel("Clear Today tabs").accessibilityAddTraits(.isButton)
-                }
-            }.font(ShellType.caption).foregroundStyle(app.pal.ink3).padding(.horizontal, 10).frame(height: section == .today ? 22 : 4)
-                .contentShape(Rectangle())
-                .contextMenu { Button("New Folder") { app.createFolder(section: section) } }
-                .modifier(ShellDropTarget { payload in
-                    if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: section, spaceID: app.activeSpaceID) }
-                })
-            if section == .today {
-                Button { app.openCommandBar(newTab: true) } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "plus").frame(width: 18)
-                        Text("New Tab"); Spacer(); Text("⌘T").font(ShellType.label)
-                    }.font(ShellType.row).padding(.horizontal, 10).frame(height: app.settings.compactSidebar == true ? 26 : ShellLayout.rowHeight)
-                }.buttonStyle(ShellButtonStyle()).help("New Tab (⌘T)")
-                    .accessibilityIdentifier("sidebar.newTab").accessibilityLabel("New Tab").accessibilityAddTraits(.isButton)
-            }
             ForEach(app.folders.filter { $0.spaceID == app.activeSpaceID && $0.section == section }) { folder in
                 FolderRow(folder: folder)
             }
@@ -172,9 +118,207 @@ struct Sidebar: View {
             }
         }
     }
-
 }
 
+/// A 15pt `ink3` glyph in a `controlSize` target: the sidebar's toolbar and footer control.
+struct SidebarGlyphButton: View {
+    let title: String
+    let system: String
+    var font: Font
+    var size: CGFloat
+    var identifier: String
+    var action: () -> Void
+    init(_ title: String, system: String, font: Font = ShellType.glyph, size: CGFloat = ShellLayout.controlSize, identifier: String, action: @escaping () -> Void) {
+        self.title = title; self.system = system; self.font = font; self.size = size; self.identifier = identifier; self.action = action
+    }
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: system).font(font).frame(width: size, height: size).contentShape(Rectangle())
+        }.buttonStyle(ShellButtonStyle(muted: true))
+            .help(title).accessibilityLabel(title).accessibilityIdentifier(identifier).accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Row hover for the sidebar's own button rows (New Tab): `rowHover`, `ink3`, 100ms fade.
+private struct SidebarRowButtonStyle: ButtonStyle {
+    @EnvironmentObject var app: AppState
+    @State private var hovered = false
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.foregroundStyle(app.pal.ink3)
+            .background(configuration.isPressed ? app.pal.rowSelected : (hovered ? app.pal.rowHover : .clear), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+            .contentShape(Rectangle()).onHover { hovered = $0 }
+            .animation(SidebarMotion.hover, value: hovered)
+    }
+}
+
+/// The space's glyph and name; the label is the pinned section's header and drop target.
+private struct SpaceLabel: View {
+    @EnvironmentObject var app: AppState
+    @State private var hovered = false
+    @State private var renaming = false
+    @State private var name = ""
+    var body: some View {
+        HStack(spacing: ShellLayout.iconGap) {
+            SpaceGlyph(icon: app.activeSpace.icon).frame(width: ShellLayout.iconSlot)
+            if renaming {
+                InlineName(text: $name) { app.renameSpace(app.activeSpaceID, name: name); renaming = false }
+            } else {
+                Text(app.activeSpace.name).font(ShellType.label).lineLimit(1)
+                    .onTapGesture(count: 2) { beginRename() }
+            }
+            Spacer(minLength: 0)
+            SidebarGlyphButton("Space options", system: "ellipsis", font: ShellType.glyphSmall, size: ShellLayout.closeTarget, identifier: "sidebar.spaceMenu") {
+                app.spaceEditorPresented.toggle()
+            }.opacity(hovered || app.spaceEditorPresented ? 1 : 0)
+                .popover(isPresented: $app.spaceEditorPresented) { SpaceEditor().environmentObject(app) }
+        }.foregroundStyle(app.pal.ink2).padding(.leading, ShellLayout.rowInsetLeading)
+            .frame(height: ShellLayout.spaceLabelHeight).contentShape(Rectangle())
+            .onHover { hovered = $0 }
+            .animation(SidebarMotion.hover, value: hovered)
+            .contextMenu {
+                Button("Rename Space") { beginRename() }
+                Button("Space Theme…") { app.spaceEditorPresented = true }
+                Button("New Folder") { app.createFolder(section: .pinned) }
+            }
+            .modifier(ShellDropTarget { payload in
+                if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .pinned, spaceID: app.activeSpaceID) }
+            })
+            .accessibilityElement(children: .contain).accessibilityLabel("Space \(app.activeSpace.name)")
+            .accessibilityIdentifier("sidebar.spaceLabel")
+            .accessibilityAction(named: "Space options") { app.spaceEditorPresented = true }
+    }
+    private func beginRename() { name = app.activeSpace.name; renaming = true }
+}
+
+/// The hairline above Today; hovering it reveals "Clear", which archives the Today tabs.
+private struct TodayDivider: View {
+    @EnvironmentObject var app: AppState
+    @State private var hovered = false
+    var body: some View {
+        HStack(spacing: ShellLayout.iconGap) {
+            Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
+            if hovered {
+                Button("Clear") { app.archiveToday() }.buttonStyle(.plain)
+                    .font(ShellType.label).foregroundStyle(app.pal.ink3)
+                    .help("Archive all Today tabs; restore with ⇧⌘T")
+                    .accessibilityIdentifier("sidebar.clear").accessibilityLabel("Clear Today tabs").accessibilityAddTraits(.isButton)
+                    .transition(.opacity)
+            }
+        }.frame(height: 2 * ShellLayout.sectionGap).contentShape(Rectangle())
+            .onHover { hovered = $0 }
+            .animation(SidebarMotion.hover, value: hovered)
+            .contextMenu {
+                Button("Clear Today") { app.archiveToday() }
+                Button("Tidy Stale Tabs") { app.tidyToday() }
+                Button("New Folder") { app.createFolder(section: .today) }
+            }
+            .modifier(ShellDropTarget { payload in
+                if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: .today, spaceID: app.activeSpaceID) }
+            })
+            .accessibilityElement(children: .contain).accessibilityLabel("Today")
+            .accessibilityIdentifier("sidebar.todayDivider")
+            .accessibilityAction(named: "Clear Today tabs") { app.archiveToday() }
+    }
+}
+
+private struct NewTabRow: View {
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        Button { app.openCommandBar(newTab: true) } label: {
+            HStack(spacing: ShellLayout.iconGap) {
+                Image(systemName: "plus").font(ShellType.glyph).frame(width: ShellLayout.iconSlot)
+                Text("New Tab").font(ShellType.row)
+                Spacer(minLength: 0)
+            }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight).contentShape(Rectangle())
+        }.buttonStyle(SidebarRowButtonStyle()).help("New Tab (⌘T)")
+            .accessibilityIdentifier("sidebar.newTab").accessibilityLabel("New Tab").accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Footer strip: archive and library leading, space dots centred, downloads (when active) and plus trailing.
+private struct SidebarFooter: View {
+    @EnvironmentObject var app: AppState
+    @ObservedObject var store: DownloadStore
+    @Binding var deleteSpace: SpaceInfo?
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let layout = SidebarFooterLayout(downloadsActive: app.downloadsPresented || store.hasRecentActivity(at: context.date))
+            HStack(spacing: 0) {
+                HStack(spacing: 0) { ForEach(layout.leading, id: \.self) { item($0) } }
+                    .frame(width: layout.sideWidth, alignment: .leading)
+                SpaceDots(deleteSpace: $deleteSpace).frame(maxWidth: .infinity)
+                HStack(spacing: 0) { ForEach(layout.trailing, id: \.self) { item($0) } }
+                    .frame(width: layout.sideWidth, alignment: .trailing)
+            }.padding(.horizontal, ShellLayout.windowGap).frame(height: ShellLayout.footerHeight)
+        }
+    }
+    @ViewBuilder private func item(_ item: SidebarFooterItem) -> some View {
+        switch item {
+        case .archive:
+            SidebarGlyphButton("Archived tabs (⇧⌘A)", system: "archivebox", identifier: "sidebar.archive") { app.archivePresented.toggle() }
+        case .library:
+            LibraryButton()
+        case .downloads:
+            DownloadsButton(store: store)
+        case .newTab:
+            SidebarGlyphButton("New Tab (⌘T)", system: "plus", identifier: "sidebar.plus") { app.openCommandBar(newTab: true) }
+                .contextMenu {
+                    Button("New Space (⌘⌥N)") { app.createSpace(); app.spaceEditorPresented = true }
+                    Button("This space’s Board (⌘⌥5)") { app.show(.board) }.disabled(app.isPrivate)
+                }
+        }
+    }
+}
+
+/// 6pt dots at a 14pt pitch (a custom space glyph replaces its dot); scrolls when they overflow.
+private struct SpaceDots: View {
+    @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Binding var deleteSpace: SpaceInfo?
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            dots
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) { dots }.scrollIndicators(.hidden)
+                    .onAppear { proxy.scrollTo(app.activeSpaceID, anchor: .center) }
+                    .onChange(of: app.activeSpaceID) { _, id in
+                        withAnimation(SidebarMotion.spaceSwitch(reduceMotion: reduceMotion)) { proxy.scrollTo(id, anchor: .center) }
+                    }
+            }
+        }
+    }
+    private var dots: some View {
+        HStack(spacing: 0) {
+            ForEach(app.spaces) { space in
+                Button { app.selectSpace(space.id) } label: {
+                    Group {
+                        if let icon = space.icon, !icon.isEmpty { SpaceGlyph(icon: icon) }
+                        else { Circle().frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot) }
+                    }.foregroundStyle(space.id == app.activeSpaceID ? app.pal.ink : app.pal.ink3)
+                        .frame(width: ShellLayout.spaceDotPitch, height: ShellLayout.controlSize).contentShape(Rectangle())
+                }.buttonStyle(.plain).id(space.id)
+                    .help(space.name).accessibilityLabel("Switch to \(space.name)")
+                    .accessibilityIdentifier("sidebar.space.\(space.id)").accessibilityAddTraits(.isButton)
+                    .accessibilityAddTraits(space.id == app.activeSpaceID ? [.isSelected] : [])
+                    .onDrag { NSItemProvider(object: "space:\(space.id)" as NSString) }
+                    .modifier(ShellDropTarget { payload in
+                        if let id = payloadID(payload, prefix: "space:") { app.moveSpace(id, before: space.id) }
+                        else if let id = payloadID(payload, prefix: "tab:"), let tab = app.tabs.first(where: { $0.id == id }) {
+                            app.placeTab(id, section: tab.section, spaceID: space.id)
+                        }
+                    })
+                    .contextMenu {
+                        Button("Rename / Theme…") { app.selectSpace(space.id); app.spaceEditorPresented = true }
+                        Button("Move left") { if let i = app.spaces.firstIndex(where: { $0.id == space.id }), i > 0 { app.moveSpace(space.id, before: app.spaces[i - 1].id) } }
+                        Button("Delete space…") { deleteSpace = space }.disabled(app.spaces.count == 1)
+                        Button("New Space") { app.createSpace(); app.spaceEditorPresented = true }
+                    }
+            }
+        }.fixedSize()
+    }
+}
+
+/// Shown only with Settings → Appearance → Address bar: In sidebar.
 private struct SidebarAddress: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
@@ -183,20 +327,20 @@ private struct SidebarAddress: View {
             Button { app.focusAddress() } label: {
                 Text(tab.url?.host?.replacingOccurrences(of: "www.", with: "") ?? "Search…")
                     .font(ShellType.caption).lineLimit(1)
-                    .frame(maxWidth: .infinity, minHeight: 28).padding(.horizontal, 5)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, ShellLayout.rowInsetLeading)
+                    .frame(height: ShellLayout.sidebarAddressHeight).contentShape(Rectangle())
             }.buttonStyle(.plain).help(tab.url?.absoluteString ?? "Open location (⌘L)")
                 .accessibilityIdentifier("sidebar.address").accessibilityLabel("Open location").accessibilityAddTraits(.isButton)
                 .contextMenu { CaptureSiteMenu(tab: tab) }
             SiteControlsButton(tab: tab)
-        }.padding(.horizontal, 4).frame(height: ShellLayout.pageToolbarHeight)
-            .background(app.pal.selection, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        }.foregroundStyle(app.pal.ink2).frame(height: ShellLayout.sidebarAddressHeight)
+            .background(app.pal.fill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
     }
 }
 
 private struct SidebarTab: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var tile = false
     @State private var hovered = false
     @State private var renaming = false
@@ -206,38 +350,16 @@ private struct SidebarTab: View {
     @State private var previewTask: Task<Void, Never>?
     @State private var previewShown = false
     private var selected: Bool { app.activeTabID == tab.id && app.activeSurface == .web }
+    private var highlighted: Bool { selected || (app.selectedTabIDs.contains(tab.id) && app.selectedTabIDs.count > 1) }
+    /// A pinned tab that has navigated away from its base URL; clicking its favicon resets it.
+    private var offBase: Bool { tab.isPinned && tab.pinnedURL != nil && tab.pinnedURL != tab.url }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: tile ? ShellLayout.favoriteRadius : ShellLayout.rowRadius) }
 
     var body: some View {
-        HStack(spacing: 8) {
-            if tile { Spacer(minLength: 0) }
-            Button { app.sidebarClick(tab, reset: tab.isPinned) } label: {
-                if tab.isLoading { ProgressView().controlSize(.mini).frame(width: ShellLayout.iconSize, height: ShellLayout.iconSize) }
-                else { Favicon(host: tab.url?.host, size: tile ? ShellLayout.favoriteIconSize : ShellLayout.iconSize, url: tab.url) }
-            }.buttonStyle(.plain).help(tab.isPinned ? "Return to pinned page" : "Open tab")
-                .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)")
-                .accessibilityLabel(tile ? tab.displayTitle : "Open \(tab.displayTitle)").accessibilityAddTraits(.isButton)
-            if !tile {
-                if renaming { InlineName(text: $name) { app.renameTab(tab, name: name); renaming = false } }
-                else {
-                    Text(tab.displayTitle).font(selected ? ShellType.rowSelected : ShellType.row).lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .onTapGesture(count: 2) { beginRename() }
-                        .onTapGesture { app.sidebarClick(tab) }
-                }
-                if tab.isPlayingAudio { Image(systemName: "speaker.wave.2.fill").font(ShellType.glyphMini).help("Playing audio") }
-                if tab.isPinned && tab.pinnedURL != tab.url {
-                    IconButton("Return to pinned page", system: "arrow.uturn.backward") { app.resetPinnedTab(tab) }
-                }
-                Button { app.requestCloseTab(tab.id) } label: {
-                    Image(systemName: "xmark").font(ShellType.glyphSmall).frame(width: 22, height: 28)
-                }.buttonStyle(.plain).opacity(hovered ? 1 : 0).help("Close \(tab.displayTitle)")
-                    .accessibilityIdentifier("sidebar.close.\(tab.id)").accessibilityLabel("Close \(tab.displayTitle)").accessibilityAddTraits(.isButton)
-            } else { Spacer(minLength: 0) }
-        }.padding(.horizontal, tile ? 4 : 10).frame(height: tile ? ShellLayout.favoriteHeight : (app.settings.compactSidebar == true ? 26 : ShellLayout.rowHeight))
-            .foregroundStyle(selected ? app.pal.ink : app.pal.ink2)
-            .background(app.selectedTabIDs.contains(tab.id) && app.selectedTabIDs.count > 1 ? app.pal.active : (selected ? app.pal.selection : (hovered ? app.pal.hover : (tile ? app.pal.fill : .clear))), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: hovered)
-            .overlay(RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(grouping ? app.pal.accentText : .clear))
+        Group { if tile { tileContent } else { rowContent } }
+            .overlay(shape.strokeBorder(grouping ? app.pal.accent : .clear))
+            .animation(SidebarMotion.hover, value: hovered)
+            .animation(SidebarMotion.hover, value: highlighted)
             .contentShape(Rectangle()).onTapGesture { app.sidebarClick(tab) }
             .onHover { inside in
                 hovered = inside; app.hoveredTabID = inside ? tab.id : nil
@@ -277,6 +399,62 @@ private struct SidebarTab: View {
             }
             .contextMenu { TabContextMenu(tab: tab, rename: beginRename) }
     }
+
+    private func icon(size: CGFloat) -> some View {
+        Group {
+            if tab.isLoading { ProgressView().controlSize(.mini).frame(width: size, height: size) }
+            else { Favicon(host: tab.url?.host, size: size, url: tab.url) }
+        }
+    }
+
+    /// Favorite tile: translucent fill and a centred 20pt icon; selected adds a 1px stroke.
+    private var tileContent: some View {
+        Button { app.sidebarClick(tab, reset: tab.isPinned) } label: {
+            icon(size: ShellLayout.favoriteIconSize)
+                .frame(maxWidth: .infinity).frame(height: ShellLayout.favoriteHeight).contentShape(Rectangle())
+        }.buttonStyle(.plain)
+            .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)").accessibilityLabel(tab.displayTitle).accessibilityAddTraits(.isButton)
+            .background(highlighted ? app.pal.fillSelected : (hovered ? app.pal.fillHover : app.pal.fill), in: shape)
+            .overlay(shape.strokeBorder(highlighted ? app.pal.fillSelectedStroke : .clear, lineWidth: ShellLayout.hairline))
+    }
+
+    /// Pinned and Today row: 20pt icon slot, title, audio glyph; Today rows add a close glyph.
+    private var rowContent: some View {
+        HStack(spacing: ShellLayout.iconGap) {
+            Button { app.sidebarClick(tab, reset: offBase) } label: {
+                icon(size: ShellLayout.iconSize)
+                    .overlay(alignment: .bottomTrailing) {
+                        if offBase {
+                            Circle().fill(app.pal.accent).frame(width: ShellLayout.statusDot, height: ShellLayout.statusDot)
+                                .offset(x: ShellLayout.statusDot / 2, y: ShellLayout.statusDot / 2)
+                        }
+                    }
+                    .frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
+            }.buttonStyle(.plain).help(offBase ? "Return to pinned page" : "Open tab")
+                .accessibilityIdentifier("sidebar.tabIcon.\(tab.id)")
+                .accessibilityLabel(offBase ? "Return \(tab.displayTitle) to pinned page" : "Open \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+            if renaming { InlineName(text: $name) { app.renameTab(tab, name: name); renaming = false } }
+            else {
+                Text(tab.displayTitle).font(selected ? ShellType.rowSelected : ShellType.row).lineLimit(1)
+                    .foregroundStyle(selected ? app.pal.ink : app.pal.ink2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .onTapGesture(count: 2) { beginRename() }
+                    .onTapGesture { app.sidebarClick(tab) }
+            }
+            if tab.isPlayingAudio {
+                Image(systemName: "speaker.wave.2.fill").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3).help("Playing audio")
+            }
+            if tab.section == .today {
+                Button { app.requestCloseTab(tab.id) } label: {
+                    Image(systemName: "xmark").font(ShellType.glyphSmall).foregroundStyle(app.pal.ink3)
+                        .frame(width: ShellLayout.closeTarget, height: ShellLayout.closeTarget).contentShape(Rectangle())
+                }.buttonStyle(.plain).opacity(hovered || selected ? 1 : 0).help("Close \(tab.displayTitle)")
+                    .accessibilityIdentifier("sidebar.close.\(tab.id)").accessibilityLabel("Close \(tab.displayTitle)").accessibilityAddTraits(.isButton)
+            }
+        }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight)
+            .background(highlighted ? app.pal.rowSelected : (hovered ? app.pal.rowHover : .clear), in: shape)
+    }
+
     private func beginRename() { name = tab.displayTitle; renaming = true }
 }
 
@@ -288,18 +466,25 @@ private struct FolderRow: View {
     @State private var hovered = false
     var body: some View {
         VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
-            HStack(spacing: 8) {
+            HStack(spacing: ShellLayout.iconGap) {
                 Button {
                     app.updateFolder(folder.id, collapsed: !folder.collapsed)
                 } label: {
-                    Image(systemName: hovered ? (folder.collapsed ? "chevron.right" : "chevron.down") : "folder").font(ShellType.glyphSmall).frame(width: ShellLayout.iconSize, height: 26)
+                    Image(systemName: folder.collapsed ? "chevron.right" : "chevron.down").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3)
+                        .frame(width: ShellLayout.iconSlot, height: ShellLayout.rowHeight).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("sidebar.folder.\(folder.id)")
                     .accessibilityLabel("\(folder.collapsed ? "Expand" : "Collapse") \(folder.name)").accessibilityAddTraits(.isButton)
                 if renaming { InlineName(text: $name) { app.updateFolder(folder.id, name: name); renaming = false } }
-                else { Text(folder.name).font(ShellType.row).lineLimit(1).onTapGesture(count: 2) { name = folder.name; renaming = true } }
+                else {
+                    Text(folder.name).font(ShellType.row).foregroundStyle(app.pal.ink2).lineLimit(1)
+                        .onTapGesture(count: 2) { name = folder.name; renaming = true }
+                }
                 Spacer(minLength: 0)
-            }.padding(.horizontal, 10).frame(height: app.settings.compactSidebar == true ? 26 : ShellLayout.rowHeight).contentShape(Rectangle())
+            }.padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.rowHeight)
+                .background(hovered ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                .contentShape(Rectangle())
                 .onHover { hovered = $0 }
+                .animation(SidebarMotion.hover, value: hovered)
                 .contextMenu {
                     Button("Rename") { name = folder.name; renaming = true }
                     Button("Remove Folder, Keep Tabs") { app.deleteFolder(folder.id) }
@@ -310,19 +495,20 @@ private struct FolderRow: View {
                     if let id = payloadID(payload, prefix: "tab:") { app.placeTab(id, section: folder.section, folderID: folder.id, spaceID: folder.spaceID) }
                 }))
             if !folder.collapsed {
-                ForEach(app.visibleTabs.filter { $0.folderID == folder.id }) { tab in SidebarTab(tab: tab).padding(.leading, 16) }
+                ForEach(app.visibleTabs.filter { $0.folderID == folder.id }) { tab in SidebarTab(tab: tab).padding(.leading, ShellLayout.folderIndent) }
             }
-        }.foregroundStyle(app.pal.ink2)
+        }
     }
 }
 
+/// A space's emoji or SF Symbol at 12pt; callers size the slot.
 struct SpaceGlyph: View {
     var icon: String?
     var body: some View {
         Group {
             if let icon, NSImage(systemSymbolName: icon, accessibilityDescription: nil) == nil { Text(String(icon.prefix(2))) }
             else { Image(systemName: icon ?? "circle.hexagongrid.fill") }
-        }.font(ShellType.glyphSmall).frame(width: ShellLayout.iconSize, height: 18)
+        }.font(ShellType.glyphSmall)
     }
 }
 
@@ -341,9 +527,11 @@ struct ShellButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var selected = false
+    /// Sidebar toolbar and footer glyphs use `ink3`.
+    var muted = false
     @State private var hovered = false
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.foregroundStyle(enabled ? app.pal.ink2 : app.pal.inkDisabled)
+        configuration.label.foregroundStyle(enabled ? (muted ? app.pal.ink3 : app.pal.ink2) : app.pal.inkDisabled)
             .background(configuration.isPressed ? app.pal.active : (selected ? app.pal.active : (hovered && enabled ? app.pal.hover : .clear)), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             .contentShape(Rectangle()).onHover { hovered = $0 }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: hovered)

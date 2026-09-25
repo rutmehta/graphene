@@ -75,8 +75,9 @@ struct SettingsView: View {
             .accessibilityIdentifier("settings.appearance.mode").accessibilityLabel("Appearance")
             Toggle("Page frame gutter", isOn: $app.settings.pageGutter)
                 .accessibilityIdentifier("settings.appearance.gutter").accessibilityLabel("Page frame gutter")
-            Toggle("Compact sidebar rows", isOn: Binding(get: { app.settings.compactSidebar ?? false }, set: { app.settings.compactSidebar = $0 }))
-                .accessibilityIdentifier("settings.appearance.compact").accessibilityLabel("Compact sidebar rows")
+            Picker("Address bar", selection: $app.settings.addressPlacement) {
+                Text("On page").tag(AddressPlacement.onPage); Text("In sidebar").tag(AddressPlacement.sidebar)
+            }.accessibilityIdentifier("settings.appearance.address").accessibilityLabel("Address bar")
             Picker("Chat panel", selection: $app.settings.chatPanelMode) {
                 Text("Floating").tag(ChatPanelMode.floating); Text("Docked").tag(ChatPanelMode.docked)
             }.accessibilityIdentifier("settings.appearance.chatPanel").accessibilityLabel("Chat panel")

@@ -62,6 +62,28 @@ enum ShellLayout {
     static let footerHeight: CGFloat = 36
     static let sectionGap: CGFloat = 12
     static let hairline: CGFloat = 1
+    // Sidebar details (arc-look.md §3.3)
+    /// Favicon/glyph slot at a row's leading edge, and the gap to the title.
+    static let iconSlot: CGFloat = 20
+    static let iconGap: CGFloat = 8
+    static let spaceLabelHeight: CGFloat = 24
+    /// Hit target of a row's close glyph and the space label's `…`.
+    static let closeTarget: CGFloat = 24
+    static let folderIndent: CGFloat = 20
+    /// Reset-tab dot on a pinned favicon and footer space dots.
+    static let statusDot: CGFloat = 6
+    static let spaceDotPitch: CGFloat = 14
+    static let sidebarAddressHeight: CGFloat = 28
+    /// Invisible resize strip at the sidebar's trailing edge.
+    static let resizeStrip: CGFloat = 8
+    /// Horizontal travel of the sidebar's space-switch slide.
+    static let spaceSlide: CGFloat = 24
+    /// Sidebar content inset: `windowGap` leading and trailing.
+    static func sidebarContentWidth(_ sidebarWidth: CGFloat) -> CGFloat { sidebarWidth - 2 * windowGap }
+    static func favoriteTileWidth(contentWidth: CGFloat) -> CGFloat {
+        let columns = CGFloat(favoriteColumns(width: contentWidth))
+        return (contentWidth - (columns - 1) * favoriteGap) / columns
+    }
     /// Small inline key-hint chips ("esc", "⌘T").
     static let chipRadius: CGFloat = 4
     // Top-tabs layout strip
