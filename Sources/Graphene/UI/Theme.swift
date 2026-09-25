@@ -162,17 +162,24 @@ enum ShellType {
 }
 
 /// A grounded space color: two gradient stops + a readable accent. Not neon.
+/// Declaration order is the picker order; raw values are what profiles store, so
+/// reordering or adding cases never changes how saved spaces decode.
 enum SpaceColor: String, Codable, CaseIterable, Identifiable {
-    case clay, moss, tide, iris, slate
+    case graphite, iris, tide, moss, clay, slate
+    /// The preset a new space (and a fresh profile's first space) starts with
+    /// (graphene-identity.md §3.2). Saved spaces keep their own colour.
+    static let defaultPreset: SpaceColor = .graphite
     var id: String { rawValue }
     var label: String {
         switch self {
+        case .graphite: return "Graphite"
         case .clay: return "Clay"; case .moss: return "Moss"; case .tide: return "Tide"
         case .iris: return "Iris"; case .slate: return "Slate"
         }
     }
     var c1: Color {
         switch self {
+        case .graphite: return Color(hex: "868AA4")
         case .clay: return Color(hex: "C08361"); case .moss: return Color(hex: "7E9564")
         case .tide: return Color(hex: "5C87A2"); case .iris: return Color(hex: "8B80C6")
         case .slate: return Color(hex: "9A9486")
@@ -180,6 +187,7 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     }
     var c2: Color {
         switch self {
+        case .graphite: return Color(hex: "3E404D")
         case .clay: return Color(hex: "93402F"); case .moss: return Color(hex: "41603C")
         case .tide: return Color(hex: "2E4A63"); case .iris: return Color(hex: "4E4880")
         case .slate: return Color(hex: "565149")
@@ -187,6 +195,7 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     }
     var accent: Color {
         switch self {
+        case .graphite: return Color(hex: "545A81")
         case .clay: return Color(hex: "9C4536"); case .moss: return Color(hex: "4F7145")
         case .tide: return Color(hex: "3E6C8C"); case .iris: return Color(hex: "645AA0")
         case .slate: return Color(hex: "6C665D")
@@ -197,9 +206,12 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     }
     /// Chrome saturation for the preset. The swatch colours are muted (s ≈ 0.13–0.5), which
     /// left the flooded gradient nearly flat; presets drive the chrome at s ≥ 0.6, like the
-    /// Arc calibration capture (arc-look.md §2.3); Slate stays at 0 as the neutral grey preset. Custom themes keep their own saturation.
+    /// Arc calibration capture (arc-look.md §2.3); Slate stays at 0 as the neutral grey preset.
+    /// Graphite (hue 232°) sits at 0.12, so s′ = 0.56: a graphite neutral rather than a colour
+    /// (graphene-identity.md §3.2). Custom themes keep their own saturation.
     var presetSaturation: Double {
         switch self {
+        case .graphite: return 0.12
         case .clay: return 0.68; case .moss: return 0.62; case .tide: return 0.66
         case .iris: return 0.64; case .slate: return 0
         }

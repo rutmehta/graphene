@@ -4,8 +4,9 @@ import SwiftUI
 struct OnboardingView: View {
     @EnvironmentObject var app: AppState
     @State private var step = 0
-    /// The three preset hues offered on the colour step.
-    static let swatches: [SpaceColor] = [.iris, .tide, .moss]
+    /// The three presets offered on the colour step; Graphite, the default, comes first
+    /// and is selected on a fresh profile (graphene-identity.md §3.2).
+    static let swatches: [SpaceColor] = [.graphite, .iris, .tide]
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .firstTextBaseline) {
