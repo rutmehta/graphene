@@ -6,10 +6,12 @@ struct TabContextMenu: View {
     @ObservedObject var tab: Tab
     var rename: () -> Void
     var body: some View {
-        command("pin", tab.isPinned ? "Unpin" : "Pin") { app.pin(tab) }
-        command("favorite", tab.isFavorite ? "Remove from Favorites" : "Add to Favorites") { app.placeTab(tab.id, section: tab.isFavorite ? .today : .favorites) }
+        // One action table per evaluation, not one per item (see `CommandMenuTable`).
+        let actions = CommandMenuTable(app.allCommandActions)
+        command("pin", actions, tab.isPinned ? "Unpin" : "Pin") { app.pin(tab) }
+        command("favorite", actions, tab.isFavorite ? "Remove from Favorites" : "Add to Favorites") { app.placeTab(tab.id, section: tab.isFavorite ? .today : .favorites) }
         if tab.isPinned { Button("Reset to Pinned Page") { app.resetPinnedTab(tab) } }
-        command("rename", "Rename…", run: rename)
+        command("rename", actions, "Rename…", run: rename)
         Button("Duplicate") { app.duplicateTab(tab) }
         Divider()
         Menu("Move to") {
@@ -25,16 +27,16 @@ struct TabContextMenu: View {
             Button("New Window") { BrowserWindows.open(sharing: app, moving: tab.id) }
         }
         Button("Open in split view") { app.openSplit(tab.id) }.disabled(tab.id == app.activeTabID)
-        command("separate", "Separate split") { app.separateSplit() }.disabled(app.activeSplit == nil)
+        command("separate", actions, "Separate split") { app.separateSplit() }.disabled(app.activeSplit == nil)
         Divider()
-        command("copy-url", "Copy Link") { copyLink(tab.url) }.disabled(tab.url == nil)
+        command("copy-url", actions, "Copy Link") { copyLink(tab.url) }.disabled(tab.url == nil)
         Button("Show in Thread") { app.selectedThreadID = tab.currentThreadID; app.show(.threads) }.disabled(tab.currentThreadID == nil)
-        command("peek", "Peek") { if let url = tab.url { app.showPeek(url) } }.disabled(tab.url == nil)
+        command("peek", actions, "Peek") { if let url = tab.url { app.showPeek(url) } }.disabled(tab.url == nil)
         BatchTabMenu()
         Divider()
         // ⌘W resets a pinned tab, so its immediate Close carries no shortcut hint.
         if tab.isPinned { Button("Close") { app.closeTab(tab.id) } }
-        else { command("close-tab", "Archive Tab") { app.closeTab(tab.id) } }
+        else { command("close-tab", actions, "Archive Tab") { app.closeTab(tab.id) } }
         // Provenance rows (graphene-identity.md §3.1): only Today rows in a branch gain these.
         if !app.branchChildren(of: tab.id).isEmpty { Button("Close branch") { app.closeBranch(tab.id) } }
         if app.branchParent(of: tab.id) != nil { Button("Detach from parent") { app.detachFromParent(tab.id) } }
@@ -46,10 +48,10 @@ struct TabContextMenu: View {
             }
         }
     }
-    @ViewBuilder private func command(_ id: String, _ title: String, run: @escaping () -> Void) -> some View {
+    @ViewBuilder private func command(_ id: String, _ actions: CommandMenuTable, _ title: String, run: @escaping () -> Void) -> some View {
         // Only the main command menu registers accelerators. SwiftUI can keep
         // contextual shortcuts alive after dismissal, targeting an unrelated tab.
-        let hint = app.allCommandActions.first(where: { $0.id == id })?.hint ?? ""
+        let hint = actions[id]?.hint ?? ""
         Button(hint.isEmpty ? title : title + "    " + hint, action: run)
     }
 }

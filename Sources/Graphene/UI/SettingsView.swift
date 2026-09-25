@@ -61,6 +61,9 @@ struct SettingsView: View {
                     Picker("Discard background pages", selection: $app.discardMinutes) {
                         Text("30 minutes").tag(30.0); Text("1 hour").tag(60.0); Text("Never").tag(0.0)
                     }
+                    Picker("Background pages kept loaded", selection: Binding(get: { app.settings.backgroundTabLimit }, set: { app.settings.backgroundTabLimit = $0 })) {
+                        ForEach([6, 12, 24], id: \.self) { Text("\($0)").tag($0) }
+                    }
                     Toggle("Start on a new tab (keep restored tabs)", isOn: Binding(get: { app.settings.startupBlank ?? false }, set: { app.settings.startupBlank = $0 }))
                 }
                 Section {

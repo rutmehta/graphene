@@ -205,7 +205,7 @@ extension AppState {
                 self.readerPresented = true }
         }
         add("save", "Save page to Vault", "d", .command, "⌘D", enabled: page && !isPrivate) { self.noteComposerPresented = true }
-        add("export", "Export thread", enabled: commandThread != nil && !isPrivate) { if let thread = self.commandThread { self.exportThread(thread) } }
+        add("export", "Export thread", enabled: !isPrivate && graph.hasThreads(spaceID: activeSpaceID)) { if let thread = self.commandThread { self.exportThread(thread) } }
         add("layout", "Switch layout") { self.layout = self.layout == .sidebar ? .topTabs : .sidebar }
         return actions
     }

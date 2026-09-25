@@ -124,7 +124,7 @@ struct RootView: View {
         .ignoresSafeArea()
         .background(WindowAccessor(onKeyWindow: { app.focusedWindowID = windowID }, state: windowState))
         .background(TabKeyboardMonitor(app: app))
-        .overlay { if !app.switcherIDs.isEmpty { TabSwitcher() } }
+        .overlay { TabSwitcherOverlay(switcher: app.switcher) }
         .overlay { WindowOutline() }
         .onAppear {
             app.focusedWindowID = windowID
@@ -197,14 +197,9 @@ struct BrowserPage: View {
             if app.findPresented && tab.url != nil && (app.activeSplit == nil || app.activeTabID == tab.id) { FindBar(tab: tab) }
             page
         }
-        .task(id: app.activeTabID) {
-            while !Task.isCancelled && app.activeTabID == tab.id {
-                let playing = await tab.engine.evaluateJavaScript("Array.from(document.querySelectorAll('audio,video')).some(e => !e.paused && !e.ended && !e.muted && e.volume > 0)")
-                guard !Task.isCancelled else { return }
-                tab.isPlayingAudio = playing as? Bool ?? false
-                try? await Task.sleep(for: .seconds(2))
-            }
-        }
+        // Media state of the page on screen comes from `AppState.pollMediaAndDiscard`, which
+        // already asks displayed tabs every 2 s; a second per-page loop here doubled the
+        // polling and republished `isPlayingAudio` (redrawing the card) every 2 s.
     }
     private var page: some View {
         ZStack(alignment: .top) {

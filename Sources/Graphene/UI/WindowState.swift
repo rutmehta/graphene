@@ -6,6 +6,12 @@ final class BrowserFocus: ObservableObject {
     static let shared = BrowserFocus()
     @Published var app: AppState?
     weak var window: NSWindow?
+    /// Publishes only when the focused browser changes: every ⌘Tab back into the app makes
+    /// the window key again, and republishing the same state rebuilt the whole menu bar.
+    func focus(_ app: AppState, window: NSWindow?) {
+        if self.app !== app { self.app = app }
+        self.window = window
+    }
 }
 
 @MainActor
@@ -26,9 +32,9 @@ final class WindowState: ObservableObject {
     func attach(_ window: NSWindow) {
         guard self.window !== window else { return }
         self.window = window
-        if window.isKeyWindow { BrowserFocus.shared.app = app; BrowserFocus.shared.window = window }
+        if window.isKeyWindow { BrowserFocus.shared.focus(app, window: window) }
         keyObserver = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { if let self { BrowserFocus.shared.app = self.app; BrowserFocus.shared.window = self.window } }
+            MainActor.assumeIsolated { if let self { BrowserFocus.shared.focus(self.app, window: self.window) } }
         }
         closeObserver = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {

@@ -55,9 +55,12 @@ struct ThreadSummary: Codable {
 /// (Semantic grouping of nodes is a deliberate later layer.)
 @MainActor
 final class KnowledgeGraph: ObservableObject {
-    @Published private(set) var nodes: [UUID: GraphNode] = [:]
+    @Published private(set) var nodes: [UUID: GraphNode] = [:] { didSet { threadCache.removeAll() } }
     @Published private(set) var edges: [GraphEdge] = []
-    @Published private(set) var visits: [GraphVisit] = []
+    @Published private(set) var visits: [GraphVisit] = [] { didSet { threadCache.removeAll() } }
+    /// `threads(...)` results until the next change of `nodes` or `visits`: the Resume page,
+    /// the Threads list, the Ask panel and the command bar ask for them on every redraw.
+    private var threadCache: [String: [Thread]] = [:]
     @Published private(set) var summaries: [String: ThreadSummary] = [:]
     func cacheSummary(_ summary: ThreadSummary, threadID: UUID) { summaries[threadID.uuidString] = summary; scheduleSave() }
     @Published private(set) var errorText: String?
@@ -161,7 +164,21 @@ final class KnowledgeGraph: ObservableObject {
         var hosts: [String]
     }
 
+    /// Whether `threads(spaceID:)` would return any thread, without building them: a visit in
+    /// scope whose page is known. The command table asks this on every AppState change.
+    func hasThreads(spaceID: UUID? = nil) -> Bool {
+        visits.last { (spaceID == nil || $0.spaceID == spaceID || $0.spaceID == nil) && nodes[$0.nodeID] != nil } != nil
+    }
+
     func threads(gapMinutes: Double = 40, limit: Int = 100, spaceID: UUID? = nil) -> [Thread] {
+        let key = "\(gapMinutes)|\(limit)|\(spaceID?.uuidString ?? "all")"
+        if let cached = threadCache[key] { return cached }
+        let built = buildThreads(limit: limit, spaceID: spaceID)
+        threadCache[key] = built
+        return built
+    }
+
+    private func buildThreads(limit: Int, spaceID: UUID?) -> [Thread] {
         let scoped = visits.filter { spaceID == nil || $0.spaceID == spaceID || $0.spaceID == nil }
         return Dictionary(grouping: scoped, by: \.threadID).compactMap { id, entries -> Thread? in
             let ordered = entries.sorted { $0.date < $1.date }
@@ -290,19 +307,37 @@ final class KnowledgeGraph: ObservableObject {
 
     private func scheduleSave() {
         saveWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.save() }
+        let work = DispatchWorkItem { [weak self] in self?.save(wait: false) }
         saveWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
-    func save() {
+    /// Encodes and writes the graph off the main thread, in order. The file holds every page's
+    /// text snippet (up to 16 KB each), so encoding it on the main thread after each
+    /// navigation stalled the UI for as long as the history was large.
+    private static let saveQueue = DispatchQueue(label: "graphene.graph.save", qos: .utility)
+
+    /// Saves now. `wait` (the default, used at quit and by callers that read the file back)
+    /// returns after the file is written; the scheduled save does not wait.
+    func save(wait: Bool = true) {
         guard canSave else { return }
         let snap = Snapshot(nodes: Array(nodes.values), edges: edges, visits: visits, summaries: summaries)
-        do {
-            let data = try JSONEncoder().encode(snap)
-            try data.write(to: file, options: .atomic)
-            errorText = nil
-        } catch { errorText = error.localizedDescription }
+        let file = self.file
+        let write: @Sendable () -> String? = {
+            do { try JSONEncoder().encode(snap).write(to: file, options: .atomic); return nil }
+            catch { return error.localizedDescription }
+        }
+        if wait {
+            let error = Self.saveQueue.sync(execute: write)
+            if errorText != error { errorText = error }
+        } else {
+            Self.saveQueue.async { [weak self] in
+                let error = write()
+                DispatchQueue.main.async { [weak self] in
+                    MainActor.assumeIsolated { if let self, self.errorText != error { self.errorText = error } }
+                }
+            }
+        }
     }
 
     private func load() {

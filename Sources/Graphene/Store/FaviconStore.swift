@@ -108,9 +108,23 @@ final class FaviconStore: ObservableObject {
     /// The URL each origin's icon came from, so a page re-declaring it does not refetch.
     private var sources: [String: URL] = [:]
     private var attempts: [URL: Date] = [:]
-    private var requests: [String: UUID] = [:]
-    private let directory = Paths.root.appendingPathComponent("Favicons", isDirectory: true)
+    /// The fetch running for each origin, and the candidates it was started with. A second
+    /// request for the same origin (twenty rows of one site appearing at once) waits for it
+    /// instead of starting its own; before, each new request orphaned the one in flight, whose
+    /// icon was then thrown away.
+    private var inFlight: [String: (declared: [URL], id: UUID, task: Task<Void, Never>)] = [:]
+    private let directory: URL
+    /// Downloads one icon; replaced in tests.
+    private let loader: ((URL) async -> Data?)?
+    /// Network requests started, for tests.
+    private(set) var downloads = 0
     private static let maxBytes = 524288
+    /// A cached icon is reused without asking the network for this long.
+    static let diskFreshness: TimeInterval = 604800
+
+    init(directory: URL = Paths.root.appendingPathComponent("Favicons", isDirectory: true), loader: ((URL) async -> Data?)? = nil) {
+        self.directory = directory; self.loader = loader
+    }
     private let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 5
@@ -133,29 +147,50 @@ final class FaviconStore: ObservableObject {
     }
 
     /// Fetches the icon for `page`'s origin: each `declared` candidate in order (from
-    /// `FaviconDiscovery`), then `/favicon.ico`. Without candidates a cached icon is reused.
+    /// `FaviconDiscovery`), then `/favicon.ico`. An icon in memory or a fresh one on disk is
+    /// reused without the network (for declared candidates, when it came from the first
+    /// candidate). One fetch runs per origin at a time.
     func fetch(_ page: URL, declared: [URL] = []) async {
         guard let fallback = FaviconPolicy.fallbackURL(page: page) else { return }
         let key = FaviconPolicy.origin(page)
-        let filename = SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
-        let file = directory.appendingPathComponent(filename + ".icon")
-        if declared.isEmpty {
-            if icons[key] != nil { return }
-            if let attributes = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
-               let date = attributes.contentModificationDate, Date().timeIntervalSince(date) < 604800,
-               let data = try? Data(contentsOf: file), let image = Self.decode(data) { store(image, key: key, source: nil); return }
-        } else if let first = declared.first, icons[key] != nil, sources[key] == first {
+        if declared.isEmpty ? icons[key] != nil : (icons[key] != nil && sources[key] == declared.first) { return }
+        if let running = inFlight[key], declared.isEmpty || running.declared == declared {
+            await running.task.value
             return
         }
-        let request = UUID(); requests[key] = request
+        let id = UUID()
+        let task = Task<Void, Never> { [weak self] in await self?.load(key: key, declared: declared, fallback: fallback) }
+        inFlight[key] = (declared, id, task)
+        await task.value
+        if inFlight[key]?.id == id { inFlight[key] = nil }
+    }
+
+    private func load(key: String, declared: [URL], fallback: URL) async {
+        let filename = SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
+        let file = directory.appendingPathComponent(filename + ".icon")
+        let sourceFile = directory.appendingPathComponent(filename + ".source")
+        if let attributes = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
+           let date = attributes.contentModificationDate, Date().timeIntervalSince(date) < Self.diskFreshness {
+            // The source sidecar says which candidate the cached bytes came from; a page that
+            // still declares it is served from disk (before, a disk hit had no source, so every
+            // page load re-downloaded its declared icon).
+            let source = (try? String(contentsOf: sourceFile, encoding: .utf8)).flatMap(URL.init(string:))
+            if declared.isEmpty || source == declared.first, let data = try? Data(contentsOf: file), let image = Self.decode(data) {
+                store(image, key: key, source: source); return
+            }
+        }
         for url in declared + [fallback] {
             if let date = attempts[url], Date().timeIntervalSince(date) < 60 { continue }
             attempts[url] = Date()
-            guard let data = await download(url), requests[key] == request, let image = Self.decode(data) else { continue }
+            downloads += 1
+            let data: Data?
+            if let loader { data = await loader(url) } else { data = await download(url) }
+            guard let data, let image = Self.decode(data) else { continue }
             if icons.count >= 128, let oldest = icons.keys.sorted().first { icons.removeValue(forKey: oldest); tones.removeValue(forKey: oldest) }
             store(image, key: key, source: url)
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try? data.write(to: file, options: .atomic)
+            try? url.absoluteString.write(to: sourceFile, atomically: true, encoding: .utf8)
             trimDisk()
             break
         }
@@ -236,7 +271,10 @@ final class FaviconStore: ObservableObject {
         var bytes = 0
         for (index, entry) in entries.enumerated() {
             bytes += entry.1
-            if index >= 128 || bytes > 8 * 1024 * 1024 { try? FileManager.default.removeItem(at: entry.0) }
+            if index >= 128 || bytes > 8 * 1024 * 1024 {
+                try? FileManager.default.removeItem(at: entry.0)
+                try? FileManager.default.removeItem(at: entry.0.deletingPathExtension().appendingPathExtension("source"))
+            }
         }
     }
 }

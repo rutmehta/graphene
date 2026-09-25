@@ -176,7 +176,7 @@ private struct ProvenanceRows: View {
         VStack(spacing: ShellLayout.rowPitch - ShellLayout.rowHeight) {
             ForEach(layout.rows) { row in
                 if let tab = tabs[row.id] {
-                    SidebarTab(tab: tab, hiddenDescendants: row.collapsed ? row.descendants : nil)
+                    SidebarTab(tab: tab, hiddenDescendants: row.collapsed ? row.descendants : nil, isBranchParent: layout.parentIDs.contains(tab.id))
                         .padding(.leading, CGFloat(row.indent) * ShellLayout.threadIndent)
                         .id(tab.id)
                         .transition(row.depth > 0 ? SidebarMotion.branchTransition(reduceMotion: reduceMotion) : .opacity.combined(with: .move(edge: .top)))
@@ -531,6 +531,9 @@ private struct SidebarTab: View {
     var tile = false
     /// Set on a collapsed branch's parent: the count shown at the trailing edge.
     var hiddenDescendants: Int? = nil
+    /// A Today row with children, from the space's `ProvenanceLayout` (computed once per
+    /// sidebar, not by a scan of every tab in every row).
+    var isBranchParent = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovered = false
     @State private var renaming = false
@@ -613,7 +616,7 @@ private struct SidebarTab: View {
 
     /// Pinned and Today row: 20pt icon slot, title, audio glyph; Today rows add a close glyph.
     /// A Today row with children: hovering it swaps the favicon for the branch chevron.
-    private var branchParent: Bool { tab.section == .today && tab.folderID == nil && !app.branchChildren(of: tab.id).isEmpty }
+    private var branchParent: Bool { isBranchParent && tab.section == .today && tab.folderID == nil }
     private var branchCollapsed: Bool { app.collapsedBranchIDs.contains(tab.id) }
     private func toggleBranch() {
         withAnimation(SidebarMotion.branch(reduceMotion: reduceMotion)) { app.setBranch(tab.id, collapsed: !branchCollapsed) }

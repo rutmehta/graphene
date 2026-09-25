@@ -18,11 +18,15 @@ struct WindowAccessor: NSViewRepresentable {
     /// separator across the whole window width at the titlebar's bottom edge once a scroll
     /// view (the sidebar list, the page) sits under it; that was the rule through the top band.
     static func flattenTitlebar(_ window: NSWindow) {
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.titlebarSeparatorStyle = .none
-        window.styleMask.insert(.fullSizeContentView)
+        // Each assignment is guarded: this runs after every shell update, and setting the
+        // style mask (even to its current value) makes AppKit re-lay out the window frame.
+        if !window.titlebarAppearsTransparent { window.titlebarAppearsTransparent = true }
+        if window.titleVisibility != .hidden { window.titleVisibility = .hidden }
+        if window.titlebarSeparatorStyle != .none { window.titlebarSeparatorStyle = .none }
+        if !window.styleMask.contains(.fullSizeContentView) { window.styleMask.insert(.fullSizeContentView) }
     }
+    /// The window number last written to `window.txt`.
+    @MainActor private static var writtenWindowNumber: Int?
 
     /// Diagnostic: prints the theme frame's view tree (class, frame, hidden, layer border/background) to stderr.
     static func dump(_ view: NSView, depth: Int) {
@@ -37,7 +41,7 @@ struct WindowAccessor: NSViewRepresentable {
         state?.attach(window)
         if window.isKeyWindow { onKeyWindow() }
         Self.flattenTitlebar(window)
-        window.isMovableByWindowBackground = false
+        if window.isMovableByWindowBackground { window.isMovableByWindowBackground = false }
         if ProcessInfo.processInfo.environment["GRAPHENE_DUMP_WINDOW"] == "1", let frame = window.contentView?.superview {
             Self.dump(frame, depth: 0)
             if let pal = state?.app.pal {
@@ -50,11 +54,16 @@ struct WindowAccessor: NSViewRepresentable {
                 guard let button = window.standardWindowButton(kind), let container = button.superview else { continue }
                 let centerY = state?.app.layout == .topTabs ? ShellLayout.topTabHeight / 2 : ShellLayout.trafficLightCenterY
                 let centerX = ShellLayout.trafficLightLeading + CGFloat(index) * ShellLayout.trafficLightSpacing
-                button.setFrameOrigin(NSPoint(x: centerX - button.frame.width / 2, y: container.bounds.height - centerY - button.frame.height / 2))
+                let origin = NSPoint(x: centerX - button.frame.width / 2, y: container.bounds.height - centerY - button.frame.height / 2)
+                if button.frame.origin != origin { button.setFrameOrigin(origin) }
             }
         }
         guard state?.app.isPrivate != true else { return }
+        // Written when the number changes, not on every shell update (it was an atomic file
+        // write on the main thread each time any window state changed).
         let n = window.windowNumber
+        guard Self.writtenWindowNumber != n else { return }
+        Self.writtenWindowNumber = n
         try? "\(n)".write(to: Paths.root.appendingPathComponent("window.txt"), atomically: true, encoding: .utf8)
     }
 }

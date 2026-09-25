@@ -42,18 +42,27 @@ final class AppState: ObservableObject, BrowserCoordinator {
     var tabs: [Tab] { get { library.tabs } set { library.tabs = newValue } }
     @Published var activeTabID: UUID? {
         didSet {
-            if oldValue != activeTabID, let old = tabs.first(where: { $0.id == oldValue }) { old.lastActiveAt = clock(); captureThumbnail(old) }
+            if oldValue != activeTabID, let old = tabs.first(where: { $0.id == oldValue }) { old.lastActiveAt = clock() }
             if let id = activeTabID {
                 claimTab(id)
                 recentIDs.removeAll { $0 == id }; recentIDs.insert(id, at: 0)
                 if !collapsedBranchIDs.isEmpty { revealInBranch(id) }
-                tabs.first { $0.id == id }?.lastActiveAt = clock()
+                if let tab = tabs.first(where: { $0.id == id }) {
+                    tab.lastActiveAt = clock()
+                    // After the switch has drawn, and only once per page (`TabLifecycle.needsThumbnail`).
+                    if oldValue != activeTabID { scheduleThumbnail(tab) }
+                }
             }
         }
     }
     private var recentIDs: [UUID] = []
-    @Published var switcherIDs: [UUID] = []
-    @Published var switcherIndex = 0
+    struct ProvenanceKey: Equatable { var ids: [UUID]; var parents: [UUID: UUID]; var collapsed: Set<UUID> }
+    private var provenanceCache: (key: ProvenanceKey, layout: ProvenanceLayout)?
+    /// ⌃Tab state lives on its own object: each ⌃Tab press used to publish AppState and redraw
+    /// every window (sidebar, toolbar, menus) while only the switcher card changes.
+    let switcher = TabSwitcherModel()
+    var switcherIDs: [UUID] { get { switcher.ids } set { switcher.ids = newValue } }
+    var switcherIndex: Int { get { switcher.index } set { switcher.index = newValue } }
     var recentTabs: [Tab] {
         let ordered = recentIDs.compactMap { id in tabs.first { $0.id == id } }
         return ordered + tabs.filter { !recentIDs.contains($0.id) }
@@ -120,6 +129,10 @@ final class AppState: ObservableObject, BrowserCoordinator {
     @Published var mediaTabID: UUID?
     private var mediaTimer: Timer?
     private var pollingMedia = false
+    /// Media polls so far; every `TabLifecycle.fullSweepPolls`th asks every loaded page.
+    var mediaPolls = 0
+    var thumbnailTask: Task<Void, Never>?
+    var memoryPressureSource: DispatchSourceMemoryPressure?
     var archiveHours: Double { get { library.archiveHours } set { library.archiveHours = newValue; persistSoon() } }
 
     /// The current space (its color drives the whole palette, Arc-style).
@@ -233,7 +246,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
         downloads.preferredDirectory = { [weak self] in self?.settings.downloadsFolder.map { URL(fileURLWithPath: $0, isDirectory: true) } }
         if !isPrivate { downloads.onFinished = { [weak self] in self?.tidyDownload($0) } }
         if directory == nil && owner == nil {
-            mediaTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            mediaTimer = Timer.scheduledTimer(withTimeInterval: TabLifecycle.pollInterval, repeats: true) { [weak self] _ in
                 Task { @MainActor in
                     guard let self, !self.pollingMedia else { return }
                     self.pollingMedia = true
@@ -244,6 +257,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
             lifecycleTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.archiveInactiveTabs() }
             }
+            mediaTimer?.tolerance = 0.5
+            lifecycleTimer?.tolerance = 5
+            startMemoryPressureMonitor()
         }
         graph.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &subscriptions)
         boards.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &subscriptions)
@@ -717,10 +733,12 @@ final class AppState: ObservableObject, BrowserCoordinator {
         return tab
     }
 
-    private func makeTab(id: UUID = UUID(), spaceID: UUID? = nil) -> Tab {
+    /// `loaded: false` makes a discarded tab with no web view yet (a restored session tab):
+    /// its page loads when the tab is first shown.
+    private func makeTab(id: UUID = UUID(), spaceID: UUID? = nil, loaded: Bool = true) -> Tab {
         let space = spaces.first { $0.id == spaceID } ?? activeSpace
         let profileID = space.profileID ?? Profile.defaultID
-        let tab = Tab(engine: WKWebEngine(privateMode: isPrivate, profileID: profileID), id: id, privateMode: isPrivate)
+        let tab = Tab(engine: loaded ? WKWebEngine(privateMode: isPrivate, profileID: profileID) : nil, id: id, privateMode: isPrivate)
         tab.profileID = profileID
         tab.lastActiveAt = clock()
         tab.coordinator = self
@@ -748,7 +766,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
                 return false
             }
         }
-        tab.configureEngine?(tab.engine)
+        if let engine = tab.loadedEngine { tab.configureEngine?(engine) }
         return tab
     }
 
@@ -812,7 +830,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.folderID = closed.folderID.flatMap { id in folders.contains { $0.id == id } ? id : nil }
         tab.isRestoring = true
         tab.parentTabID = closed.parentTabID.map { remap[$0] ?? $0 }.flatMap { id in tabs.contains { $0.id == id && $0.id != tab.id } ? id : nil }
-        if let url = closed.url.flatMap(URL.init(string:)) { tab.load(url) }
+        // The page loads when the tab is shown (`Tab.engine`), so a branch restored in one Undo
+        // starts one web view, not one per tab.
+        if let url = closed.url.flatMap(URL.init(string:)) { tab.url = url }
         show(.web)
         persistSoon()
         return tab
@@ -896,12 +916,18 @@ final class AppState: ObservableObject, BrowserCoordinator {
         tab.resumeThreadID = nil
         persistSoon()
         Task { [weak self, weak tab] in
-            guard let tab else { return }
-            let text = await tab.engine.captureSnapshotText()
-            guard tab.currentNodeID == node, tab.url == url, self?.captureAllowed(tab, url: url) == true else { return }
+            // Only a loaded page is read; `tab.engine` would reload a tab discarded meanwhile.
+            guard let tab, let engine = tab.loadedEngine else { return }
+            let text = await engine.captureSnapshotText()
+            guard tab.loadedEngine === engine, tab.currentNodeID == node, tab.url == url, self?.captureAllowed(tab, url: url) == true else { return }
             self?.graph.attachText(nodeID: node, text: text)
-            if let t = tab.engine.pageTitle, !t.isEmpty { self?.graph.setTitle(nodeID: node, title: t) }
+            if let t = engine.pageTitle, !t.isEmpty { self?.graph.setTitle(nodeID: node, title: t) }
         }
+    }
+
+    /// A page finished loading: a selected page gets its thumbnail once it has settled.
+    func tabDidFinishLoad(_ tab: Tab) {
+        if displayedTabIDs.contains(tab.id) { scheduleThumbnail(tab) }
     }
 
     /// A citation mark in `tabID`'s page was hovered (`id`) or left (`nil`); raises its chip in the Ask panel.
@@ -998,12 +1024,17 @@ final class AppState: ObservableObject, BrowserCoordinator {
     private func inTodayList(_ tab: Tab) -> Bool { tab.section == .today && tab.folderID == nil }
 
     /// The Today list of a space as branches, with `collapsedBranchIDs` applied.
+    /// Cached per (tabs, parents, collapsed): the sidebar asks on every redraw.
     func todayProvenance(spaceID: UUID? = nil) -> ProvenanceLayout {
         let space = spaceID ?? activeSpaceID
         let today = tabs.filter { $0.spaceID == space && inTodayList($0) }
         var parents: [UUID: UUID] = [:]
         for tab in today { if let parent = tab.parentTabID { parents[tab.id] = parent } }
-        return ProvenanceLayout(ids: today.map(\.id), parents: parents, collapsed: collapsedBranchIDs)
+        let key = ProvenanceKey(ids: today.map(\.id), parents: parents, collapsed: collapsedBranchIDs)
+        if let cached = provenanceCache, cached.key == key { return cached.layout }
+        let layout = ProvenanceLayout(ids: key.ids, parents: parents, collapsed: collapsedBranchIDs)
+        provenanceCache = (key, layout)
+        return layout
     }
 
     /// The participating parent of a tab: an open Today tab in the same space.
@@ -1187,7 +1218,10 @@ final class AppState: ObservableObject, BrowserCoordinator {
 
     func persist() {
         if !isPrivate && canPersistSettings {
-            do { try JSONEncoder().encode(exportedSettings).write(to: dataDirectory.appendingPathComponent("settings.json"), options: .atomic); settingsError = nil }
+            do {
+                try JSONEncoder().encode(exportedSettings).write(to: dataDirectory.appendingPathComponent("settings.json"), options: .atomic)
+                if settingsError != nil { settingsError = nil }
+            }
             catch { settingsError = "Couldn’t save settings: \(error.localizedDescription)" }
         }
         guard canPersistSession, !isPrivate else { return }
@@ -1211,7 +1245,8 @@ final class AppState: ObservableObject, BrowserCoordinator {
         do {
             try JSONEncoder().encode(archivedTabs).write(to: archiveFile, options: .atomic)
             try JSONEncoder().encode(data).write(to: sessionFile, options: .atomic)
-            sessionError = nil
+            // Assigning nil publishes even when it was nil, redrawing every window on each save.
+            if sessionError != nil { sessionError = nil }
         } catch { sessionError = "Couldn’t save the browser session: \(error.localizedDescription)" }
     }
 
@@ -1255,7 +1290,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
         if let idx = session.activeSpaceIndex, spaces.indices.contains(idx) { activeSpaceID = spaces[idx].id }
         var restoredParents: [(Tab, UUID)] = []
         for st in session.tabs {
-            let tab = makeTab(id: st.id ?? UUID())
+            let tab = makeTab(id: st.id ?? UUID(), loaded: false)
             if let parent = st.parentTabID { restoredParents.append((tab, parent)) }
             tab.isPinned = st.pinned
             tab.isFavorite = st.favorite ?? false

@@ -375,7 +375,11 @@ struct ChatView: View {
     private func attach(_ tab: Tab) async {
         guard app.aiTabAllowed(tab), let url = tab.url else { return }
         let token = scopeToken, space = app.activeSpaceID
-        let text = await tab.engine.captureSnapshotText()
+        // A sleeping (discarded) tab is read from the text captured when it was visited, rather
+        // than woken: `tab.engine` would start a web view and reload the page just to read it.
+        let text: String
+        if tab.loadedEngine == nil, let snippet = app.graph.node(for: url)?.snippet, !snippet.isEmpty { text = snippet }
+        else { text = await tab.engine.captureSnapshotText() }
         guard !Task.isCancelled, token == scopeToken, space == app.activeSpaceID, tab.url == url, app.aiTabAllowed(tab) else { return }
         let source = KnowledgeSource(id: tab.id, title: tab.displayTitle, url: url.absoluteString, text: text, kind: "Tab")
         attachments.removeAll { $0.id == source.id }; attachments.append(source)
