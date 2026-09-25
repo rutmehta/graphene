@@ -1,6 +1,7 @@
 import Foundation
 
 enum ChatPanelMode: String, Codable, CaseIterable { case floating, docked }
+enum AddressPlacement: String, Codable, CaseIterable { case onPage, sidebar }
 
 /// Optional storage keeps settings written by earlier versions readable.
 struct Settings: Codable, Equatable {
@@ -8,7 +9,6 @@ struct Settings: Codable, Equatable {
     var customSearchURL: String?
     var downloadsFolder: String?
     var startupBlank: Bool?
-    var compactSidebar: Bool?
     var layout: BrowserLayout?
     var appearance: ThemeMode?
     var searchEngine: SearchEngine?
@@ -24,6 +24,8 @@ struct Settings: Codable, Equatable {
     private var panelWidth: Double?
     private var panelMode: ChatPanelMode?
     var chatPanelMode: ChatPanelMode { get { panelMode ?? .floating } set { panelMode = newValue } }
+    private var address: AddressPlacement?
+    var addressPlacement: AddressPlacement { get { address ?? .onPage } set { address = newValue } }
     private var completed: Bool?
     private var routes: [RoutingRule]?
     private var shortcuts: [String: CommandShortcut]?

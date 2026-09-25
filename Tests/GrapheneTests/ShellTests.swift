@@ -37,7 +37,7 @@ final class ShellTests: XCTestCase {
         XCTAssertEqual(restored.sidebarWidths["two"], 240)
         for hue in stride(from: 0.0, through: 1.0, by: 0.1) {
             for mode in [ThemeMode.light, .dark] {
-                let palette = Palette(mode: mode, space: .tide, theme: SpaceTheme(hue: hue, saturation: 1, intensity: 0.65))
+                let palette = Palette(mode: mode, space: .tide, theme: SpaceTheme(hue: hue, saturation: 1))
                 XCTAssertGreaterThan(palette.inkContrast, 4.5)
             }
         }
@@ -47,7 +47,7 @@ final class ShellTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let app = AppState(directory: directory)
-        let theme = SpaceTheme(hue: 0.12, saturation: 0.8, intensity: 0.6, gradient: true, grain: true)
+        let theme = SpaceTheme(hue: 0.12, saturation: 0.8)
         app.updateSpaceTheme(theme, icon: "leaf")
         app.resizeSidebar(340)
         app.mode = .automatic

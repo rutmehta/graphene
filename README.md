@@ -24,7 +24,7 @@ The script builds a debug executable into `.build/Graphene.app` and ad-hoc signs
 These are implemented capabilities, not a claim that every gesture or dialog passed WP9. Previous work-package reports distinguish model tests, source inspection and actual desktop observations.
 
 - Browsing: URLs and web search, back/forward, reload/stop, new-tab links, loading/error states, exact main-document Find counts and next/previous, per-host zoom, native printing, and Save Page As a WebKit web archive.
-- Shell: persisted Sidebar and Top tabs layouts, expanding address/command results, light/dark/system appearance, space-tinted chrome, page gutters and optional page-font override. Default sidebar rows have 41pt pitch, 13pt labels and 16pt favicons. Favorites use three columns, expanding to four at a 280pt sidebar, with 56pt tile height and 8pt gaps. The sidebar has a 200–360pt resize divider and collapsed edge-peek implementation. Library exposes Threads, Vault, Mail and Board. The traffic band is draggable, with aligned window/navigation controls.
+- Shell: persisted Sidebar and Top tabs layouts, expanding address/command results, light/dark/system appearance, space-tinted chrome, page gutters and optional page-font override. Sidebar rows have 40pt pitch, 13pt labels and 16pt favicons; the space label heads the pins, a hairline heads Today (hover it for Clear), and pinned tabs off their base URL show an accent dot on the favicon (click it to reset). Favorites are 44pt translucent tiles in three columns, four from 300pt of content width, with 10pt gaps. The sidebar has an invisible 180–360pt resize strip and collapsed edge-peek. The footer holds archive, the Library (Threads, Vault, Mail, Board, Downloads), space dots and plus. The traffic band is draggable and holds only the sidebar toggle. Settings → Appearance → Address bar can put the address pill back in the sidebar.
 - Organization: named/icon Spaces with CRUD, ordering and themes; separate space-scoped Favorites, pins with resettable base URLs, Today tabs and folders. Tab rename, movement, drag/drop, multi-selection and batch actions are implemented, but the full drag/resize/menu sweep is still unverified.
 - Tab lifecycle: persistent searchable archive and restore/delete; close-tab Undo; optional auto-archive after 12 hours (default), 24 hours, seven days or Never. Lazy background restoration avoids synthetic visits. Background discard defaults to 30 minutes, with recent/visible, audible media, downloading and dirty-form protections. Five minutes idle does not meet that default threshold.
 - Windows: shared tab collections with per-window selection and explicit WebView handoff, private windows, MRU and numbered-tab navigation, two-to-four-pane splits and Peek. Restoring a recently closed whole window as a unit is not implemented.
@@ -79,7 +79,7 @@ Defaults below can be remapped in Settings → Shortcuts. Native editor and syst
 | ⌘N / ⇧⌘N | New window / private window |
 | ⇧⌘A | Archived tabs |
 | Library / command bar | Threads, Vault, Mail, Board and Downloads |
-| Tidy / command bar “Tidy stale tabs” | Archive stale Today tabs now, respecting Settings → General |
+| Command bar “Tidy Stale Tabs” / Today hairline menu | Archive stale Today tabs now, respecting Settings → General |
 | ⌘S | Show or hide sidebar |
 | ⇧⌘L | Toggle light / dark |
 | ⇧⌘[ / ⇧⌘] | Previous / next tab in this space |

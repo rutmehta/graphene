@@ -107,7 +107,7 @@ final class VisualPaletteTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let app = AppState(directory: directory)
-        let theme = SpaceTheme(hue: 0.15, saturation: 0.5, intensity: 0.3)
+        let theme = SpaceTheme(hue: 0.15, saturation: 0.5)
         app.updateSpaceTheme(theme)
         app.layout = .topTabs
         XCTAssertTrue(app.pal.neutralChrome)
