@@ -33,6 +33,9 @@ struct TabContextMenu: View {
         BatchTabMenu()
         Divider()
         command("close-tab", tab.isPinned ? "Close" : "Archive Tab") { app.requestCloseTab(tab.id) }
+        // Provenance rows (graphene-identity.md §3.1): only Today rows in a branch gain these.
+        if !app.branchChildren(of: tab.id).isEmpty { Button("Close branch") { app.closeBranch(tab.id) } }
+        if app.branchParent(of: tab.id) != nil { Button("Detach from parent") { app.detachFromParent(tab.id) } }
         Button("Archive Other Tabs") { for other in app.visibleTabs where other.id != tab.id && !other.isPinned { app.closeTab(other.id) } }
         Button("Archive Tabs Below") {
             let rows = app.visibleTabs
