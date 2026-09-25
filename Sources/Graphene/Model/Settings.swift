@@ -30,6 +30,9 @@ struct Settings: Codable, Equatable {
     var shortcutOverrides: [String: CommandShortcut] { get { shortcuts ?? [:] } set { shortcuts = newValue } }
     var routingRules: [RoutingRule] { get { routes ?? [] } set { routes = newValue } }
     var pageGutter: Bool { get { gutter ?? true } set { gutter = newValue } }
-    var askWidth: Double { get { min(560, max(360, panelWidth ?? 420)) } set { panelWidth = min(560, max(360, newValue)) } }
+    var askWidth: Double { get { Self.clampedAskWidth(panelWidth ?? Double(ShellLayout.chatWidth)) } set { panelWidth = Self.clampedAskWidth(newValue) } }
+    private static func clampedAskWidth(_ width: Double) -> Double {
+        min(Double(ShellLayout.chatWidthRange.upperBound), max(Double(ShellLayout.chatWidthRange.lowerBound), width))
+    }
     var onboardingComplete: Bool { get { completed ?? false } set { completed = newValue } }
 }

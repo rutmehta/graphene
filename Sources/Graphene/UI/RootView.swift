@@ -22,6 +22,11 @@ struct RootView: View {
     private var collapseAnimation: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.30, dampingFraction: 0.75)
     }
+    /// Floating chat, or docked chat that would squeeze the page below its minimum, draws as a floating card.
+    private func chatFloats(window width: CGFloat) -> Bool {
+        app.settings.chatPanelMode == .floating
+            || width - (showsSidebar ? sidebarWidth : 0) - app.settings.askWidth - 24 < ShellLayout.minimumPageWidth
+    }
     var body: some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
@@ -54,11 +59,13 @@ struct RootView: View {
                             .clipShape(RoundedRectangle(cornerRadius: ShellLayout.pageRadius))
                             .padding(app.layout == .topTabs && app.settings.pageGutter ? 6 : 0)
                             .overlay {
-                                if app.layout == .topTabs && app.commandBarPresented {
-                                    app.pal.scrimSubtle.contentShape(Rectangle())
+                                if app.commandBarPresented {
+                                    (app.layout == .topTabs ? app.pal.scrimSubtle : app.pal.commandScrim).contentShape(Rectangle())
                                         .onTapGesture { app.dismissCommandBar() }
+                                        .transition(.opacity)
                                 }
                             }
+                            .overlay(alignment: .bottom) { ToastOverlay() }
                     }
                     .background(sidebarLayout ? app.pal.pageBg : app.pal.chromeBg)
                     .clipShape(cardShape)
@@ -70,12 +77,12 @@ struct RootView: View {
                                             threadTitle: app.currentThreads.first(where: { $0.id == app.knowledgeThreadID })?.title, embedded: true)
                             .id(app.knowledgeThreadID)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(app.pal.ground, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+                            .background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
                             .clipShape(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
-                            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline))
-                            .shadow(color: app.pal.shadow, radius: 16, x: -4, y: 6)
+                            .overlay(RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline, lineWidth: ShellLayout.hairline))
+                            .shadow(color: chatFloats(window: geometry.size.width) ? app.pal.pageShadow : .clear, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
                             .overlay(alignment: .leading) {
-                                Rectangle().fill(app.pal.hairline).frame(width: 4).contentShape(Rectangle())
+                                Rectangle().fill(app.pal.hitTarget).frame(width: ShellLayout.windowGap / 2).contentShape(Rectangle())
                                     .gesture(DragGesture().onChanged { value in
                                         if askResizeStart == nil { askResizeStart = app.settings.askWidth }
                                         app.settings.askWidth = (askResizeStart ?? Double(ShellLayout.chatWidth)) - value.translation.width
@@ -86,7 +93,7 @@ struct RootView: View {
                                         app.settings.askWidth += direction == .increment ? 10 : -10; app.persist()
                                     }
                             }
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .transition(Motion.panel(reduced: reduceMotion))
                     }
                 }
                 .padding(.vertical, cardGap).padding(.trailing, cardGap).padding(.leading, showsSidebar ? 0 : cardGap)
@@ -120,25 +127,19 @@ struct RootView: View {
                         .opacity(addressHovered ? 1 : 0).onHover { addressHovered = $0 }.padding(.top, 7)
                 }
             }
-            .overlay {
+            .overlay(alignment: .top) {
                 if app.commandBarPresented && app.layout == .sidebar {
-                    ZStack(alignment: .top) {
-                        app.pal.scrim
-                            .contentShape(Rectangle()).onTapGesture { app.dismissCommandBar() }
-                        CommandBar()
-                            .frame(width: min(ShellLayout.commandWidth, geometry.size.width - 64))
-                            .padding(.top, max(70, geometry.size.height * ShellLayout.commandTop))
-                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: app.layout == .topTabs ? .top : .center)))
-                    }
-                    .transition(.opacity)
+                    // The scrim dims only the page card; this catches clicks on the rest of the window.
+                    app.pal.hitTarget.contentShape(Rectangle()).onTapGesture { app.dismissCommandBar() }
+                    CommandBar()
+                        .frame(width: CommandBarLayout.width(window: geometry.size.width))
+                        .padding(.top, CommandBarLayout.top(window: geometry.size.height))
+                        .transition(Motion.commandBar(reduced: reduceMotion))
                 }
             }
-            .overlay(alignment: .bottom) {
-                ToastOverlay().padding(.bottom, 24)
-            }
             .animation(collapseAnimation, value: app.sidebarCollapsed)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.16), value: app.knowledgeSearchPresented)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: app.commandBarPresented)
+            .animation(Motion.panel.reduced(reduceMotion), value: app.knowledgeSearchPresented)
+            .animation((app.commandBarPresented ? Motion.commandIn : Motion.commandOut).reduced(reduceMotion), value: app.commandBarPresented)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: app.sidebarPeek)
         }
         .ignoresSafeArea()

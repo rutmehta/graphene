@@ -73,10 +73,32 @@ enum ShellLayout {
     static let commandRowHeight: CGFloat = 44
     /// Fraction of the window height from the top to the command bar's top edge.
     static let commandTop: CGFloat = 0.18
+    /// Total horizontal clearance kept around the command bar: width is `min(commandWidth, window − commandMargin)`.
+    static let commandMargin: CGFloat = 80
+    /// Leading inset of the input row's glyph.
+    static let commandInset: CGFloat = 20
+    static let commandSectionHeight: CGFloat = 24
+    /// Horizontal inset of result rows, and the list's top and bottom padding.
+    static let commandListPadding: CGFloat = 8
+    /// Rows shown before the result list scrolls.
+    static let commandMaxRows = 8
+    /// Icon column in command, chat and switcher rows.
+    static let iconSlot: CGFloat = 20
     // Popovers and panels
     static let popoverRadius: CGFloat = 12
     static let chatWidth: CGFloat = 420
     static let chatWidthRange: ClosedRange<CGFloat> = 360...560
+    static let chatHeaderHeight: CGFloat = 44
+    /// Context chips in the chat panel.
+    static let chipHeight: CGFloat = 24
+    static let composerMinHeight: CGFloat = 40
+    // Toast, tab switcher, site controls
+    static let toastMaxWidth: CGFloat = 420
+    static let toastHeight: CGFloat = 40
+    /// Distance from the page card's bottom edge.
+    static let toastInset: CGFloat = 24
+    static let thumbnailSize = CGSize(width: 96, height: 60)
+    static let siteControlsWidth: CGFloat = 320
     static func clampedSidebarWidth(_ width: CGFloat) -> CGFloat {
         min(sidebarRange.upperBound, max(sidebarRange.lowerBound, width))
     }
@@ -99,6 +121,12 @@ enum ShellType {
     static let glyphSmall = Font.system(size: 12, weight: .regular)
     /// Folder chevrons and inline status badges.
     static let glyphMini = Font.system(size: 10, weight: .regular)
+    /// Code blocks in chat answers.
+    static let code = Font.system(size: 12, weight: .regular, design: .monospaced)
+    /// Chat body line height as a multiple of the font size.
+    static let rowLineHeight: CGFloat = 1.45
+    /// Extra leading that turns `row` into `rowLineHeight`.
+    static var rowLineSpacing: CGFloat { rowSize * (rowLineHeight - 1) }
     /// Point sizes for AppKit text fields that take an `NSFont` (the command bar input).
     static let rowSize: CGFloat = 13
     static let inputSize: CGFloat = 18
@@ -205,6 +233,8 @@ struct Palette {
     var rowHover: Color { isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.04) }
     var rowSelected: Color { Color.white.opacity(isDark ? 0.12 : 0.60) }
     var hairline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.08) }
+    /// `fill` for chips, bubbles and fields on an `elev` surface: light `fill` is white, which vanishes on a white card.
+    var elevFill: Color { isDark ? fill : rowHover }
     /// A practically invisible fill that still receives hover and drops.
     var hitTarget: Color { Color.black.opacity(0.001) }
 
@@ -219,6 +249,12 @@ struct Palette {
     var windowOutline: Color { isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.06) }
     var elev: Color { isDark ? Color(hex: "26262C") : .white }
     var scrim: Color { Color.black.opacity(isDark ? 0.30 : 0.13) }
+    /// Dimming over the page card behind the command bar.
+    var commandScrim: Color { Color.black.opacity(isDark ? 0.20 : 0.10) }
+    /// The command bar's deep shadow (same in both schemes).
+    var commandShadow: Color { Color.black.opacity(0.30) }
+    var commandShadowRadius: CGFloat { 32 }
+    var commandShadowY: CGFloat { 12 }
     /// The light dimming behind the top-tabs integrated command bar.
     var scrimSubtle: Color { Color.black.opacity(isDark ? 0.075 : 0.035) }
 

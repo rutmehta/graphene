@@ -35,7 +35,7 @@ struct ChatView: View {
         VStack(alignment: .leading, spacing: 0) {
             header
             contextBar
-            Divider().overlay(app.pal.hairline)
+            Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline)
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -55,11 +55,11 @@ struct ChatView: View {
                         }
                         if let error = controller.error ?? store?.error { Text(error).font(ShellType.secondary).foregroundStyle(app.pal.ink2) }
                         Color.clear.frame(height: 1).id("bottom")
-                    }.padding(16)
+                    }.padding(ShellLayout.windowGap * 2)
                 }.onChange(of: controller.chat?.messages.last?.content) { _, _ in proxy.scrollTo("bottom", anchor: .bottom) }
             }
             composer
-        }.foregroundStyle(app.pal.ink).background(app.pal.ground).tint(app.pal.accentText)
+        }.foregroundStyle(app.pal.ink).background(app.pal.elev).tint(app.pal.accentText)
             .frame(width: embedded ? nil : 680, height: embedded ? nil : 660)
             .task {
                 store = ChatStore(root: app.dataDirectory); skills = SkillStore(root: app.dataDirectory).skills
@@ -80,55 +80,65 @@ struct ChatView: View {
             .onDisappear { controller.stop(); captureToken = UUID() }
     }
     private var header: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 8) {
-
-                Text("Chat").font(ShellType.title)
-                Spacer()
-                IconButton("Past chats", system: "clock.arrow.circlepath") { store?.reload(); history.toggle() }
-                    .popover(isPresented: $history) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Chats in \(app.activeSpace.name)").font(.headline)
-                            ScrollView {
-                                ForEach((store?.chats ?? []).filter { $0.spaceID == app.activeSpaceID && $0.profileID == (app.activeSpace.profileID ?? Profile.defaultID) }) { chat in
-                                    HStack {
-                                        Button(chat.title) { controller.select(chat); attachments = chat.messages.last?.sources?.filter { app.aiSourceAllowed($0) } ?? []; history = false }.buttonStyle(.plain).lineLimit(2)
-                                            .accessibilityIdentifier("chat.history.\(chat.id)").accessibilityLabel(chat.title).accessibilityAddTraits(.isButton)
-                                        Spacer()
-                                        Button { store?.delete(chat.id); history = false; if controller.chat?.id == chat.id { Task { await reset() } } } label: { Image(systemName: "trash") }.accessibilityLabel("Delete chat")
-                                    }.padding(.vertical, 6)
-                                }
+        HStack(spacing: 2) {
+            Text("Chat").font(ShellType.title)
+            Spacer()
+            glyphButton("Past chats", system: "clock.arrow.circlepath") { store?.reload(); history.toggle() }
+                .popover(isPresented: $history) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Chats in \(app.activeSpace.name)").font(ShellType.title)
+                        ScrollView {
+                            ForEach((store?.chats ?? []).filter { $0.spaceID == app.activeSpaceID && $0.profileID == (app.activeSpace.profileID ?? Profile.defaultID) }) { chat in
+                                HStack {
+                                    Button(chat.title) { controller.select(chat); attachments = chat.messages.last?.sources?.filter { app.aiSourceAllowed($0) } ?? []; history = false }.buttonStyle(.plain).lineLimit(2)
+                                        .accessibilityIdentifier("chat.history.\(chat.id)").accessibilityLabel(chat.title).accessibilityAddTraits(.isButton)
+                                    Spacer()
+                                    Button { store?.delete(chat.id); history = false; if controller.chat?.id == chat.id { Task { await reset() } } } label: { Image(systemName: "trash") }.accessibilityLabel("Delete chat")
+                                }.font(ShellType.row).padding(.vertical, 6)
                             }
-                        }.padding(16).frame(width: 340, height: 300)
-                    }
-                IconButton("New chat", system: "square.and.pencil") { Task { await reset() } }
-                IconButton("Close chat", system: "xmark") { if embedded { app.knowledgeSearchPresented = false } else { dismiss() } }
-            }
-        }.padding(.horizontal, 16).frame(height: 40)
+                        }
+                    }.padding(16).frame(width: 340, height: 300).background(app.pal.elev)
+                }
+            glyphButton("New chat", system: "square.and.pencil") { Task { await reset() } }
+            glyphButton("Close chat", system: "xmark") { if embedded { app.knowledgeSearchPresented = false } else { dismiss() } }
+        }.padding(.leading, ShellLayout.windowGap * 2).padding(.trailing, ShellLayout.windowGap)
+            .frame(height: ShellLayout.chatHeaderHeight)
             .help(registry.status + (registry.unavailableReason == nil ? " · Ready" : " · Unavailable"))
     }
+    /// Header and context glyphs: 15pt in `ink3`, the shell's quiet control style.
+    private func glyphButton(_ title: String, system: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: system).font(ShellType.glyph).foregroundStyle(app.pal.ink3)
+                .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+        }.buttonStyle(ShellButtonStyle())
+            .help(title).accessibilityLabel(title).accessibilityIdentifier("icon.\(system).\(title)")
+            .accessibilityAddTraits(.isButton)
+    }
     private var contextBar: some View {
-        HStack(spacing: 6) {
-            Button { contextDetails.toggle() } label: { Image(systemName: "slider.horizontal.3").frame(width: 24, height: 24) }
-                .buttonStyle(ShellButtonStyle()).help("Context and source budget")
-                .accessibilityIdentifier("chat.contextDetails").accessibilityLabel("Context and source budget").accessibilityAddTraits(.isButton)
+        HStack(spacing: 4) {
+            glyphButton("Context and source budget", system: "slider.horizontal.3") { contextDetails.toggle() }
+                .accessibilityIdentifier("chat.contextDetails")
                 .popover(isPresented: $contextDetails) { contextOptions.frame(width: 320).padding(.top, 12).background(app.pal.elev) }
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     ForEach(attachments) { source in
-                        HStack(spacing: 5) {
-                            Favicon(host: URL(string: source.url)?.host, size: 12)
+                        HStack(spacing: 4) {
+                            Favicon(host: URL(string: source.url)?.host, size: ShellLayout.iconSize)
                             Text(source.title).lineLimit(1).frame(maxWidth: 180)
-                            Button { attachments.removeAll { $0.id == source.id } } label: { Image(systemName: "xmark") }
+                            Button { attachments.removeAll { $0.id == source.id } } label: { Image(systemName: "xmark").font(ShellType.glyphMini).foregroundStyle(app.pal.ink3) }
                                 .buttonStyle(.plain).accessibilityIdentifier("chat.remove.\(source.id)")
                                 .accessibilityLabel("Remove \(source.title)").accessibilityAddTraits(.isButton)
-                        }.font(ShellType.caption).padding(.horizontal, 7).frame(height: 24).background(app.pal.hover, in: Capsule())
+                        }.font(ShellType.secondary).foregroundStyle(app.pal.ink2)
+                            .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+                            .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                     }
-                    if attachments.isEmpty { Text("No sources").font(ShellType.caption).foregroundStyle(app.pal.ink3) }
+                    if attachments.isEmpty { Text("No sources").font(ShellType.secondary).foregroundStyle(app.pal.ink3) }
                 }
             }
             if capturing { ProgressView().controlSize(.mini) }
-        }.padding(.horizontal, 12).frame(height: 34)
+            glyphButton(search ? "Hide source search" : "Search sources", system: "magnifyingglass") { search.toggle() }
+                .accessibilityIdentifier("chat.searchSources")
+        }.padding(.horizontal, ShellLayout.windowGap).frame(height: ShellLayout.chatHeaderHeight - ShellLayout.windowGap)
             .overlay(alignment: .bottom) {
                 if !budget.notices.isEmpty {
                     Button("\(budget.notices.count) source warnings") { contextDetails = true }
@@ -146,8 +156,9 @@ struct ChatView: View {
                         Button(context.rawValue) {
                             if contexts.contains(context) { contexts.remove(context) } else { contexts.insert(context) }
                             Task { await collect() }
-                        }.buttonStyle(.plain).font(ShellType.caption).padding(7)
-                            .background(contexts.contains(context) ? app.pal.accentSoft : app.pal.hover, in: Capsule())
+                        }.buttonStyle(.plain).font(ShellType.secondary)
+                            .padding(.horizontal, ShellLayout.rowInsetLeading).frame(height: ShellLayout.chipHeight)
+                            .background(contexts.contains(context) ? app.pal.accentSoft : app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                             .accessibilityIdentifier("chat.context.\(context.rawValue)").accessibilityLabel(context.rawValue).accessibilityAddTraits(.isButton)
                             .accessibilityAddTraits(contexts.contains(context) ? [.isSelected] : [])
                             .disabled(context == .thread && scopedNodes == nil && app.activeTab?.currentThreadID == nil)
@@ -172,7 +183,10 @@ struct ChatView: View {
     private func messageView(_ message: ChatMessage) -> some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            if message.role == .user { Text(message.content).font(ShellType.row).textSelection(.enabled) }
+            if message.role == .user {
+                Text(message.content).font(ShellType.row).lineSpacing(ShellType.rowLineSpacing)
+                    .foregroundStyle(app.pal.ink2).textSelection(.enabled)
+            }
             else {
                 ChatMarkdownView(text: message.content, sources: message.sources ?? [])
                 if controller.working, message.id == controller.chat?.messages.last?.id { ProgressView().controlSize(.small) }
@@ -190,7 +204,7 @@ struct ChatView: View {
                 }.buttonStyle(.plain).font(ShellType.caption).foregroundStyle(app.pal.ink3)
             }
         }.padding(message.role == .user ? 12 : 0).frame(maxWidth: .infinity, alignment: .leading)
-            .background(message.role == .user ? app.pal.hover : app.pal.ground, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
+            .background(message.role == .user ? app.pal.elevFill : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
     }
     private var composer: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -206,7 +220,7 @@ struct ChatView: View {
                         }.buttonStyle(.plain)
                             .accessibilityIdentifier("chat.mention.\(tab.id)").accessibilityLabel("Attach \(tab.displayTitle)").accessibilityAddTraits(.isButton)
                     }
-                }.font(ShellType.secondary).padding(10).background(app.pal.hover, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                }.font(ShellType.secondary).padding(10).background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             }
             if choosingSkill || (query.hasPrefix("/") && !query.contains(" ")) {
                 ForEach(skills.filter { choosingSkill || $0.trigger.hasPrefix(query.lowercased()) }) { skill in
@@ -219,42 +233,45 @@ struct ChatView: View {
                         .accessibilityIdentifier("chat.skill.\(skill.trigger)").accessibilityLabel(skill.trigger).accessibilityAddTraits(.isButton)
                 }
             }
-            VStack(spacing: 8) {
-                TextField("Ask a question about this page…", text: $query, axis: .vertical).textFieldStyle(.plain).lineLimit(2...5).font(ShellType.row).focused($focused).onSubmit { send() }.accessibilityLabel("Chat composer")
-                    .accessibilityIdentifier("chat.composer")
-                HStack {
-                    Button { query += query.isEmpty || query.hasSuffix(" ") ? "@" : " @"; focused = true } label: {
-                        Text("@").font(ShellType.row).frame(width: 24, height: 24)
-                    }.buttonStyle(.plain).help("Attach tabs (@)").accessibilityLabel("Attach tabs")
-                        .accessibilityIdentifier("chat.attach").accessibilityAddTraits(.isButton)
-                    Button { choosingSkill.toggle(); focused = true } label: {
-                        Text("/").font(ShellType.glyph).frame(width: 24, height: 24)
-                    }.buttonStyle(.plain).help("Choose a skill (/)").accessibilityLabel("Choose a skill")
-                        .accessibilityIdentifier("chat.chooseSkill").accessibilityAddTraits(.isButton)
-                    Button(search ? "Hide source search" : "Search sources") { search.toggle() }.buttonStyle(.plain).font(ShellType.caption).foregroundStyle(app.pal.ink3)
-                        .accessibilityIdentifier("chat.searchSources").accessibilityLabel(search ? "Hide source search" : "Search sources").accessibilityAddTraits(.isButton)
-                    Spacer()
-                    Button { query += query.isEmpty || query.hasSuffix(" ") ? "@" : " @"; focused = true } label: {
-                        Image(systemName: "plus").font(ShellType.glyph).frame(width: 28, height: 28)
-                    }.buttonStyle(.plain).help("Attach a tab")
-                        .accessibilityIdentifier("chat.addAttachment").accessibilityLabel("Add attachment").accessibilityAddTraits(.isButton)
-                    Button { if controller.working { controller.stop(); if let chat = controller.chat { store?.save(chat) } } else { send() } } label: {
-                        Image(systemName: controller.working ? "stop.fill" : "arrow.up")
-                            .font(ShellType.glyph).foregroundStyle(app.pal.elev)
-                            .frame(width: 28, height: 28).background(app.pal.accentText, in: Circle())
-                    }.buttonStyle(.plain)
-                        .accessibilityIdentifier("chat.send").accessibilityLabel(controller.working ? "Stop" : "Send").accessibilityAddTraits(.isButton)
-                        .disabled(!controller.working && (query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || capturing || registry.unavailableReason != nil))
+            HStack(alignment: .bottom, spacing: 2) {
+                composerGlyph("@", font: ShellType.row, label: "Attach tabs", help: "Attach tabs (@)", id: "chat.attach") {
+                    query += query.isEmpty || query.hasSuffix(" ") ? "@" : " @"; focused = true
                 }
-            }.padding(12).background(app.pal.elev, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius)).overlay { RoundedRectangle(cornerRadius: ShellLayout.popoverRadius).strokeBorder(app.pal.hairline) }
+                composerGlyph("/", font: ShellType.glyph, label: "Choose a skill", help: "Choose a skill (/)", id: "chat.chooseSkill") {
+                    choosingSkill.toggle(); focused = true
+                }
+                TextField("Ask a question about this page…", text: $query, axis: .vertical).textFieldStyle(.plain).lineLimit(1...5)
+                    .font(ShellType.row).focused($focused).onSubmit { send() }.accessibilityLabel("Chat composer")
+                    .accessibilityIdentifier("chat.composer")
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 4)
+                let sendDisabled = !controller.working && (query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || capturing || registry.unavailableReason != nil)
+                Button { if controller.working { controller.stop(); if let chat = controller.chat { store?.save(chat) } } else { send() } } label: {
+                    Image(systemName: controller.working ? "stop.circle.fill" : "arrow.up.circle.fill")
+                        .font(ShellType.input).foregroundStyle(sendDisabled ? app.pal.inkDisabled : app.pal.accent)
+                        .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .accessibilityIdentifier("chat.send").accessibilityLabel(controller.working ? "Stop" : "Send").accessibilityAddTraits(.isButton)
+                    .disabled(sendDisabled)
+            }.padding((ShellLayout.composerMinHeight - ShellLayout.controlSize) / 2)
+                .frame(minHeight: ShellLayout.composerMinHeight)
+                .background(app.pal.elevFill, in: RoundedRectangle(cornerRadius: ShellLayout.popoverRadius))
             if let reason = registry.unavailableReason { Text(reason).font(ShellType.caption).foregroundStyle(app.pal.ink3).fixedSize(horizontal: false, vertical: true) }
-        }.padding(16)
+        }.padding(ShellLayout.windowGap * 1.5)
             .dropDestination(for: String.self) { values, _ in
                 let sources = app.noteDropSources(values)
                 for source in sources { attachments.removeAll { $0.id == source.id }; attachments.append(source) }
                 if !sources.isEmpty { focused = true }
                 return !sources.isEmpty
             }
+    }
+    /// The composer's leading `@` and `/` buttons.
+    private func composerGlyph(_ glyph: String, font: Font, label: String, help: String, id: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(glyph).font(font).foregroundStyle(app.pal.ink3)
+                .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
+        }.buttonStyle(ShellButtonStyle()).help(help).accessibilityLabel(label)
+            .accessibilityIdentifier(id).accessibilityAddTraits(.isButton)
     }
     private func removeMention() { if let range = query.range(of: "@", options: .backwards) { query = String(query[..<range.lowerBound]) } }
     private func send() {
