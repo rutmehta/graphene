@@ -245,7 +245,8 @@ extension AppState {
         guard !isPrivate else { return }
         askRequest = AskRequest(query: query, tabIDs: Array(Set(commandContextIDs + (attachedSources.isEmpty ? (activeTabID.map { [$0] } ?? []) : []))))
         commandContextIDs = []; knowledgeThreadID = nil; commandBarPresented = false
-        knowledgeSearchPresented = true; show(.web)
+        // The panel floats over whichever surface is showing; never swap a library view for the web.
+        knowledgeSearchPresented = true
     }
     func openInSystemBrowser(_ url: URL) {
         guard let target = NSWorkspace.shared.urlForApplication(toOpen: url) else { notify("No browser is available."); return }

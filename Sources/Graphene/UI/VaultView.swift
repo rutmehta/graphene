@@ -97,7 +97,7 @@ struct VaultView: View {
                         LibraryBarButton("Add to Board", system: "rectangle.on.rectangle") { addToBoard(selected) }
                     }
                     LibraryBarButton(byPage ? "Newest first" : "By page", system: byPage ? "list.bullet" : "list.bullet.indent") { byPage.toggle() }
-                    LibraryBarButton("Ask my notes", system: "text.bubble") { askNotes() }.disabled(notes.isEmpty)
+                    LibraryBarButton("Ask my notes", system: "sparkle") { askNotes() }.disabled(notes.isEmpty)
                 }
                 LibraryBarButton("Open vault folder", system: "folder") { NSWorkspace.shared.open(Paths.vault) }
             }
@@ -199,7 +199,7 @@ struct VaultView: View {
 
     private func askNotes() {
         app.attachedSources = notes.prefix(4).map { KnowledgeSource(id: $0.id, title: $0.title, url: $0.url, text: $0.text + "\n" + $0.note, kind: "Vault note") }
-        app.knowledgeSearchPresented = true; app.show(.web)
+        app.knowledgeSearchPresented = true
     }
 }
 
