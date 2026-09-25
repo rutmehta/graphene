@@ -23,8 +23,8 @@ enum NoteDrag {
 
 /// Registers the note reference outside the main actor, so its loader runs wherever the drop
 /// target asks for the data.
-private func register(_ reference: Data, on provider: NSItemProvider) {
-    provider.registerDataRepresentation(forTypeIdentifier: UTType.grapheneNoteReference.identifier, visibility: .all) { @Sendable completion in
+nonisolated private func register(_ reference: Data, on provider: NSItemProvider) {
+    provider.registerDataRepresentation(forTypeIdentifier: UTType.grapheneNoteReference.identifier, visibility: .all) { completion in
         completion(reference, nil); return nil
     }
 }
