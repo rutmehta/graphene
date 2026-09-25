@@ -25,6 +25,22 @@ final class VisualPaletteTests: XCTestCase {
     }
 
     @MainActor
+    func testPresetsDriveTheChromeAtSixtyPercentSaturation() throws {
+        for space in SpaceColor.allCases {
+            XCTAssertGreaterThanOrEqual(space.theme.saturation, 0.6, space.rawValue)
+            XCTAssertGreaterThanOrEqual(Palette(mode: .dark, space: space).chromeSaturation, 0.8, space.rawValue)
+            let swatch = try XCTUnwrap(NSColor(space.c1).usingColorSpace(.sRGB))
+            XCTAssertEqual(space.theme.hue, Double(swatch.hueComponent), accuracy: 0.0001, "Presets keep the swatch hue")
+        }
+        // Iris no longer collapses to a flat purple: the two dark stops differ clearly in hue and chroma.
+        let iris = Palette(mode: .dark, space: .iris)
+        let top = try XCTUnwrap(NSColor(iris.chromeTop).usingColorSpace(.sRGB))
+        XCTAssertGreaterThan(top.saturationComponent, 0.45)
+        // A custom theme keeps its own saturation.
+        XCTAssertEqual(Palette(mode: .dark, space: .iris, theme: SpaceTheme(hue: 0.68, saturation: 0.2)).chromeSaturation, 0.6, accuracy: 0.0001)
+    }
+
+    @MainActor
     func testNeutralSpacesDropAllHue() throws {
         for palette in [Palette(mode: .dark, space: .clay, theme: SpaceTheme(hue: 0.3, saturation: 0)),
                         Palette(mode: .light, space: .clay, neutralChrome: true)] {

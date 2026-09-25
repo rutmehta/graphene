@@ -191,6 +191,20 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     var gradient: LinearGradient {
         LinearGradient(colors: [c1, c2], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
+    /// Chrome saturation for the preset. The swatch colours are muted (s ≈ 0.13–0.5), which
+    /// left the flooded gradient nearly flat; presets drive the chrome at s ≥ 0.6, like the
+    /// Arc calibration capture (arc-look.md §2.3). Custom themes keep their own saturation.
+    var presetSaturation: Double {
+        switch self {
+        case .clay: return 0.68; case .moss: return 0.62; case .tide: return 0.66
+        case .iris: return 0.64; case .slate: return 0.60
+        }
+    }
+    /// The preset as a hue and saturation: the swatch's hue with `presetSaturation`.
+    var theme: SpaceTheme {
+        let color = NSColor(c1).usingColorSpace(.sRGB) ?? .systemBlue
+        return SpaceTheme(hue: Double(color.hueComponent), saturation: presetSaturation)
+    }
 }
 
 /// One of the browser's first-class surfaces (the app tiles in the sidebar).
@@ -213,11 +227,10 @@ struct Palette {
 
     // MARK: space input
 
-    /// Hue and saturation (0…1) of the space: its custom theme, else the preset's first stop.
+    /// Hue and saturation (0…1) of the space: its custom theme, else the preset's.
     private var spaceHS: (hue: Double, saturation: Double) {
-        if let theme { return (min(1, max(0, theme.hue)), min(1, max(0, theme.saturation))) }
-        let color = NSColor(space.c1).usingColorSpace(.sRGB) ?? .systemBlue
-        return (Double(color.hueComponent), Double(color.saturationComponent))
+        let theme = theme ?? space.theme
+        return (min(1, max(0, theme.hue)), min(1, max(0, theme.saturation)))
     }
     /// `s′ = 0.5 + 0.5·s`, so a tinted space never turns grey; a neutral space (s = 0)
     /// and the top-tabs layout (`neutralChrome`) get `s′ = 0`.

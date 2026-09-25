@@ -6,9 +6,7 @@ import AppKit
 struct SpaceEditor: View {
     @EnvironmentObject var app: AppState
     private var theme: SpaceTheme {
-        if let theme = app.activeSpace.theme { return theme }
-        let color = NSColor(app.activeSpace.color.c1).usingColorSpace(.deviceRGB) ?? .systemBlue
-        return SpaceTheme(hue: color.hueComponent, saturation: color.saturationComponent)
+        app.activeSpace.theme ?? app.activeSpace.color.theme
     }
     private func binding<Value>(_ key: WritableKeyPath<SpaceTheme, Value>) -> Binding<Value> {
         Binding(get: { theme[keyPath: key] }, set: { value in var copy = theme; copy[keyPath: key] = value; app.updateSpaceTheme(copy) })
