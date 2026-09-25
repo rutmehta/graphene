@@ -132,10 +132,12 @@ struct OnDeviceProvider: LanguageModelProvider {
                     #if canImport(FoundationModels)
                     if #available(macOS 26, *) {
                         let system = messages.filter { $0.role == .system }.map(\.content).joined(separator: "\n")
-                        let prompt = messages.filter { $0.role != .system }.map { "\($0.role.rawValue): \($0.content)" }.joined(separator: "\n\n")
+                        let turns = messages.filter { $0.role != .system }
+                        // One self-contained turn (Chat's request) goes as is; role labels would read as a transcript to continue.
+                        let prompt = turns.count == 1 ? turns[0].content : turns.map { "\($0.role.rawValue): \($0.content)" }.joined(separator: "\n\n")
                         for attempt in 0...1 {
                             let session = LanguageModelSession(instructions: system)
-                            let context = attempt == 0 ? prompt : String((messages.last { $0.role == .user }?.content ?? prompt).prefix(2400))
+                            let context = attempt == 0 ? prompt : PageContext.shortened(messages.last { $0.role == .user }?.content ?? prompt, limit: 2400)
                             var previous = ""
                             do {
                                 for try await snapshot in session.streamResponse(to: context, options: GenerationOptions(temperature: 0.1, maximumResponseTokens: 700)) {

@@ -174,7 +174,8 @@ struct CommandBar: View {
                              onMove: moveSelection,
                              onSubmit: submitSelection,
                              onCancel: { app.dismissCommandBar() }, completion: completion,
-                             onToggle: toggleMode)
+                             onToggle: toggleMode,
+                             onFocused: { app.takeResumeKeys() })
                     .id(app.commandBarCreatesTab)
                     .frame(maxWidth: .infinity)
                     .frame(height: integrated ? 28 : 30)
@@ -378,6 +379,8 @@ private struct CommandInput: NSViewRepresentable {
     let onCancel: () -> Void
     var completion: String?
     var onToggle: () -> Void
+    /// Called when the field takes focus; returns text typed before it could (Resume page burst typing).
+    var onFocused: () -> String = { "" }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -410,6 +413,7 @@ private struct CommandInput: NSViewRepresentable {
             string: placeholder,
             attributes: [.foregroundColor: placeholderColor, .font: NSFont.systemFont(ofSize: fontSize)]
         )
+        field.onFocused = onFocused
         field.requestFocus(focusRequest, selectAll: selectAllOnFocus)
     }
 
@@ -466,6 +470,7 @@ private final class CommandTextField: NSTextField {
     private var focusRequest = 0
     private var handledFocusRequest: Int?
     private var selectAllOnFocus = false
+    var onFocused: (() -> String)?
 
     func requestFocus(_ request: Int, selectAll: Bool) {
         focusRequest = request
@@ -486,7 +491,13 @@ private final class CommandTextField: NSTextField {
                   window.makeFirstResponder(self),
                   let editor = self.currentEditor() as? NSTextView else { return }
             self.handledFocusRequest = self.focusRequest
-            if self.selectAllOnFocus {
+            // Keys typed before the field existed go after the text already in it, in order.
+            let buffered = self.onFocused?() ?? ""
+            if !buffered.isEmpty {
+                let end = (editor.string as NSString).length
+                editor.insertText(buffered, replacementRange: NSRange(location: end, length: 0))
+            }
+            if self.selectAllOnFocus && buffered.isEmpty {
                 editor.selectAll(nil)
             } else {
                 editor.setSelectedRange(NSRange(location: (self.stringValue as NSString).length, length: 0))

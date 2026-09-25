@@ -68,17 +68,37 @@ struct ResumeSections: Equatable {
 
 extension AppState {
     /// A key typed on the Resume page: printable characters without ⌘, ⌃ or ⌥ open the command
-    /// bar in new-tab mode, starting with that text. Returns whether the key was taken.
+    /// bar in new-tab mode, starting with that text. Keys that arrive after that one but before
+    /// the bar's field has focus (fast typing) are buffered in order, and the field inserts them
+    /// after the first when it takes focus (`takeResumeKeys`). Returns whether the key was taken.
     @discardableResult
     func resumeTyped(_ characters: String, modifiers: EventModifiers = []) -> Bool {
-        guard !commandBarPresented, modifiers.isDisjoint(with: [.command, .control, .option]),
-              let scalar = characters.unicodeScalars.first, !CharacterSet.controlCharacters.contains(scalar),
-              // Arrow and function keys arrive as private-use scalars.
-              !(0xF700...0xF8FF).contains(scalar.value),
-              !characters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        guard modifiers.isDisjoint(with: [.command, .control, .option]), let scalar = characters.unicodeScalars.first else { return false }
+        if commandBarPresented {
+            guard let buffer = resumeKeyBuffer else { return false }
+            if scalar.value == 0x7F || scalar.value == 0x08 {
+                if buffer.isEmpty { if !commandBarDraft.isEmpty { commandBarDraft.removeLast() } } else { resumeKeyBuffer = String(buffer.dropLast()) }
+                return true
+            }
+            guard Self.resumePrintable(scalar) else { return false }
+            resumeKeyBuffer = buffer + characters
+            return true
+        }
+        guard Self.resumePrintable(scalar), !characters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         openCommandBar(newTab: true)
         commandBarDraft = characters
+        resumeKeyBuffer = ""
         return true
+    }
+    /// Not a control character, nor an arrow or function key (those arrive as private-use scalars).
+    private static func resumePrintable(_ scalar: Unicode.Scalar) -> Bool {
+        !CharacterSet.controlCharacters.contains(scalar) && !(0xF700...0xF8FF).contains(scalar.value)
+    }
+    /// The command bar's field took focus: returns the keys buffered since the bar opened from the
+    /// Resume page, in typing order, for the field to insert after the first; ends buffering.
+    func takeResumeKeys() -> String {
+        defer { resumeKeyBuffer = nil }
+        return resumeKeyBuffer ?? ""
     }
 }
 

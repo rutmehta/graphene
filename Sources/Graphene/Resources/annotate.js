@@ -33,6 +33,8 @@
     const clone = document.body?.cloneNode(true);
     if (!clone) return { title: document.title, text: '', selection: '', byline: '', published: '', headings: [] };
     clone.querySelectorAll('nav,footer,header,aside,script,style,noscript,form,input,textarea,[contenteditable],[hidden],[aria-hidden="true"],[data-graphene]').forEach(e => e.remove());
+    // textContent runs blocks together ("…material.Graphene…"); space them as the page shows them.
+    clone.querySelectorAll('address,article,aside,blockquote,br,dd,div,dl,dt,figcaption,figure,h1,h2,h3,h4,h5,h6,hr,li,ol,p,pre,section,table,td,th,tr,ul').forEach(e => { e.before(' '); e.after(' '); });
     const candidates = [...clone.querySelectorAll('article,main,[role="main"],section')];
     const score = e => (e.textContent || '').length - [...e.querySelectorAll('a')].reduce((n, a) => n + a.textContent.length, 0) * 2;
     const main = candidates.sort((a, b) => score(b) - score(a))[0] || clone;

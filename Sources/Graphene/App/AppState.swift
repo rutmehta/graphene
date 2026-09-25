@@ -136,6 +136,9 @@ final class AppState: ObservableObject, BrowserCoordinator {
     /// Bumped when a Resume page should take the keyboard (a new blank tab from "+ New Tab").
     @Published var resumeFocusRequest = 0
     private var pendingNewTabDraft = ""
+    /// Keys typed on the Resume page after the first opened the command bar, before its field took
+    /// focus; `nil` when not buffering (see `resumeTyped`).
+    var resumeKeyBuffer: String?
     private var lastActiveTabs: [UUID: UUID] = [:]
     var archivedTabs: [SessionTab] { get { library.archivedTabs } set { library.archivedTabs = newValue } }
     var folders: [TabFolder] { get { library.folders } set { library.folders = newValue } }
@@ -437,12 +440,14 @@ final class AppState: ObservableObject, BrowserCoordinator {
         resumeFocusRequest += 1
     }
     func dismissCommandBar() {
+        resumeKeyBuffer = nil
         if commandBarCreatesTab { pendingNewTabDraft = commandBarDraft }
         commandBarPresented = false
         focusBrowser()
     }
 
     func completeCommandBarSwitch(_ id: UUID) {
+        resumeKeyBuffer = nil
         activate(id)
         pendingNewTabDraft = ""
         commandBarDraft = ""
@@ -451,6 +456,7 @@ final class AppState: ObservableObject, BrowserCoordinator {
     }
 
     func commitCommandBar(_ input: String) {
+        resumeKeyBuffer = nil
         guard Omnibox.resolve(input, engine: searchEngine, customSearchURL: settings.customSearchURL) != nil else { return }
         let target = commandBarCreatesTab && activeTab?.url != nil ? newTab() : (activeTab ?? newTab())
         submit(input, on: target)

@@ -89,6 +89,7 @@ final class ResumePageTests: XCTestCase {
         XCTAssertTrue(app.commandBarPresented)
         XCTAssertTrue(app.commandBarCreatesTab)
         XCTAssertEqual(app.commandBarDraft, "g")
+        XCTAssertEqual(app.takeResumeKeys(), "", "the field focused before another key")
         XCTAssertFalse(app.resumeTyped("h"), "once open, the bar's field takes the keys")
         let resume = app.activeTabID
         app.commitCommandBar("example.org")
@@ -177,6 +178,41 @@ final class ResumePageTests: XCTestCase {
         XCTAssertFalse(SurfaceState<EmptyView>.showsLattice(surface: .web, symbol: "exclamationmark.shield", loading: false))
     }
 
+    /// Typing "swift" fast: the first key opens the bar, the rest arrive before its field has
+    /// focus and are buffered in order, then handed to the field once, after the "s".
+    func testBurstTypingOnResumeIsBufferedUntilTheFieldFocuses() {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("graphene-g3-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = AppState(directory: root)
+        app.openResumeTab()
+        XCTAssertNil(app.resumeKeyBuffer)
+        XCTAssertEqual(app.takeResumeKeys(), "", "nothing buffered before the first key")
+        for key in ["s", "w", "i", "f", "t"] { XCTAssertTrue(app.resumeTyped(key), key) }
+        XCTAssertEqual(app.commandBarDraft, "s", "the first key starts the draft")
+        XCTAssertEqual(app.resumeKeyBuffer, "wift", "the rest wait in typing order")
+        // Spaces and shifted keys are text; ⌘ shortcuts and arrows are not.
+        XCTAssertTrue(app.resumeTyped(" "))
+        XCTAssertTrue(app.resumeTyped("U", modifiers: .shift))
+        XCTAssertFalse(app.resumeTyped("v", modifiers: .command))
+        XCTAssertFalse(app.resumeTyped("\u{F702}"))
+        // Delete removes the last buffered key.
+        XCTAssertTrue(app.resumeTyped("\u{7F}"))
+        XCTAssertEqual(app.resumeKeyBuffer, "wift ")
+        XCTAssertTrue(app.resumeTyped("u"))
+        XCTAssertEqual(app.takeResumeKeys(), "wift u", "handed over once, in order, for insertion after the first key")
+        XCTAssertNil(app.resumeKeyBuffer)
+        XCTAssertEqual(app.takeResumeKeys(), "")
+        XCTAssertFalse(app.resumeTyped("x"), "after focus the field takes the keys")
+
+        // Dismissing the bar before its field focused drops the buffer.
+        app.dismissCommandBar()
+        XCTAssertTrue(app.resumeTyped("a"))
+        XCTAssertTrue(app.resumeTyped("b"))
+        app.dismissCommandBar()
+        XCTAssertNil(app.resumeKeyBuffer)
+        XCTAssertEqual(app.takeResumeKeys(), "")
+    }
+
     // MARK: cited passages
 
     func testCitedPassageNormalisation() {
@@ -189,6 +225,24 @@ final class ResumePageTests: XCTestCase {
         XCTAssertFalse(CitedPassage(id: "2", text: "  ").matches(in: "anything"))
         XCTAssertNil(passage.index)
         XCTAssertEqual(CitedPassage(id: "3", text: "x", index: 2).index, 2)
+
+        // Footnote markers, bracketed superscripts and the spacing around punctuation do not count.
+        XCTAssertEqual(CitedPassage.normalized("measured.[7][8] On a microscopic"), "measured.on a microscopic")
+        XCTAssertEqual(CitedPassage.normalized("measured. [ 7 ] [ 8 ] On a microscopic"), "measured.on a microscopic")
+        XCTAssertEqual(CitedPassage.normalized("Manchester.[citation needed]"), "manchester.")
+        XCTAssertEqual(CitedPassage.normalized("carbon ( graphite )"), CitedPassage.normalized("carbon (graphite)"))
+        XCTAssertEqual(CitedPassage.normalized("a [ ] b [unclosed"), "a[]b[unclosed")
+        XCTAssertEqual(CitedPassage.normalized("soft\u{00AD}hyphen zero\u{200B}width"), "softhyphen zerowidth")
+        let wiki = "On a microscopic scale, graphene is the strongest material ever measured.[7][8] The existence of graphene was first theorized in 1947 by Philip R. Wallace."
+        XCTAssertTrue(CitedPassage(id: "4", text: "On a microscopic scale, graphene is the strongest material ever measured. [ 7 ] [ 8 ] The existence").matches(in: wiki))
+        XCTAssertTrue(CitedPassage(id: "5", text: "measured.The existence of graphene").matches(in: wiki), "a block boundary lost by textContent")
+        // Longest run of at least eight words, never fewer and never approximate.
+        let run = CitedPassage(id: "6", text: "The existence of graphene was first theorized in 1947 by Andre Geim.")
+        XCTAssertEqual(run.matchingRun(in: wiki), "The existence of graphene was first theorized in 1947 by")
+        XCTAssertNil(CitedPassage(id: "7", text: "graphene is the strongest material ever tested in labs").matchingRun(in: wiki), "seven words in a row is not enough")
+        XCTAssertNil(CitedPassage(id: "8", text: "graphene was the strongest material ever measured by Philip Wallace").matchingRun(in: wiki))
+        XCTAssertEqual(CitedPassage(id: "9", text: "The existence of graphene was first theorized in 1947 by Philip R. Wallace.").matchingRun(in: wiki),
+                       "The existence of graphene was first theorized in 1947 by Philip R. Wallace.")
     }
 
     /// The Swift mirror and cite.js normalise identically.
@@ -199,8 +253,27 @@ final class ResumePageTests: XCTestCase {
         context.evaluateScript("var window = {}; var document = { addEventListener: function(){} };")
         context.evaluateScript(script)
         let normalize = try XCTUnwrap(context.objectForKeyedSubscript("window")?.objectForKeyedSubscript("__grapheneCite")?.objectForKeyedSubscript("normalize"))
-        for sample in ["  Hello\n\n World ", "ÉCOLE\u{00A0}Normale", "a\tb\r\nc", "", "   ", "Straße GROSS", "x  y  z"] {
+        let samples = ["  Hello\n\n World ", "ÉCOLE\u{00A0}Normale", "a\tb\r\nc", "", "   ", "Straße GROSS", "x  y  z",
+                       // Wikipedia's page text, as textContent and as the scraped source shows it.
+                       "honeycomb planar nanostructure.[2][3] The name \"graphene\" is derived",
+                       "Graphene ( / ˈ ɡ r æ f iː n / ) [ 1 ] is a variety of the element carbon .",
+                       "the University of Manchester[10][11] using a piece of graphite.[citation needed]",
+                       "measured.Graphene was first", "measured. Graphene was first", "130\u{00A0}GPa (19,000,000 psi)",
+                       "[   ] [x] [unclosed", "[" + String(repeating: "a", count: 31) + "] kept", "[" + String(repeating: "a", count: 30) + "] dropped",
+                       "zero\u{200B}width soft\u{00AD}hyphen\u{FEFF}bom\u{0085}nel", "İstanbul e\u{301}te 👍🏽 ok", "Philip R. Wallace — (1947)"]
+        for sample in samples {
             XCTAssertEqual(normalize.call(withArguments: [sample])?.toString(), CitedPassage.normalized(sample), sample)
+        }
+        // Both sides pick the same text to mark, whole or as a run.
+        let match = try XCTUnwrap(context.objectForKeyedSubscript("window")?.objectForKeyedSubscript("__grapheneCite")?.objectForKeyedSubscript("match"))
+        let page = "Graphene is known for its exceptionally high tensile strength, electrical conductivity, transparency.[4] On a microscopic scale, graphene is the strongest material ever measured.[7][8]"
+        for passage in ["Graphene is known for its exceptionally high tensile strength , electrical conductivity , transparency . [ 4 ]",
+                        "Graphene is known for its exceptionally high tensile strength and is flexible.",
+                        "graphene is the strongest material ever measured by anyone",
+                        "On a microscopic scale graphene is strong", "transparency.On a microscopic scale, graphene is the strongest material"] {
+            let js = match.call(withArguments: [page, passage])
+            let swift = CitedPassage(id: "x", text: passage).matchingRun(in: page)
+            XCTAssertEqual(js?.isNull == true ? nil : js?.toString(), swift, passage)
         }
     }
 
@@ -236,6 +309,56 @@ final class ResumePageTests: XCTestCase {
         await engine.clearHighlights()
         let remaining = await engine.evaluateJavaScript("document.querySelectorAll('mark').length") as? Int
         XCTAssertEqual(remaining, 0)
+    }
+
+    /// A page built like Wikipedia's (footnote superscripts and links inside sentences, a hidden
+    /// math fallback, a sentence split across two paragraphs): the text Graphene captures for
+    /// the model yields passages the page marks, and a partial passage marks its longest run.
+    func testHighlightMatchesPassagesFromWikipediaStructuredPage() async throws {
+        let engine = WKWebEngine()
+        let ref = { (n: String) in "<sup class=\"reference\"><a href=\"#cite_note-\(n)\"><span class=\"cite-bracket\">[</span>\(n)<span class=\"cite-bracket\">]</span></a></sup>" }
+        let html = """
+        <html><head><title>Graphene - Wikipedia</title></head><body><header>Main menu</header><main><h1>Graphene</h1><div class="mw-parser-output">
+        <p><b>Graphene</b> (<span class="IPA">/ˈɡræf.iːn/</span>\(ref("1"))) is a variety of the element <a href="/wiki/Carbon">carbon</a> which occurs naturally in small amounts.</p>
+        <p>Graphene is known for its exceptionally high <a href="/wiki/Tensile_strength">tensile strength</a>, <a href="/wiki/Conductivity">electrical conductivity</a>, transparency, and being the thinnest two-dimensional material in the world.\(ref("4")) On a microscopic scale, graphene is the strongest material ever measured.\(ref("7"))\(ref("8"))</p>
+        <p>The existence of graphene was first theorized in 1947 by <a href="/wiki/Philip_R._Wallace">Philip R. Wallace</a> during his research on graphite's electronic properties.\(ref("9")) In 2004, the material was isolated and characterized by</p><p><a href="/wiki/Andre_Geim">Andre Geim</a> and Konstantin Novoselov at the University of Manchester.\(ref("10"))<sup class="noprint">[<i>citation needed</i>]</sup></p>
+        <p>It has an ultimate tensile strength of 130&nbsp;GPa<span class="mwe-math-element"><span aria-hidden="true">σ</span></span> and a Young's modulus of 1&nbsp;TPa.</p>
+        </div></main></body></html>
+        """
+        engine.webView.loadHTMLString(html, baseURL: URL(string: "https://en.wikipedia.org/wiki/Graphene"))
+        for _ in 0..<100 where engine.isLoading || engine.currentURL == nil { try await Task.sleep(for: .milliseconds(50)) }
+        try await Task.sleep(for: .milliseconds(150))
+        let captured = await engine.captureReadableContent().text
+        XCTAssertTrue(captured.contains("strongest material ever measured"), captured)
+        let source = PageContext.budget([KnowledgeSource(id: UUID(), title: "Graphene - Wikipedia", url: "https://en.wikipedia.org/wiki/Graphene", text: captured, kind: "Tab")], limit: 6000).sources[0]
+
+        // Passages picked from the captured text, as a finished answer's citations pick them.
+        let claims = ["On a microscopic scale graphene is the strongest material ever measured.",
+                      "Graphene is known for its high tensile strength and electrical conductivity.",
+                      "Its existence was first theorized in 1947 by Philip R. Wallace.",
+                      "It was isolated in 2004 by Andre Geim and Konstantin Novoselov at the University of Manchester.",
+                      "Its ultimate tensile strength is 130 GPa and its Young's modulus is 1 TPa."]
+        var passages: [CitedPassage] = []
+        for (offset, claim) in claims.enumerated() {
+            let text = try XCTUnwrap(PageContext.passage(for: claim, in: source), claim)
+            passages.append(CitedPassage(id: "p\(offset)", text: text, index: offset + 1))
+            XCTAssertTrue(passages[offset].matches(in: captured), text)
+        }
+        XCTAssertTrue(passages[3].text.contains("characterized by Andre Geim"), "the sentence spans two paragraphs: \(passages[3].text)")
+        let found = await engine.highlight(passages: passages)
+        XCTAssertEqual(found, passages.map(\.id), "every passage from the page is found in the page")
+        let philip = await engine.evaluateJavaScript("Array.from(document.querySelectorAll('mark[data-graphene-cite=\"p2\"]')).map(m => m.textContent).join('')") as? String
+        XCTAssertEqual(philip.map(CitedPassage.normalized), CitedPassage.normalized(passages[2].text))
+
+        // A passage that runs past the page's wording marks only its longest exact run.
+        let partial = CitedPassage(id: "run", text: "Graphene is known for its exceptionally high tensile strength and remarkable flexibility.")
+        let approximate = CitedPassage(id: "near", text: "Graphene is famous for its very high tensile strength and conductivity.")
+        let more = await engine.highlight(passages: [partial, approximate])
+        XCTAssertEqual(more, ["run"], "an approximate match is never marked")
+        let marked = await engine.evaluateJavaScript("Array.from(document.querySelectorAll('mark[data-graphene-cite=\"run\"]')).map(m => m.textContent).join('')") as? String
+        XCTAssertEqual(marked, "Graphene is known for its exceptionally high tensile strength")
+        XCTAssertEqual(partial.matchingRun(in: captured), "Graphene is known for its exceptionally high tensile strength")
+        await engine.clearHighlights()
     }
 
     func testPrivateEnginesNeverHighlight() async {
