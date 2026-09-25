@@ -57,8 +57,6 @@ struct SpaceEditor: View {
             labeledSlider("Hue", value: binding(\.hue), range: 0...1)
             labeledSlider("Saturation", value: binding(\.saturation), range: 0...1)
             labeledSlider("Intensity", value: binding(\.intensity), range: 0...0.65)
-            Toggle("Gradient", isOn: binding(\.gradient))
-            Toggle("Subtle grain", isOn: binding(\.grain))
             Picker("Appearance", selection: Binding(get: { app.mode }, set: { app.mode = $0; app.persist() })) {
                 ForEach(ThemeMode.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
             }

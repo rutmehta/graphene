@@ -25,8 +25,9 @@ struct WindowAccessor: NSViewRepresentable {
         if !window.styleMask.contains(.fullScreen) {
             for (index, kind) in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].enumerated() {
                 guard let button = window.standardWindowButton(kind), let container = button.superview else { continue }
-                let centerY = state?.app.layout == .topTabs ? ShellLayout.topTabHeight / 2 : ShellLayout.trafficBandHeight / 2
-                button.setFrameOrigin(NSPoint(x: 20 + CGFloat(index) * 23 - button.frame.width / 2, y: container.bounds.height - centerY - button.frame.height / 2))
+                let centerY = state?.app.layout == .topTabs ? ShellLayout.topTabHeight / 2 : ShellLayout.trafficLightCenterY
+                let centerX = ShellLayout.trafficLightLeading + CGFloat(index) * ShellLayout.trafficLightSpacing
+                button.setFrameOrigin(NSPoint(x: centerX - button.frame.width / 2, y: container.bounds.height - centerY - button.frame.height / 2))
             }
         }
         guard state?.app.isPrivate != true else { return }

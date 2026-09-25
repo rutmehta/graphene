@@ -86,8 +86,8 @@ Space input: hue `h` (0…1), saturation `s` (0…1, user "intensity"), plus the
 
 | Token | Formula | Reference result for h=243° |
 |---|---|---|
-| `chromeTop` | HSB(h, 0.55·s′, 0.15) | #0E0D26 |
-| `chromeBottom` | HSB(h + 20°, 0.60·s′, 0.16) | #200A26 |
+| `chromeTop` | HSB(h, 0.82·s′, 0.15) | #0E0D26 (at s = 0.6) |
+| `chromeBottom` | HSB(h + 44°, 0.92·s′, 0.15) | #200A26 (at s = 0.6) |
 | `chromeGrain` | white 3% noise, 1px | |
 | `ink` | white | |
 | `ink2` | white 72% | inactive row titles |
@@ -105,7 +105,7 @@ Space input: hue `h` (0…1), saturation `s` (0…1, user "intensity"), plus the
 | `elev` | #26262C | command bar, popovers, toast |
 | `accent` | HSB(h, 0.45, 0.85) | focus rings, links inside chrome, progress bar |
 
-where `s′ = 0.5 + 0.5·s` so even a "neutral" space keeps a whisper of hue. A user-chosen neutral (grey) space sets `s = 0` and gets `s′ = 0`.
+where `s′ = 0.5 + 0.5·s` so even a "neutral" space keeps a whisper of hue. A user-chosen neutral (grey) space sets `s = 0` and gets `s′ = 0`. `s` is the space theme's saturation (or the preset colour's saturation). The dark coefficients were recalibrated in D1 so that h = 243°, s = 0.6 reproduces the capture: the first draft (0.55·s′ at h, 0.60·s′ at h + 20°, brightness 0.16) missed both samples by 8 to 11 per channel; the bottom sample sits at hue 287°, not 263°.
 
 **Light chrome** (Arc pastel):
 
