@@ -10,6 +10,52 @@ struct WindowDragRegion: NSViewRepresentable {
     }
 }
 
+/// The sidebar's two-finger horizontal swipe between spaces, decided per gesture.
+///
+/// The old filter judged every event on its own and swallowed any with |dx| > |dy|. A
+/// vertical trackpad scroll routinely carries frames where the horizontal jitter wins, often
+/// the `began` frame itself; swallowing those starved the sidebar's scroll view of the
+/// gesture's start, so vertical scrolling stalled or never began. Now the gesture's axis is
+/// locked once it has travelled a few points: a vertical gesture passes through untouched,
+/// as do the frames before the lock, `mayBegin`/`began`/`ended`/`cancelled`, momentum and
+/// non-trackpad wheels; only the moving frames of a horizontal gesture are consumed.
+struct SidebarSwipeFilter {
+    enum Decision: Equatable {
+        case pass
+        case consume
+        /// Consume, and switch space by this step.
+        case switchSpace(Int)
+    }
+    /// Horizontal travel that switches space once per gesture.
+    static let threshold: CGFloat = 65
+    /// Travel (|dx| + |dy|) after which the gesture's axis is decided; frames before it pass.
+    static let lockDistance: CGFloat = 6
+    /// A gesture is horizontal only when its sideways travel clearly dominates.
+    static let horizontalBias: CGFloat = 1.5
+    private(set) var axis: Axis?
+    private var travelX: CGFloat = 0
+    private var travelY: CGFloat = 0
+    private var distance: CGFloat = 0
+    private var switched = false
+
+    mutating func decide(phase: NSEvent.Phase, momentumPhase: NSEvent.Phase, dx: CGFloat, dy: CGFloat, precise: Bool) -> Decision {
+        guard precise, momentumPhase.isEmpty else { return .pass }
+        if phase.contains(.mayBegin) || phase.contains(.began) { reset() }
+        if phase.contains(.ended) || phase.contains(.cancelled) { reset(); return .pass }
+        guard phase.contains(.changed) || phase.contains(.began) else { return .pass }
+        distance += dx
+        if axis == nil {
+            travelX += abs(dx); travelY += abs(dy)
+            if travelX + travelY >= Self.lockDistance { axis = travelX > travelY * Self.horizontalBias ? .horizontal : .vertical }
+        }
+        // `began` always reaches the scroll view, whichever way the gesture turns out.
+        guard axis == .horizontal, !phase.contains(.began) else { return .pass }
+        if abs(distance) > Self.threshold && !switched { switched = true; return .switchSpace(distance < 0 ? 1 : -1) }
+        return .consume
+    }
+    private mutating func reset() { axis = nil; travelX = 0; travelY = 0; distance = 0; switched = false }
+}
+
 struct SidebarSwipe: NSViewRepresentable {
     var switchSpace: (Int) -> Void
     func makeNSView(context: Context) -> SwipeView { let view = SwipeView(); view.switchSpace = switchSpace; return view }
@@ -17,19 +63,21 @@ struct SidebarSwipe: NSViewRepresentable {
     final class SwipeView: NSView {
         var switchSpace: (Int) -> Void = { _ in }
         private var monitor: Any?
-        private var distance: CGFloat = 0
-        private var switched = false
+        private var filter = SidebarSwipeFilter()
+        /// A full-height background under the sidebar: never the target of clicks, drags or
+        /// scroll-wheel events, which belong to the rows and the scroll view above it.
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             if let monitor { NSEvent.removeMonitor(monitor); self.monitor = nil }
             guard window != nil else { return }
             monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-                guard let self, event.window === self.window, self.bounds.contains(self.convert(event.locationInWindow, from: nil)), event.hasPreciseScrollingDeltas else { return event }
-                if event.phase.contains(.began) { self.distance = 0; self.switched = false }
-                guard abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) else { return event }
-                self.distance += event.scrollingDeltaX
-                if abs(self.distance) > 65 && !self.switched { self.switchSpace(self.distance < 0 ? 1 : -1); self.switched = true }
-                return nil
+                guard let self, event.window === self.window, self.bounds.contains(self.convert(event.locationInWindow, from: nil)) else { return event }
+                switch self.filter.decide(phase: event.phase, momentumPhase: event.momentumPhase, dx: event.scrollingDeltaX, dy: event.scrollingDeltaY, precise: event.hasPreciseScrollingDeltas) {
+                case .pass: return event
+                case .consume: return nil
+                case .switchSpace(let step): self.switchSpace(step); return nil
+                }
             }
         }
         deinit { if let monitor { NSEvent.removeMonitor(monitor) } }

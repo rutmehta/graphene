@@ -20,7 +20,7 @@ struct LedgerView: View {
                     LibraryBarButton(summary.working ? "Stop summary" : "Summarize thread", system: summary.working ? "stop.circle" : "text.append") {
                         summary.toggle(selected, app: app)
                     }
-                    LibraryBarButton("Ask this thread", system: "text.bubble") { app.askThread(selected) }
+                    LibraryBarButton("Ask this thread", system: ShellGlyph.ask) { app.askThread(selected) }
                     LibraryBarButton("Export thread as Markdown", system: "square.and.arrow.up") { ThreadDetail.export(selected, app: app) }
                 }
             }
@@ -60,6 +60,7 @@ struct LedgerView: View {
                         .padding(.horizontal, ShellLayout.windowGap + ShellLayout.rowInsetLeading).frame(height: ShellLayout.footerHeight)
                 }.frame(width: ThreadPanes.listWidth)
                     .focusable()
+                    .focusEffectDisabled()
                     .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
                     .onKeyPress(.downArrow) { moveSelection(1); return .handled }
                     .onKeyPress(.return) { if let selected { app.resumeThread(selected) }; return .handled }
@@ -534,7 +535,7 @@ struct LibraryBarButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: system).font(ShellType.glyph).frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
-        }.buttonStyle(LibraryGlyphStyle(selected: selected))
+        }.buttonStyle(LibraryGlyphStyle(selected: selected)).keyboardFocusRing()
             .help(title).accessibilityLabel(title).accessibilityIdentifier("library.\(system).\(title)").accessibilityAddTraits(selected ? [.isButton, .isSelected] : [.isButton])
     }
 }

@@ -90,7 +90,7 @@ struct CommandBar: View {
             }
             return matches
         }
-        if asking { matches.append(Result(id: "ask", title: "Ask Graphene: \(query)", detail: "Current page and attached tabs · On-device", host: nil, symbol: "sparkle", kind: "Ask", destination: .ask)) }
+        if asking { matches.append(Result(id: "ask", title: "Ask Graphene: \(query)", detail: "Current page and attached tabs · On-device", host: nil, symbol: ShellGlyph.ask, kind: "Ask", destination: .ask)) }
         for action in app.commandActions where CommandMatch.matches(query, title: action.title) {
             matches.append(Result(id: "action-\(action.id)", title: action.title, detail: action.id == "archive-all" ? "Archive Today tabs; keep pins and favorites" : "", host: nil, symbol: "command", kind: "Commands", destination: .action(action.id)))
         }
@@ -160,7 +160,7 @@ struct CommandBar: View {
         let labels = CommandBarLayout.sectionStarts(sections)
         VStack(spacing: 0) {
             HStack(spacing: 14) {
-                Image(systemName: asking ? "sparkle" : "magnifyingglass")
+                Image(systemName: asking ? ShellGlyph.ask : "magnifyingglass")
                     .font(integrated ? ShellType.row : ShellType.input)
                     .foregroundStyle(app.pal.ink3)
                     .accessibilityHidden(true)

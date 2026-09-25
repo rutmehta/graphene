@@ -178,15 +178,13 @@ struct IconButton: View {
     let system: String
     var font: Font
     var action: () -> Void
-    @EnvironmentObject var app: AppState
-    @FocusState private var focused: Bool
     init(_ title: String, system: String, font: Font = ShellType.glyph, action: @escaping () -> Void) { self.title = title; self.system = system; self.font = font; self.action = action }
     var body: some View {
+        // The old ring drew on any focus, so a click left an accent box around the glyph.
         Button(action: action) {
             Image(systemName: system).font(font).frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize)
                 .contentShape(Rectangle())
-        }.buttonStyle(ShellButtonStyle()).focused($focused)
-            .overlay { RoundedRectangle(cornerRadius: ShellLayout.rowRadius).strokeBorder(focused ? app.pal.accentText : .clear, lineWidth: 2).allowsHitTesting(false) }
+        }.buttonStyle(ShellButtonStyle()).keyboardFocusRing()
             .help(title).accessibilityLabel(title).accessibilityIdentifier("icon.\(system).\(title)")
             .accessibilityAddTraits(.isButton)
     }

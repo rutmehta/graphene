@@ -172,7 +172,7 @@ Favorites grid: `favoriteColumns` columns, `favoriteGap`, tiles `favoriteHeight`
 
 Space label, `sectionGap` below the grid: the space's glyph (emoji or SF Symbol, 12pt) and name in `label` `ink2`, leading inset 8, row height 24. Hover reveals a `…` glyph at the trailing edge opening the space menu. No "Research ⋯" header row; the label is the header.
 
-Pinned rows: `rowHeight`/`rowPitch`, `rowRadius`. Leading inset 8, favicon 16 in a 20 slot, 8 gap, title `row` in `ink2` (selected: `rowSelected` in `ink`). No close button on pinned rows; hover shows nothing but `rowHover`. Folders: chevron glyph 10pt `ink3` in the icon slot, children indented 20 further. Reset-tab affordance: when a pinned tab is off its base URL, its favicon gets a 6pt `accent` dot at its bottom-right; clicking the favicon resets.
+Pinned rows: `rowHeight`/`rowPitch`, `rowRadius`. Leading inset 8, favicon 16 in a 20 slot, 8 gap, title `row` in `ink2` (selected: `rowSelected` in `ink`). No close button on pinned rows; hover shows nothing but `rowHover`. ⌘W on a pinned tab (or favorite) keeps it pinned and returns it to its pinned page, with no dialog; Unpin and Close are in its context menu and act at once (Close archives with the Undo toast). Folders: chevron glyph 10pt `ink3` in the icon slot, children indented 20 further. Reset-tab affordance: when a pinned tab is off its base URL, its favicon gets a 6pt `accent` dot at its bottom-right; clicking the favicon resets.
 
 Today section: hairline (full content width) `sectionGap` below the last pinned row. Hovering the hairline reveals "Clear" in `label` `ink3` at the trailing end (archives all Today tabs). No permanent "Tidy | Clear" row. "+ New Tab" row directly under the hairline: plus glyph 15pt in the icon slot, "New Tab" in `row` `ink3`, no shortcut hint. Today rows as pinned rows but with a close glyph (12pt `xmark`, `ink3`, 24×24 target) at the trailing edge on hover and on the selected row; audio glyph before it when playing.
 
@@ -223,7 +223,7 @@ Settings is native `Settings` scene: 180 sidebar list, pages use `body` and `sec
 |---|---|
 | Sidebar collapse/expand | spring(response 0.30, dampingFraction 0.75) on width; page card follows |
 | Sidebar peek | spring(0.28, 0.8) x-offset from −width to 0, opacity 0→1 |
-| Space switch | asymmetric horizontal slide 24pt with opacity, easeOut 180ms; the gradient cross-fades 240ms |
+| Space switch | asymmetric horizontal slide 24pt with opacity in the direction of travel (content moves left toward the next space, right toward the previous), easeOut 180ms; the gradient cross-fades 240ms; the active space dot's colour eases with it |
 | Row hover/selection | easeOut 100ms |
 | Command bar | opacity + scale 0.98→1, easeOut 120ms; dismiss 90ms |
 | Chat panel | spring(0.32, 0.8) x-offset 24 + opacity |
