@@ -7,6 +7,7 @@ struct Favicon: View {
     var size: CGFloat = 16
     var url: URL? = nil
     @EnvironmentObject private var app: AppState
+    @Environment(\.pageIsDark) private var pageIsDark
     @ObservedObject private var store = FaviconStore.shared
     private var color: Color {
         let value = (host ?? "").utf8.reduce(0) { ($0 &* 31 &+ Int($1)) % 360 }
@@ -15,7 +16,14 @@ struct Favicon: View {
     var body: some View {
         Group {
             if let icon = store.image(page: url, host: host) {
-                Image(nsImage: icon).resizable().interpolation(.high).scaledToFit()
+                // A dark mark on dark chrome (or a white one on light chrome) sits on a contrast backing.
+                if let backing = app.pal.page(dark: pageIsDark).iconBacking(for: store.tone(page: url, host: host)) {
+                    Image(nsImage: icon).resizable().interpolation(.high).scaledToFit()
+                        .padding(ShellLayout.iconBackingInset)
+                        .background(backing, in: RoundedRectangle(cornerRadius: ShellLayout.iconBackingRadius))
+                } else {
+                    Image(nsImage: icon).resizable().interpolation(.high).scaledToFit()
+                }
             } else if let host, !host.isEmpty {
                 Text(String(host.replacingOccurrences(of: "www.", with: "").prefix(1)).uppercased())
                     .font(.system(size: size * 0.65, weight: .semibold))

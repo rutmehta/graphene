@@ -355,7 +355,8 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             catch { delegate?.engine(self, didFail: error) }
         case "dirty": formDirty = true
         case "icon":
-            if !isPrivate, let page = webView.url, let declared = body["url"] as? String {
+            if !isPrivate, let page = webView.url {
+                let declared = FaviconDiscovery.candidates(FaviconDiscovery.links(from: body["icons"]), page: page)
                 Task { await FaviconStore.shared.fetch(page, declared: declared) }
             }
         case "navigate":
@@ -379,10 +380,13 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     (() => {
       let last = '';
       const publish = () => {
-        const icon = document.querySelector('link[rel~="icon"]');
-        if (icon && icon.href && icon.href !== last) {
-          last = icon.href;
-          window.webkit.messageHandlers.graphene.postMessage({kind:'icon', url:last});
+        const icons = Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"], link[rel~="apple-touch-icon-precomposed"]'))
+          .filter(link => link.href)
+          .map(link => ({href: link.href, rel: link.rel || '', sizes: link.getAttribute('sizes') || '', type: link.type || ''}));
+        const signature = JSON.stringify(icons);
+        if (signature !== last) {
+          last = signature;
+          window.webkit.messageHandlers.graphene.postMessage({kind:'icon', icons});
         }
       };
       publish();

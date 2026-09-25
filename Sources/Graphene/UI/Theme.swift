@@ -65,6 +65,10 @@ enum ShellLayout {
     // Sidebar details (arc-look.md §3.3)
     /// Favicon/glyph slot at a row's leading edge, and the gap to the title.
     static let iconSlot: CGFloat = 20
+    /// A favicon drawn on a contrast backing sits this far inside it.
+    static let iconBackingInset: CGFloat = 2
+    /// Corner radius of the favicon contrast backing.
+    static let iconBackingRadius: CGFloat = 4
     static let iconGap: CGFloat = 8
     static let spaceLabelHeight: CGFloat = 24
     /// Hit target of a row's close glyph and the space label's `…`.
@@ -207,6 +211,32 @@ enum SpaceColor: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// How a favicon reads against the chrome, from its alpha-weighted mean colour.
+enum FaviconTone: Equatable {
+    /// A near-black, near-grey mark (GitHub): vanishes on dark chrome.
+    case dark
+    /// A near-white, near-grey mark: vanishes on light chrome.
+    case light
+    /// Anything with enough colour or mid-tone to stand on either chrome.
+    case other
+
+    /// Mean relative luminance below this, with low colourfulness, is a dark icon.
+    static let darkLuminance = 0.35
+    /// Mean relative luminance above this, with low colourfulness, is a light icon.
+    static let lightLuminance = 0.8
+    /// Mean sRGB chroma (max − min channel) at or above this counts as colourful.
+    static let maxChroma = 0.2
+    /// Icons whose visible pixels cover less than this fraction are not classified.
+    static let minimumCoverage = 0.02
+
+    static func classify(meanLuminance: Double, meanChroma: Double) -> FaviconTone {
+        guard meanChroma < maxChroma else { return .other }
+        if meanLuminance < darkLuminance { return .dark }
+        if meanLuminance > lightLuminance { return .light }
+        return .other
+    }
+}
+
 /// One of the browser's first-class surfaces (the app tiles in the sidebar).
 enum Surface: String, CaseIterable { case web, threads, mail, vault, board }
 
@@ -330,6 +360,21 @@ struct Palette {
         let c = color.usingColorSpace(.sRGB) ?? .black
         func linear(_ v: CGFloat) -> Double { v <= 0.04045 ? Double(v / 12.92) : pow(Double((v + 0.055) / 1.055), 2.4) }
         return 0.2126 * linear(c.redComponent) + 0.7152 * linear(c.greenComponent) + 0.0722 * linear(c.blueComponent)
+    }
+
+    // MARK: favicon contrast
+
+    /// Backing behind a dark favicon on dark chrome.
+    var iconBacking: Color { Color.white.opacity(0.85) }
+    /// Backing behind a very light favicon on light chrome.
+    var iconBackingOnLight: Color { Color.black.opacity(0.72) }
+    /// The backing a favicon of `tone` needs on this palette's chrome, if any.
+    func iconBacking(for tone: FaviconTone) -> Color? {
+        switch tone {
+        case .dark: return isDark ? iconBacking : nil
+        case .light: return isDark ? nil : iconBackingOnLight
+        case .other: return nil
+        }
     }
 
     // MARK: page-following card

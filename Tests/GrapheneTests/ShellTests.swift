@@ -4,9 +4,14 @@ import XCTest
 final class ShellTests: XCTestCase {
     func testFaviconOriginsAndDeclaredIconPolicy() {
         let page = URL(string: "https://example.com:8443/docs")!
-        XCTAssertEqual(FaviconPolicy.iconURL(page: page, declared: "/brand.png")?.absoluteString, "https://example.com:8443/brand.png")
-        XCTAssertEqual(FaviconPolicy.iconURL(page: page, declared: "https://tracker.example/icon.png")?.absoluteString, "https://example.com:8443/favicon.ico")
-        XCTAssertNil(FaviconPolicy.iconURL(page: URL(string: "file:///tmp/a")!, declared: nil))
+        XCTAssertEqual(FaviconPolicy.declaredURL("/brand.png", page: page)?.absoluteString, "https://example.com:8443/brand.png")
+        XCTAssertEqual(FaviconPolicy.fallbackURL(page: page)?.absoluteString, "https://example.com:8443/favicon.ico")
+        // A page may declare its icon on its own CDN; downgrades, credentials and non-web schemes are refused.
+        XCTAssertEqual(FaviconPolicy.declaredURL("https://cdn.example/icon.png", page: page)?.absoluteString, "https://cdn.example/icon.png")
+        XCTAssertNil(FaviconPolicy.declaredURL("http://cdn.example/icon.png", page: page))
+        XCTAssertNil(FaviconPolicy.declaredURL("https://user:pw@cdn.example/icon.png", page: page))
+        XCTAssertNil(FaviconPolicy.declaredURL("javascript:alert(1)", page: page))
+        XCTAssertNil(FaviconPolicy.fallbackURL(page: URL(string: "file:///tmp/a")!))
         XCTAssertFalse(FaviconPolicy.sameOrigin(page, URL(string: "https://example.com/")!))
         XCTAssertFalse(FaviconPolicy.sameOrigin(page, URL(string: "http://example.com:8443/")!))
     }
