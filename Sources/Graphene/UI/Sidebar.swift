@@ -526,13 +526,16 @@ struct ShellButtonStyle: ButtonStyle {
     @EnvironmentObject var app: AppState
     @Environment(\.isEnabled) private var enabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// On a web page card the hover fills follow the page, not the appearance.
+    @Environment(\.pageIsDark) private var pageIsDark
     var selected = false
     /// Sidebar toolbar and footer glyphs use `ink3`.
     var muted = false
     @State private var hovered = false
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.foregroundStyle(enabled ? (muted ? app.pal.ink3 : app.pal.ink2) : app.pal.inkDisabled)
-            .background(configuration.isPressed ? app.pal.active : (selected ? app.pal.active : (hovered && enabled ? app.pal.hover : .clear)), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+        let pal = app.pal.page(dark: pageIsDark)
+        configuration.label.foregroundStyle(enabled ? (muted ? pal.ink3 : pal.ink2) : pal.inkDisabled)
+            .background(configuration.isPressed ? pal.active : (selected ? pal.active : (hovered && enabled ? pal.hover : .clear)), in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
             .contentShape(Rectangle()).onHover { hovered = $0 }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.08), value: hovered)
     }

@@ -54,7 +54,7 @@ struct LittleArcRoot: View {
     @State private var shown = false
     var body: some View {
         TransientBrowser(tab: tab, little: true, close: close)
-            .pageCard()
+            .webPageCard(tab)
             .padding(ShellLayout.windowGap)
             .scaleEffect(shown || reduceMotion ? 1 : Self.appearScale)
             .opacity(shown ? 1 : 0)

@@ -1,4 +1,6 @@
 import XCTest
+import AppKit
+import SwiftUI
 @testable import Graphene
 
 final class PageToolbarTests: XCTestCase {
@@ -76,5 +78,53 @@ final class PageToolbarTests: XCTestCase {
         settings.addressPlacement = .sidebar
         let round = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(settings))
         XCTAssertEqual(round.addressPlacement, .sidebar)
+    }
+}
+
+/// The web page card follows the page's own background, not the appearance.
+@MainActor
+final class PageFollowingCardTests: XCTestCase {
+    private func hex(_ color: Color) throws -> String {
+        let c = try XCTUnwrap(NSColor(color).usingColorSpace(.sRGB))
+        return String(format: "%02X%02X%02X", Int((c.redComponent * 255).rounded()), Int((c.greenComponent * 255).rounded()), Int((c.blueComponent * 255).rounded()))
+    }
+
+    func testLuminanceThreshold() {
+        XCTAssertEqual(Palette.darkPageLuminance, 0.4)
+        XCTAssertEqual(Palette.pageIsDark(.white), false)
+        XCTAssertEqual(Palette.pageIsDark(.black), true)
+        XCTAssertEqual(Palette.pageIsDark(NSColor(srgbRed: 0x1E / 255, green: 0x1E / 255, blue: 0x22 / 255, alpha: 1)), true)
+        // Mid grey #A0A0A0 has luminance ≈ 0.35: dark. #B0B0B0 ≈ 0.43: light.
+        XCTAssertEqual(Palette.pageIsDark(NSColor(srgbRed: 0xA0 / 255, green: 0xA0 / 255, blue: 0xA0 / 255, alpha: 1)), true)
+        XCTAssertEqual(Palette.pageIsDark(NSColor(srgbRed: 0xB0 / 255, green: 0xB0 / 255, blue: 0xB0 / 255, alpha: 1)), false)
+        XCTAssertNil(Palette.pageIsDark(nil))
+        XCTAssertNil(Palette.pageIsDark(NSColor.black.withAlphaComponent(0.2)), "A transparent colour says nothing about the page")
+    }
+
+    func testTokensFollowThePageNotTheAppearance() throws {
+        for mode in [ThemeMode.dark, .light] {
+            let pal = Palette(mode: mode, space: .iris)
+            XCTAssertEqual(try hex(pal.pageBg(dark: false)), "FFFFFF", "\(mode): a light page gets a white card")
+            XCTAssertEqual(try hex(pal.pageBg(dark: true)), "1E1E22", "\(mode): a dark page gets the charcoal card")
+            XCTAssertLessThan(Palette.luminance(pal.page(dark: false).ink), 0.05, "Dark glyphs over a light page")
+            XCTAssertGreaterThan(Palette.luminance(pal.page(dark: true).ink), 0.9, "Light glyphs over a dark page")
+            XCTAssertEqual(try hex(pal.pageToolbarInk(dark: false)), try hex(Palette(mode: .light, space: .iris).ink3))
+            XCTAssertEqual(try hex(pal.pageToolbarInk(dark: true)), try hex(Palette(mode: .dark, space: .iris).ink3))
+            // Before the first report the card follows the appearance, as library views always do.
+            XCTAssertEqual(try hex(pal.pageBg(dark: nil)), try hex(pal.pageBg))
+            XCTAssertEqual(pal.page(dark: nil).isDark, pal.isDark)
+        }
+        let custom = SpaceTheme(hue: 0.3, saturation: 0.7)
+        XCTAssertEqual(Palette(mode: .dark, space: .moss, theme: custom).page(dark: false).theme, custom, "The space carries over")
+    }
+
+    func testEngineReportsPageDarknessToTheTab() {
+        let engine = WKWebEngine(privateMode: true)
+        let tab = Tab(engine: engine, privateMode: true)
+        XCTAssertNil(tab.pageIsDark)
+        engine.webView.underPageBackgroundColor = .black
+        XCTAssertEqual(tab.pageIsDark, true)
+        engine.webView.underPageBackgroundColor = .white
+        XCTAssertEqual(tab.pageIsDark, false)
     }
 }

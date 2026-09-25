@@ -324,11 +324,39 @@ struct Palette {
         LinearGradient(colors: [chromeTop, chromeBottom], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
-    static func luminance(_ color: Color) -> Double {
-        let c = NSColor(color).usingColorSpace(.sRGB) ?? .black
+    static func luminance(_ color: Color) -> Double { luminance(NSColor(color)) }
+    /// WCAG relative luminance of an sRGB colour (0 black … 1 white).
+    static func luminance(_ color: NSColor) -> Double {
+        let c = color.usingColorSpace(.sRGB) ?? .black
         func linear(_ v: CGFloat) -> Double { v <= 0.04045 ? Double(v / 12.92) : pow(Double((v + 0.055) / 1.055), 2.4) }
         return 0.2126 * linear(c.redComponent) + 0.7152 * linear(c.greenComponent) + 0.0722 * linear(c.blueComponent)
     }
+
+    // MARK: page-following card
+
+    /// A page whose background luminance is below this reads as dark; the card and its
+    /// toolbar then use the dark page tokens even under a light appearance, and vice versa.
+    static let darkPageLuminance = 0.4
+    /// Colours more transparent than this say nothing about the page and are ignored.
+    static let pageColorMinimumAlpha: CGFloat = 0.5
+    /// Whether a page's background (`themeColor`, else `underPageBackgroundColor`) is dark;
+    /// `nil` when there is no usable colour yet.
+    static func pageIsDark(_ color: NSColor?) -> Bool? {
+        guard let color = color?.usingColorSpace(.sRGB), color.alphaComponent >= pageColorMinimumAlpha else { return nil }
+        return luminance(color) < darkPageLuminance
+    }
+    /// The palette for native chrome drawn on a web page card: the dark or light scheme
+    /// matching the page, keeping the space. `nil` (no report yet) follows the appearance.
+    func page(dark: Bool?) -> Palette {
+        guard let dark else { return self }
+        return Palette(mode: dark ? .dark : .light, space: space, theme: theme, neutralChrome: neutralChrome)
+    }
+    /// The page card fill: white over light pages, #1E1E22 over dark ones.
+    func pageBg(dark: Bool?) -> Color { page(dark: dark).pageBg }
+    /// Toolbar glyphs on the page card.
+    func pageToolbarInk(dark: Bool?) -> Color { page(dark: dark).ink3 }
+    /// The host in the toolbar's address run.
+    func pageToolbarInkStrong(dark: Bool?) -> Color { page(dark: dark).ink2 }
     /// WCAG contrast of `ink` against the chrome's top stop.
     var inkContrast: Double {
         let a = Self.luminance(ink), b = Self.luminance(chromeTop)

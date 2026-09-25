@@ -20,7 +20,7 @@ struct SplitBrowserView: View {
                     VStack(spacing: 0) {
                         WebPageToolbar(tab: tab, reservesTrafficLights: reservesTrafficLights, cardOriginX: cardOriginX)
                         BrowserPage(tab: tab)
-                    }.id(tab.id).pageCard()
+                    }.webPageCard(tab).id(tab.id)
                 } else { BrowserPage(tab: tab).overlay(alignment: .top) { PageProgressBar(tab: tab) }.id(tab.id) }
             }
         }.overlay(alignment: .trailing) {
@@ -81,6 +81,6 @@ private struct SplitBranch: View {
             WebPageToolbar(tab: tab, reservesTrafficLights: reservesTrafficLights, cardOriginX: cardOriginX, paneCount: paneCount)
             BrowserPage(tab: tab)
         }
-        .pageCard(focused: app.activeTabID == tab.id)
+        .webPageCard(tab, focused: app.activeTabID == tab.id)
     }
 }

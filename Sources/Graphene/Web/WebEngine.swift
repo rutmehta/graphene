@@ -49,6 +49,8 @@ protocol WebEngineDelegate: AnyObject {
     func engine(_ engine: WebEngine, requestNewTabFor url: URL, activate: Bool)
     func engine(_ engine: WebEngine, didCaptureAnnotation annotation: CapturedAnnotation)
     func engine(_ engine: WebEngine, didCopyText text: String, url: URL?)
+    /// The page's background turned dark or light (`Palette.pageIsDark`).
+    func engine(_ engine: WebEngine, didChangePageDarkness dark: Bool)
 }
 
 /// Raw annotation payload coming up from the injected page script.

@@ -18,7 +18,7 @@ struct SiteControlsButton: View {
                 .disabled(tab.url?.host == nil)
                 .help(tab.url?.scheme == "https" && tab.loadError == nil ? "Site controls: secure connection" : "Site controls: connection not secure")
                 .accessibilityLabel("Site controls").accessibilityIdentifier("toolbar.siteControls").accessibilityAddTraits(.isButton)
-                .popover(isPresented: Binding(get: { app.siteControlsTabID == tab.id }, set: { if !$0 { app.siteControlsTabID = nil } })) { SiteControlsPopover(tab: tab) }
+                .popover(isPresented: Binding(get: { app.siteControlsTabID == tab.id }, set: { if !$0 { app.siteControlsTabID = nil } })) { SiteControlsPopover(tab: tab).environment(\.pageIsDark, nil) }
         }
     }
 }

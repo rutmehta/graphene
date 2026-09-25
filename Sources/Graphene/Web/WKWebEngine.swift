@@ -123,7 +123,16 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
             webView.observe(\.canGoForward) { _, _ in notify() },
             webView.observe(\.estimatedProgress) { _, _ in notify() },
             webView.observe(\.isLoading) { _, _ in notify() },
+            webView.observe(\.underPageBackgroundColor) { [weak self] _, _ in MainActor.assumeIsolated { self?.reportPageDarkness() } },
+            webView.observe(\.themeColor) { [weak self] _, _ in MainActor.assumeIsolated { self?.reportPageDarkness() } },
         ]
+    }
+
+    /// The page's own colour: its `theme-color` when declared, else the colour WebKit
+    /// paints under the page (the document background by default).
+    private func reportPageDarkness() {
+        guard let dark = Palette.pageIsDark(webView.themeColor) ?? Palette.pageIsDark(webView.underPageBackgroundColor) else { return }
+        delegate?.engine(self, didChangePageDarkness: dark)
     }
 
     private func notifyState() { delegate?.engineDidChangeState(self) }
@@ -192,6 +201,7 @@ final class WKWebEngine: NSObject, WebEngine, WKNavigationDelegate, WKUIDelegate
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         recordIfNew(webView.url, title: webView.title)
         delegate?.engineDidChangeState(self)
+        reportPageDarkness()
         let url = webView.url
         Task {
             let detected = await evaluateJavaScript("!!document.querySelector('article, main') && (document.querySelector('article, main').innerText || '').length > 600") as? Bool ?? false

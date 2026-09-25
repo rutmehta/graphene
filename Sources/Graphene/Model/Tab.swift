@@ -50,6 +50,9 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
     @Published var customTitle: String?
     @Published var folderID: UUID?
     @Published var isPlayingAudio = false
+    /// Whether the loaded page is dark, as the engine last reported; `nil` until it does,
+    /// in which case the page card follows the appearance.
+    @Published var pageIsDark: Bool?
     var section: TabSection { isFavorite ? .favorites : (isPinned ? .pinned : .today) }
 
     var spaceID: UUID?
@@ -124,6 +127,10 @@ final class Tab: ObservableObject, Identifiable, WebEngineDelegate {
 
     func engine(_ engine: WebEngine, didCaptureAnnotation annotation: CapturedAnnotation) {
         coordinator?.tab(self, didCapture: annotation)
+    }
+
+    func engine(_ engine: WebEngine, didChangePageDarkness dark: Bool) {
+        if pageIsDark != dark { pageIsDark = dark }
     }
 
     func engine(_ engine: WebEngine, didCopyText text: String, url: URL?) {

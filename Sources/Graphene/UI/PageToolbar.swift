@@ -70,20 +70,43 @@ enum SplitCardGeometry {
     }
 }
 
+private struct PageIsDarkKey: EnvironmentKey { static let defaultValue: Bool? = nil }
+extension EnvironmentValues {
+    /// Set on a web page card: whether its page is dark. `nil` (library views, no report yet)
+    /// means the card follows the appearance.
+    var pageIsDark: Bool? {
+        get { self[PageIsDarkKey.self] }
+        set { self[PageIsDarkKey.self] = newValue }
+    }
+}
+
+/// Publishes a tab's `pageIsDark` to the card and toolbar drawn for it.
+private struct FollowsPage: ViewModifier {
+    @ObservedObject var tab: Tab
+    func body(content: Content) -> some View { content.environment(\.pageIsDark, tab.pageIsDark) }
+}
+
 /// The page card treatment: `pageBg`, `pageRadius`, a hairline `pageBorder` (or
-/// `focusBorder` for the focused split pane) and `pageShadow`.
+/// `focusBorder` for the focused split pane) and `pageShadow`. On a web card the fill
+/// and border follow the page (`pageIsDark`), not the appearance.
 struct PageCard: ViewModifier {
     @EnvironmentObject var app: AppState
+    @Environment(\.pageIsDark) private var pageIsDark
     var focused = false
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: ShellLayout.pageRadius)
-        content.background(app.pal.pageBg).clipShape(shape)
-            .overlay(shape.strokeBorder(focused ? app.pal.focusBorder : app.pal.pageBorder, lineWidth: ShellLayout.hairline).allowsHitTesting(false))
+        let page = app.pal.page(dark: pageIsDark)
+        content.background(app.pal.pageBg(dark: pageIsDark)).clipShape(shape)
+            .overlay(shape.strokeBorder(focused ? app.pal.focusBorder : page.pageBorder, lineWidth: ShellLayout.hairline).allowsHitTesting(false))
             .shadow(color: app.pal.pageShadow, radius: app.pal.pageShadowRadius, y: app.pal.pageShadowY)
     }
 }
 extension View {
     func pageCard(focused: Bool = false) -> some View { modifier(PageCard(focused: focused)) }
+    /// A web page card: `pageCard` whose fill, toolbar and glyphs follow `tab`'s page.
+    func webPageCard(_ tab: Tab, focused: Bool = false) -> some View {
+        modifier(PageCard(focused: focused)).modifier(FollowsPage(tab: tab))
+    }
 }
 
 /// A monochrome `controlSize` glyph button: `ink3`, `accent` when on, `inkDisabled` when disabled.
@@ -106,9 +129,11 @@ struct ToolbarGlyph: View {
     var on = false
     @EnvironmentObject var app: AppState
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.pageIsDark) private var pageIsDark
     var body: some View {
+        let pal = app.pal.page(dark: pageIsDark)
         Image(systemName: system).font(ShellType.glyph)
-            .foregroundStyle(!enabled ? app.pal.inkDisabled : on ? app.pal.accent : app.pal.ink3)
+            .foregroundStyle(!enabled ? pal.inkDisabled : on ? pal.accent : app.pal.pageToolbarInk(dark: pageIsDark))
             .frame(width: ShellLayout.controlSize, height: ShellLayout.controlSize).contentShape(Rectangle())
     }
 }
@@ -130,7 +155,9 @@ struct PageToolbar<Trailing: View>: View {
     var fill: Color? = nil
     @ViewBuilder var trailing: () -> Trailing
     @EnvironmentObject var app: AppState
+    @Environment(\.pageIsDark) private var pageIsDark
     var body: some View {
+        let fill = fill ?? app.pal.pageBg(dark: pageIsDark)
         GeometryReader { geometry in
             HStack(spacing: PageToolbarGeometry.controlGap) {
                 if showsSidebarToggle { SidebarToggleButton() }
@@ -153,11 +180,11 @@ struct PageToolbar<Trailing: View>: View {
         }
         .frame(height: ShellLayout.pageToolbarHeight)
         .background {
-            if let backgroundTap { (fill ?? app.pal.pageBg).contentShape(Rectangle()).onTapGesture(perform: backgroundTap) }
-            else { (fill ?? app.pal.pageBg).overlay(WindowDragRegion()) }
+            if let backgroundTap { fill.contentShape(Rectangle()).onTapGesture(perform: backgroundTap) }
+            else { fill.overlay(WindowDragRegion()) }
         }
         .overlay(alignment: .bottom) {
-            Rectangle().fill(app.pal.hairline).frame(height: ShellLayout.hairline).allowsHitTesting(false)
+            Rectangle().fill(app.pal.page(dark: pageIsDark).hairline).frame(height: ShellLayout.hairline).allowsHitTesting(false)
                 .overlay(alignment: .leading) { PageProgressBar(tab: tab) }
         }
     }
@@ -167,10 +194,11 @@ struct PageToolbar<Trailing: View>: View {
 struct PageProgressBar: View {
     @ObservedObject var tab: Tab
     @EnvironmentObject var app: AppState
+    @Environment(\.pageIsDark) private var pageIsDark
     private static var height: CGFloat { ShellLayout.hairline * 2 }
     var body: some View {
         GeometryReader { geometry in
-            Rectangle().fill(app.pal.accent)
+            Rectangle().fill(app.pal.page(dark: pageIsDark).accent)
                 .frame(width: geometry.size.width * PageToolbarGeometry.progressFraction(isLoading: tab.isLoading, progress: tab.progress), height: Self.height)
                 .animation(.easeOut(duration: PageToolbarGeometry.progressEase), value: tab.progress)
                 .opacity(PageToolbarGeometry.progressOpacity(isLoading: tab.isLoading))
@@ -186,13 +214,16 @@ struct PageAddress: View {
     var action: (() -> Void)?
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.pageIsDark) private var pageIsDark
     @State private var hovered = false
     private var parts: AddressParts? { AddressParts(url: tab.url) }
+    private var ink2: Color { app.pal.pageToolbarInkStrong(dark: pageIsDark) }
+    private var ink3: Color { app.pal.pageToolbarInk(dark: pageIsDark) }
     var body: some View {
         Group {
             if let action {
                 Button(action: action) { run }.buttonStyle(.plain)
-                    .background(hovered ? app.pal.rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
+                    .background(hovered ? app.pal.page(dark: pageIsDark).rowHover : .clear, in: RoundedRectangle(cornerRadius: ShellLayout.rowRadius))
                     .onHover { hovered = $0 }
                     .animation(reduceMotion ? nil : .easeOut(duration: PageToolbarGeometry.hoverFade), value: hovered)
                     .help("Open location (⌘L)")
@@ -212,13 +243,13 @@ struct PageAddress: View {
     private var run: some View {
         HStack(spacing: PageToolbarGeometry.controlGap * 2) {
             if parts?.secure == true {
-                Image(systemName: "lock.fill").font(ShellType.caption).foregroundStyle(app.pal.ink3).accessibilityHidden(true)
+                Image(systemName: "lock.fill").font(ShellType.caption).foregroundStyle(ink3).accessibilityHidden(true)
             }
             if let parts {
-                Text("\(Text(parts.host).foregroundStyle(app.pal.ink2))\(Text(parts.rest).foregroundStyle(app.pal.ink3))")
+                Text("\(Text(parts.host).foregroundStyle(ink2))\(Text(parts.rest).foregroundStyle(ink3))")
                     .font(ShellType.caption).lineLimit(1).truncationMode(.middle)
             } else {
-                Text("Search or enter URL").font(ShellType.caption).foregroundStyle(app.pal.ink3).lineLimit(1)
+                Text("Search or enter URL").font(ShellType.caption).foregroundStyle(ink3).lineLimit(1)
             }
         }
         .padding(.horizontal, ShellLayout.rowInsetLeading)
