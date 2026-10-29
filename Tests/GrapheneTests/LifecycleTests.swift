@@ -60,6 +60,26 @@ final class LifecycleTests: XCTestCase {
         XCTAssertTrue(DownloadStore(file: file).entries.isEmpty)
     }
 
+    @MainActor
+    func testCancelledDownloadResumesInPlace() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let store = DownloadStore(file: file)
+        let id = store.begin(URL(fileURLWithPath: "/tmp/example.zip"))
+        store.update(id, progress: 0.4)
+        store.finish(id, error: "Cancelled")
+        XCTAssertEqual(store.entries.first?.status, .failed)
+        store.resume(id)
+        XCTAssertEqual(store.entries.first?.status, .active)
+        XCTAssertNil(store.entries.first?.error)
+        XCTAssertEqual(store.entries.first?.progress, 0.4, "Progress carries on from where it stopped")
+        XCTAssertEqual(store.entries.count, 1, "Resuming reuses the history entry")
+        store.finish(id, error: nil)
+        store.resume(id)
+        XCTAssertEqual(store.entries.first?.status, .finished, "A finished download is never reopened")
+        XCTAssertFalse(BrowserDownload.canResume(id), "No resume data without WebKit")
+    }
+
     func testDialogLoopGuardIsOriginScopedAndExpires() {
         var guardrail = DialogGuard()
         let now = Date(timeIntervalSince1970: 1000)

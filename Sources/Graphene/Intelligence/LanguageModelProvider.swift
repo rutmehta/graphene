@@ -138,19 +138,25 @@ struct OnDeviceProvider: LanguageModelProvider {
                         for attempt in 0...1 {
                             let session = LanguageModelSession(instructions: system)
                             let context = attempt == 0 ? prompt : PageContext.shortened(messages.last { $0.role == .user }?.content ?? prompt, limit: 2400)
-                            var previous = ""
+                            var gate = RefusalGate()
                             do {
                                 for try await snapshot in session.streamResponse(to: context, options: GenerationOptions(temperature: 0.1, maximumResponseTokens: 700)) {
                                     try Task.checkCancellation()
-                                    continuation.yield(String(snapshot.content.dropFirst(previous.count)))
-                                    previous = snapshot.content
+                                    if let text = gate.receive(snapshot.content) { continuation.yield(text) }
                                 }
-                                continuation.finish(); return
+                                switch gate.finish() {
+                                case .text(let text):
+                                    if !text.isEmpty { continuation.yield(text) }
+                                    continuation.finish(); return
+                                case .refused:
+                                    // A canned "I cannot fulfill that request" is not an answer; retry once, then say so plainly.
+                                    guard attempt == 0 else { throw ProviderFailure(message: RefusalGate.declinedMessage) }
+                                }
                             } catch LanguageModelSession.GenerationError.guardrailViolation {
                                 try Task.checkCancellation()
-                                guard attempt == 0 else { throw ProviderFailure(message: "Apple's on-device model declined this request") }
+                                guard attempt == 0 else { throw ProviderFailure(message: RefusalGate.declinedMessage) }
                                 // Keep partial output visibly separate from the retry; never silently splice two answers.
-                                if !previous.isEmpty { continuation.yield("\n\nApple's on-device model declined this request. Retrying with a shorter excerpt…\n\n") }
+                                if gate.released { continuation.yield("\n\nApple's on-device model declined this request. Retrying with a shorter excerpt…\n\n") }
                             }
                         }
                     }
@@ -160,6 +166,52 @@ struct OnDeviceProvider: LanguageModelProvider {
             }
             continuation.onTermination = { _ in task.cancel() }
         }
+    }
+}
+
+/// Holds back the opening of an on-device answer until it is clear the model is answering,
+/// so a short canned refusal ("I cannot fulfill that request.") is never shown as the answer.
+/// Snapshots are cumulative, as `LanguageModelSession.streamResponse` delivers them.
+struct RefusalGate {
+    enum Outcome: Equatable { case text(String), refused }
+    /// Refusals are one short sentence; anything longer is released as it streams.
+    static let holdLimit = 160
+    static let declinedMessage = "Apple's on-device model declined this request. Try asking about a specific passage, or choose another provider in Settings → AI."
+    /// The model declining the task itself, in the first person. "I cannot find that in the
+    /// sources" is a legitimate grounded answer, and "the site cannot comply with GDPR" is about
+    /// the page, so neither matches.
+    static let subjects = ["i cannot ", "i can't ", "i can not ", "i'm unable to ", "i am unable to ", "i'm not able to ", "i am not able to "]
+    static let tasks = ["fulfill", "assist with", "help with that", "help with this", "comply", "summarize", "provide a summary", "complete that request", "complete this request"]
+
+    static func isRefusal(_ text: String) -> Bool {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
+        guard !normalized.isEmpty, normalized.count <= holdLimit else { return false }
+        return subjects.contains { subject in tasks.contains { normalized.contains(subject + $0) } }
+    }
+
+    private var latest = ""
+    private var sent = 0
+    /// Whether any text has been handed on; once it has, the rest streams straight through.
+    private(set) var released = false
+
+    /// Takes the cumulative snapshot and returns the new text to show, if any.
+    mutating func receive(_ snapshot: String) -> String? {
+        latest = snapshot
+        guard released || snapshot.count > Self.holdLimit else { return nil }
+        released = true
+        return drain()
+    }
+    /// The stream ended: either the rest of the answer, or a refusal to retry.
+    mutating func finish() -> Outcome {
+        if !released, Self.isRefusal(latest) { return .refused }
+        released = true
+        return .text(drain() ?? "")
+    }
+    private mutating func drain() -> String? {
+        guard latest.count > sent else { return nil }
+        let text = String(latest.dropFirst(sent))
+        sent = latest.count
+        return text
     }
 }
 
