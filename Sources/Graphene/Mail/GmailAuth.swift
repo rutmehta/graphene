@@ -6,12 +6,14 @@ enum GmailAuthError: LocalizedError {
     case notConfigured
     case cancelled
     case tokenExchangeFailed(String)
+    case randomGenerationFailed(OSStatus)
 
     var errorDescription: String? {
         switch self {
         case .notConfigured: return "Add your Google OAuth client id/secret to connect."
         case .cancelled: return "Sign-in was cancelled."
         case .tokenExchangeFailed(let m): return "Couldn't complete sign-in: \(m)"
+        case .randomGenerationFailed(let status): return "Couldn't generate a secure sign-in verifier (status \(status))."
         }
     }
 }
@@ -26,7 +28,7 @@ struct GmailAuth {
         guard let cfg = GmailConfig.current else { throw GmailAuthError.notConfigured }
         OAuthLog.log("authorize() start; client=\(cfg.clientID.prefix(24))…")
 
-        let verifier = Self.randomURLSafe(64)
+        let verifier = try Self.randomURLSafe(64)
         let challenge = Self.base64URL(Data(SHA256.hash(data: Data(verifier.utf8))))
 
         let server = LoopbackServer()
@@ -109,9 +111,18 @@ struct GmailAuth {
     }
 
     // MARK: helpers
-    static func randomURLSafe(_ n: Int) -> String {
+    /// Throws instead of returning a verifier built from unfilled (zero) bytes
+    /// when the secure random source fails.
+    static func randomURLSafe(
+        _ n: Int,
+        fill: (inout [UInt8]) -> OSStatus = { SecRandomCopyBytes(kSecRandomDefault, $0.count, &$0) }
+    ) throws -> String {
         var bytes = [UInt8](repeating: 0, count: n)
-        _ = SecRandomCopyBytes(kSecRandomDefault, n, &bytes)
+        let status = fill(&bytes)
+        guard status == errSecSuccess else {
+            OAuthLog.log("SecRandomCopyBytes failed: \(status)")
+            throw GmailAuthError.randomGenerationFailed(status)
+        }
         return base64URL(Data(bytes))
     }
     static func base64URL(_ data: Data) -> String {
