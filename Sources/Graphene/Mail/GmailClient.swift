@@ -130,12 +130,18 @@ enum GmailClient {
         return Date()
     }
 
-    private static func decodeEntities(_ s: String) -> String {
-        s.replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
+    static func decodeEntities(_ s: String) -> String {
+        // Match only the original text so decoded entities are never interpreted again.
+        s.replacing(#/&(amp|quot|#39|lt|gt);/#) { match in
+            switch match.1 {
+            case "amp": return "&"
+            case "quot": return "\""
+            case "#39": return "'"
+            case "lt": return "<"
+            case "gt": return ">"
+            default: return String(match.0)
+            }
+        }
     }
 
     /// A stable, muted color per sender.
