@@ -60,6 +60,20 @@ enum ChatMarkdown {
     static func hasMarkers(_ text: String) -> Bool {
         text.range(of: #"\[\d+\]"#, options: .regularExpression) != nil || text.contains(anchorOpen)
     }
+    /// The ranges of `text` inside fenced code blocks (fence lines included), so code stays literal.
+    static func fencedRanges(_ text: String) -> [NSRange] {
+        var ranges: [NSRange] = [], start: Int?, location = 0
+        for line in text.components(separatedBy: "\n") {
+            let length = (line as NSString).length
+            if line.hasPrefix("```") {
+                if let open = start { ranges.append(NSRange(location: open, length: location + length - open)); start = nil }
+                else { start = location }
+            }
+            location += length + 1
+        }
+        if let open = start { ranges.append(NSRange(location: open, length: location - open)) }
+        return ranges
+    }
     /// `text` with each citation's chip in place: the `[n]` markers of per-claim citations
     /// become their chips by position among the answer's markers (older citations keep their
     /// `[n]`, resolved by source number), and each fallback citation's chip follows the
@@ -69,7 +83,10 @@ enum ChatMarkdown {
         var byMarker: [Int: Int] = [:]
         for (offset, citation) in citations.enumerated() { for marker in citation.markers ?? [] { byMarker[marker] = offset + 1 } }
         if !byMarker.isEmpty, let regex = try? NSRegularExpression(pattern: #"\[(\d+)\](?:\([^)]*\))?"#) {
+            let fenced = fencedRanges(text)
+            // Ordinals count every marker (as `ChatCitation.assign` does); markers in code just stay literal.
             for (ordinal, match) in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).enumerated().reversed() {
+                if fenced.contains(where: { NSLocationInRange(match.range.location, $0) }) { continue }
                 guard let position = byMarker[ordinal], let range = Range(match.range, in: result) else { continue }
                 result.replaceSubrange(range, with: anchorOpen + "\(position)" + anchorClose)
             }
