@@ -131,12 +131,16 @@ enum Importer {
         defer { sqlite3_finalize(statement) }
         func text(_ col: Int32) -> String { sqlite3_column_text(statement, col).map { String(cString: $0) } ?? "" }
         var rows: [ImportedHistory] = []
-        while sqlite3_step(statement) == SQLITE_ROW {
-            guard let url = webURL(text(0)) else { continue }
-            let time = sqlite3_column_double(statement, 2)
-            let date = safari ? Date(timeIntervalSinceReferenceDate: time) : Date(timeIntervalSince1970: time / 1_000_000 - 11_644_473_600)
-            rows.append(ImportedHistory(url: url, title: text(1), date: date))
+        var step = sqlite3_step(statement)
+        while step == SQLITE_ROW {
+            if let url = webURL(text(0)) {
+                let time = sqlite3_column_double(statement, 2)
+                let date = safari ? Date(timeIntervalSinceReferenceDate: time) : Date(timeIntervalSince1970: time / 1_000_000 - 11_644_473_600)
+                rows.append(ImportedHistory(url: url, title: text(1), date: date))
+            }
+            step = sqlite3_step(statement)
         }
+        guard step == SQLITE_DONE else { throw CocoaError(.fileReadCorruptFile) }
         return rows
     }
 }

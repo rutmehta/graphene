@@ -1,4 +1,5 @@
 import XCTest
+import SQLite3
 import WebKit
 @testable import Graphene
 
@@ -91,6 +92,17 @@ final class SiteTests: XCTestCase {
         let result = try Importer.chrome(Data(contentsOf: file))
         XCTAssertEqual(result.bookmarks.count, 2)
         XCTAssertEqual(result.bookmarks.first?.title, "Graphene")
+    }
+    func testHistoryReadFailsWhenSQLiteStepErrors() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("history-\(UUID()).sqlite")
+        defer { try? FileManager.default.removeItem(at: file) }
+        var db: OpaquePointer?
+        XCTAssertEqual(sqlite3_open(file.path, &db), SQLITE_OK)
+        // abs(INT64_MIN) raises "integer overflow" from sqlite3_step, not from prepare.
+        let schema = "CREATE VIEW urls AS SELECT 'https://a.example' AS url, 'A' AS title, 1 AS last_visit_time UNION ALL SELECT 'https://b.example', 'B', abs(-9223372036854775808)"
+        XCTAssertEqual(sqlite3_exec(db, schema, nil, nil, nil), SQLITE_OK)
+        sqlite3_close(db)
+        XCTAssertThrowsError(try Importer.readHistory(file, safari: false))
     }
     func testArcSidebarFixturePreservesSpaceAndPinsOnly() throws {
         let file = Bundle.module.url(forResource: "arc-sidebar", withExtension: "json", subdirectory: "Fixtures")!
