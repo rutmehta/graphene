@@ -39,7 +39,7 @@ enum MailLayout {
 
 /// One conversation: the first message and its replies, oldest first.
 struct MailConversation: Identifiable {
-    /// The Gmail thread id, else `subject:` plus the normalised subject.
+    /// The Gmail thread id, else `subject:` plus the normalised subject, else `message:` plus the message id.
     let id: String
     let messages: [MailItem]
 
@@ -75,13 +75,20 @@ struct MailConversation: Identifiable {
     static func group(_ items: [MailItem]) -> [MailConversation] {
         var order: [String] = [], buckets: [String: [MailItem]] = [:]
         for item in items {
-            let key = item.threadID.map { "thread:\($0)" } ?? "subject:\(normalizedSubject(item.subject))"
+            let key = item.threadID.map { "thread:\($0)" } ?? subjectKey(item)
             if buckets[key] == nil { order.append(key) }
             buckets[key, default: []].append(item)
         }
         return order.map { key in MailConversation(id: key, messages: buckets[key]!.sorted { $0.date < $1.date }) }
             .enumerated().sorted { $0.element.latest != $1.element.latest ? $0.element.latest > $1.element.latest : $0.offset < $1.offset }
             .map(\.element)
+    }
+
+    /// The subject key, or a per-message key when the subject is empty or the placeholder,
+    /// so unrelated subjectless messages stay separate.
+    static func subjectKey(_ item: MailItem) -> String {
+        let subject = normalizedSubject(item.subject)
+        return subject.isEmpty || subject == "(no subject)" ? "message:\(item.id)" : "subject:\(subject)"
     }
 
     /// The subject without reply and forward prefixes, case- and space-folded.

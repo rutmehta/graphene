@@ -242,6 +242,14 @@ final class BoardMailTests: XCTestCase {
         XCTAssertEqual(MailConversation.normalizedSubject("Re[2]: Fw: Budget"), "budget")
     }
 
+    func testSubjectlessMessagesWithoutThreadStaySeparate() {
+        let items = [message("a", thread: nil, subject: "(no subject)", minutes: 1), message("b", thread: nil, subject: "(No Subject)", minutes: 2),
+                     message("c", thread: nil, subject: "  ", minutes: 3), message("d", thread: nil, subject: "Re: (no subject)", minutes: 4)]
+        let conversations = MailConversation.group(items)
+        XCTAssertEqual(conversations.map(\.id), ["message:d", "message:c", "message:b", "message:a"])
+        XCTAssertTrue(conversations.allSatisfy { $0.messages.count == 1 })
+    }
+
     func testConversationsCollapseToTheLatestThreeReplies() throws {
         let items = (0..<6).map { message("m\($0)", thread: "t", minutes: Double($0)) }
         let conversation = try XCTUnwrap(MailConversation.group(items).first)
