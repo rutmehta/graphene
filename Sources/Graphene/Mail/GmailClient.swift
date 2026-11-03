@@ -130,12 +130,25 @@ enum GmailClient {
         return Date()
     }
 
-    private static func decodeEntities(_ s: String) -> String {
-        s.replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
+    /// Decodes Gmail's snippet entities in a single pass, so text produced by decoding
+    /// (e.g. the `&lt;` in `&amp;lt;`) is never decoded again.
+    static func decodeEntities(_ s: String) -> String {
+        let entities: [(String, String)] = [("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">")]
+        var out = ""
+        var rest = s[...]
+        while let amp = rest.firstIndex(of: "&") {
+            out.append(contentsOf: rest[..<amp])
+            rest = rest[amp...]
+            if let match = entities.first(where: { rest.hasPrefix($0.0) }) {
+                out.append(match.1)
+                rest = rest.dropFirst(match.0.count)
+            } else {
+                out.append("&")
+                rest = rest.dropFirst()
+            }
+        }
+        out.append(contentsOf: rest)
+        return out
     }
 
     /// A stable, muted color per sender.
