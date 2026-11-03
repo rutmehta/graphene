@@ -130,12 +130,18 @@ enum GmailClient {
         return Date()
     }
 
-    private static func decodeEntities(_ s: String) -> String {
-        s.replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
+    static func decodeEntities(_ s: String) -> String {
+        let entities = ["&amp;": "&", "&quot;": "\"", "&#39;": "'", "&lt;": "<", "&gt;": ">"]
+        guard let regex = try? NSRegularExpression(pattern: "&(?:amp|quot|#39|lt|gt);") else { return s }
+        let source = s as NSString
+        let decoded = NSMutableString(string: s)
+        // Match only the original input; work backwards to preserve UTF-16 offsets.
+        for match in regex.matches(in: s, range: NSRange(location: 0, length: source.length)).reversed() {
+            if let replacement = entities[source.substring(with: match.range)] {
+                decoded.replaceCharacters(in: match.range, with: replacement)
+            }
+        }
+        return decoded as String
     }
 
     /// A stable, muted color per sender.
