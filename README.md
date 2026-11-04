@@ -1,5 +1,7 @@
 # Graphene
 
+History imports now report SQLite read errors instead of silently accepting partial history.
+
 A native macOS browser for pages, research threads and local notes.
 
 Version 0.3.0 is a local development build, not a completed release-readiness sign-off. The WP9 regression sweep remains partial. See `docs/parity/shots/wp9/verification.md` for observed failures and unverified workflows.
