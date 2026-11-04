@@ -131,7 +131,10 @@ enum Importer {
         defer { sqlite3_finalize(statement) }
         func text(_ col: Int32) -> String { sqlite3_column_text(statement, col).map { String(cString: $0) } ?? "" }
         var rows: [ImportedHistory] = []
-        while sqlite3_step(statement) == SQLITE_ROW {
+        while true {
+            let status = sqlite3_step(statement)
+            if status == SQLITE_DONE { break }
+            guard status == SQLITE_ROW else { throw CocoaError(.fileReadUnknown) }
             guard let url = webURL(text(0)) else { continue }
             let time = sqlite3_column_double(statement, 2)
             let date = safari ? Date(timeIntervalSinceReferenceDate: time) : Date(timeIntervalSince1970: time / 1_000_000 - 11_644_473_600)
