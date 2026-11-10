@@ -13,7 +13,7 @@ struct MailItem: Identifiable {
     var initial: String
     var colorHex: String
     var body: [String]
-    /// Gmail's thread id; conversations group by it, else by normalised subject.
+    /// Gmail's thread id; else group by meaningful normalised subject or message id.
     var threadID: String? = nil
 
     /// Unread rows carry the 6pt `accent` dot in the icon slot (there are no avatars).
@@ -39,7 +39,7 @@ enum MailLayout {
 
 /// One conversation: the first message and its replies, oldest first.
 struct MailConversation: Identifiable {
-    /// The Gmail thread id, else `subject:` plus the normalised subject.
+    /// The `thread:` id, else `subject:` plus the normalised subject, or a `message:` id for missing subjects.
     let id: String
     let messages: [MailItem]
 
@@ -75,7 +75,13 @@ struct MailConversation: Identifiable {
     static func group(_ items: [MailItem]) -> [MailConversation] {
         var order: [String] = [], buckets: [String: [MailItem]] = [:]
         for item in items {
-            let key = item.threadID.map { "thread:\($0)" } ?? "subject:\(normalizedSubject(item.subject))"
+            let key: String
+            if let threadID = item.threadID {
+                key = "thread:\(threadID)"
+            } else {
+                let subject = normalizedSubject(item.subject)
+                key = subject.isEmpty || subject == "(no subject)" ? "message:\(item.id)" : "subject:\(subject)"
+            }
             if buckets[key] == nil { order.append(key) }
             buckets[key, default: []].append(item)
         }
