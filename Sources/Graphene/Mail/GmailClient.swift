@@ -20,20 +20,20 @@ enum GmailClient {
         return try JSONDecoder().decode(Profile.self, from: await get(URL(string: "\(base)/profile")!, token: accessToken)).emailAddress
     }
 
-    static func listInbox(accessToken: String, max: Int = 18) async throws -> [MailItem] {
+    static func listInbox(accessToken: String, max: Int = 18, session: URLSession = .shared) async throws -> [MailItem] {
         let listURL = URL(string: "\(base)/messages?maxResults=\(max)&labelIds=INBOX")!
-        let listData = try await get(listURL, token: accessToken)
+        let listData = try await get(listURL, token: accessToken, session: session)
         let list = (try? JSONSerialization.jsonObject(with: listData) as? [String: Any]) ?? [:]
         let refs = (list["messages"] as? [[String: Any]]) ?? []
         var items: [MailItem] = []
         for ref in refs {
             guard let id = ref["id"] as? String else { continue }
-            if let item = try? await fetch(id: id, accessToken: accessToken) { items.append(item) }
+            items.append(try await fetch(id: id, accessToken: accessToken, session: session))
         }
         return items
     }
 
-    private static func fetch(id: String, accessToken: String) async throws -> MailItem {
+    private static func fetch(id: String, accessToken: String, session: URLSession) async throws -> MailItem {
         var comps = URLComponents(string: "\(base)/messages/\(id)")!
         comps.queryItems = [
             .init(name: "format", value: "metadata"),
@@ -41,7 +41,7 @@ enum GmailClient {
             .init(name: "metadataHeaders", value: "Subject"),
             .init(name: "metadataHeaders", value: "Date"),
         ]
-        let data = try await get(comps.url!, token: accessToken)
+        let data = try await get(comps.url!, token: accessToken, session: session)
         let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
         let snippet = (msg["snippet"] as? String) ?? ""
         let labelIds = (msg["labelIds"] as? [String]) ?? []
@@ -96,10 +96,10 @@ enum GmailClient {
         return String(data: d, encoding: .utf8)
     }
 
-    private static func get(_ url: URL, token: String) async throws -> Data {
+    private static func get(_ url: URL, token: String, session: URLSession = .shared) async throws -> Data {
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        let (data, resp) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await session.data(for: req)
         if let http = resp as? HTTPURLResponse {
             if http.statusCode == 401 { throw GmailError.unauthorized }
             if http.statusCode >= 400 { throw GmailError.http(http.statusCode) }
