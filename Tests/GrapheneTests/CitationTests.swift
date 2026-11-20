@@ -8,6 +8,14 @@ final class CitationTests: XCTestCase {
         KnowledgeSource(id: id, title: title, url: url, text: text, kind: kind)
     }
 
+    func testFencedCodeKeepsMarkersLiteral() {
+        let id = UUID()
+        let citation = ChatCitation(citationID: "a", index: 1, sourceNumber: 1, sourceID: id, passage: nil, markers: [0, 1, 2])
+        let answer = "Intro [1].\n```swift\nlet x = a[1]\n```\nOutro [1]."
+        let shown = ChatMarkdown.anchored(answer, citations: [citation])
+        XCTAssertEqual(shown, "Intro ⁅1⁆.\n```swift\nlet x = a[1]\n```\nOutro ⁅1⁆.")
+    }
+
     // MARK: index assignment
 
     func testIndicesAreAssignedPerAnswerInOrderOfFirstMention() {
