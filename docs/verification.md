@@ -1,3 +1,9 @@
+## Synthetic post-deploy probe investigation
+
+The supplied [Sazabi report](https://app.development.sazabi.dev/projects/019dda38-61c6-7326-af5d-05d78a1d5539/issues/01a15591-7be7-758b-9276-52a15063cdea) attributes the single 19:07 UTC probe failure to an intentional end-to-end issue-tracking check, with no live-user impact or production defect.
+
+Repository inspection found no post-deploy test runner or matching synthetic verification probe in Graphene. No application fix or regression test is warranted by this report. Current probe status could not be independently verified because the local Sazabi CLI was unauthenticated and no Sazabi MCP server was available. This note records the investigation only; it does not resolve the Sazabi issue or establish release readiness.
+
 ## WP9 release-readiness pass — September 11, 2026
 
 Status: partial regression pass, not release sign-off. This section supersedes historical test totals below; earlier sections retain their original dates and scope.
