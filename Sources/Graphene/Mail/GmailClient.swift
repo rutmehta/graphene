@@ -130,12 +130,16 @@ enum GmailClient {
         return Date()
     }
 
-    private static func decodeEntities(_ s: String) -> String {
-        s.replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
+    static func decodeEntities(_ s: String) -> String {
+        let entities = ["amp;": "&", "quot;": "\"", "#39;": "'", "lt;": "<", "gt;": ">"]
+        // Split the original text so decoded ampersands are never interpreted again.
+        return s.components(separatedBy: "&").enumerated().map { index, part in
+            guard index > 0 else { return part }
+            for (entity, replacement) in entities where part.hasPrefix(entity) {
+                return replacement + part.dropFirst(entity.count)
+            }
+            return "&" + part
+        }.joined()
     }
 
     /// A stable, muted color per sender.
