@@ -242,6 +242,28 @@ final class BoardMailTests: XCTestCase {
         XCTAssertEqual(MailConversation.normalizedSubject("Re[2]: Fw: Budget"), "budget")
     }
 
+    func testConversationsKeepMissingSubjectsSeparate() {
+        for subject in ["", " \n\t", "Re: Fwd:", "(no subject)", " Re: (NO   SUBJECT) \n"] {
+            let items = [message("1", thread: nil, subject: subject, minutes: 1),
+                         message("2", thread: nil, subject: subject, minutes: 2)]
+            let conversations = MailConversation.group(items)
+            XCTAssertEqual(conversations.map(\.id), ["message:2", "message:1"], "subject: \(subject)")
+            XCTAssertEqual(conversations.map { $0.messages.map(\.id) }, [["2"], ["1"]])
+            XCTAssertEqual(MailConversation.group(Array(items.reversed())).map(\.id), conversations.map(\.id),
+                           "per-message conversation IDs stay stable across reloads")
+        }
+    }
+
+    func testConversationsWithMissingSubjectsStillGroupByThread() {
+        let items = [message("1", thread: "t1", subject: "", minutes: 1),
+                     message("2", thread: "t1", subject: "Re: (no subject)", minutes: 2),
+                     message("3", thread: "t2", subject: "(no subject)", minutes: 3),
+                     message("4", thread: nil, subject: "(no subject)", minutes: 4)]
+        let conversations = MailConversation.group(items)
+        XCTAssertEqual(conversations.map(\.id), ["message:4", "thread:t2", "thread:t1"])
+        XCTAssertEqual(conversations.map { $0.messages.map(\.id) }, [["4"], ["3"], ["1", "2"]])
+    }
+
     func testConversationsCollapseToTheLatestThreeReplies() throws {
         let items = (0..<6).map { message("m\($0)", thread: "t", minutes: Double($0)) }
         let conversation = try XCTUnwrap(MailConversation.group(items).first)
