@@ -33,6 +33,11 @@ struct DownloadsButton: View {
                                     HStack {
                                         Text(entry.error ?? entry.status.rawValue.capitalized).foregroundStyle(entry.error == nil ? app.pal.ink3 : app.pal.danger).lineLimit(2)
                                         Spacer()
+                                        if entry.status == .active, BrowserDownload.isActive(entry.id) {
+                                            Button("Cancel") { BrowserDownload.cancel(entry.id) }
+                                        } else if entry.status != .finished, BrowserDownload.canResume(entry.id) {
+                                            Button("Resume") { BrowserDownload.resume(entry.id) }
+                                        }
                                         if entry.status == .finished {
                                             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([entry.destination]) }
                                             Button("Open") { NSWorkspace.shared.open(entry.destination) }
