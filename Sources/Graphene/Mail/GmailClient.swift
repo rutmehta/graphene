@@ -108,9 +108,10 @@ enum GmailClient {
     }
 
     // MARK: parsing helpers
-    private static func parseFrom(_ raw: String) -> (String, String) {
+    static func parseFrom(_ raw: String) -> (String, String) {
         // "Display Name <email@x.com>"  or  "email@x.com"
-        if let open = raw.firstIndex(of: "<"), let close = raw.firstIndex(of: ">") {
+        if let open = raw.firstIndex(of: "<"),
+           let close = raw[raw.index(after: open)...].firstIndex(of: ">") {
             let email = String(raw[raw.index(after: open)..<close])
             var name = String(raw[..<open]).trimmingCharacters(in: .whitespaces)
             name = name.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
