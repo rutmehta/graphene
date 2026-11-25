@@ -47,6 +47,13 @@ final class DownloadStore: ObservableObject {
         save()
         if error == nil { onFinished?(entries[index]) }
     }
+    /// A failed or cancelled download picked up again from WebKit's resume data.
+    func resume(_ id: UUID) {
+        guard let index = entries.firstIndex(where: { $0.id == id }), entries[index].status != .finished else { return }
+        entries[index].status = .active
+        entries[index].error = nil
+        save()
+    }
     func rename(_ id: UUID, to name: String) throws {
         guard let index = entries.firstIndex(where: { $0.id == id && $0.status == .finished }),
               AITidy.filename(name, original: entries[index].destination.lastPathComponent) == name else { throw ProviderFailure(message: "Invalid download name.") }
