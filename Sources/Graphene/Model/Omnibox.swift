@@ -50,10 +50,13 @@ enum Omnibox {
     }
 
     static func asURL(_ s: String) -> URL? {
-        if s.hasPrefix("http://") || s.hasPrefix("https://") || s.hasPrefix("graphene://") {
+        let lowercased = s.lowercased()
+        if lowercased.hasPrefix("http://") || lowercased.hasPrefix("https://") || lowercased.hasPrefix("graphene://") {
             return URL(string: s)
         }
-        if s.hasPrefix("localhost") { return URL(string: "http://" + s) }
+        if lowercased.hasPrefix("localhost"), let url = URL(string: "http://" + s), url.host?.lowercased() == "localhost" {
+            return url
+        }
         // bare domain like example.com / sub.example.co.uk/path — no spaces, has a dot
         if !s.contains(" "), s.contains(".") {
             let head = s.split(separator: "/").first.map(String.init) ?? s
